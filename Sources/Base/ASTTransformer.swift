@@ -64,12 +64,13 @@ class ASTTransformer: ASTVisitor {
   
   func run(in context: ASTContext) {
     context.diagnostics.forEach(visitPoundDiagnosticStmt)
-    context.globals.forEach(visit)
-    context.types.forEach(visit)
-    context.typeAliases.forEach(visit)
-    context.functions.forEach(visit)
-    context.operators.forEach(visit)
-    context.extensions.forEach(visit)
+    context.globals.forEach(visitVarAssignDecl)
+    context.protocols.forEach(visitProtocolDecl)
+    context.types.forEach(visitTypeDecl)
+    context.typeAliases.forEach(visitTypeAliasDecl)
+    context.functions.forEach(visitFuncDecl)
+    context.operators.forEach(visitOperatorDecl)
+    context.extensions.forEach(visitExtensionDecl)
   }
   
   func matchRank(_ t1: DataType?, _ t2: DataType?) -> TypeRank? {
@@ -236,6 +237,15 @@ class ASTTransformer: ASTVisitor {
     visit(expr.condition)
     visit(expr.trueCase)
     visit(expr.falseCase)
+  }
+  
+  func visitProtocolDecl(_ decl: ProtocolDecl) {
+    for method in decl.methods {
+      visitFuncDecl(method)
+    }
+    for inherited in decl.inherited {
+      visitTypeRefExpr(inherited)
+    }
   }
   
   func visitSwitchStmt(_ stmt: SwitchStmt) {

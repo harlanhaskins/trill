@@ -73,7 +73,7 @@ extension Parser {
     }
     var body: CompoundStmt? = nil
     if case .leftBrace = peek() {
-      body = try parseCompoundExpr()
+      body = try parseCompoundStmt()
       if case .initializer = kind {
         returnType = type!.ref()
       }
@@ -192,69 +192,7 @@ extension Parser {
     }
     return (args: args, ret: returnType, hasVarArgs: hasVarArgs)
   }
-  
-  func parseType() throws -> TypeRefExpr {
-    let startLoc = sourceLoc
-    while true {
-      switch peek() {
-      // HACK
-      case .unknown(let char):
-        var pointerLevel = 0
-        for c in char.characters {
-          if c != "*" {
-            throw unexpectedToken()
-          }
-          pointerLevel += 1
-        }
-        consumeToken()
-        return PointerTypeRefExpr(pointedTo: try parseType(),
-                                  level: pointerLevel,
-                                  sourceRange: range(start: startLoc))
-      case .leftParen:
-        consumeToken()
-        var args = [TypeRefExpr]()
-        while peek() != .rightParen {
-          let t = try parseType()
-          args.append(t)
-          if peek() != .rightParen {
-            try consume(.comma)
-          }
-        }
-        try consume(.rightParen)
-        if case .arrow = peek() {
-          consumeToken()
-          let ret = try parseType()
-          return FuncTypeRefExpr(argNames: args,
-                                 retName: ret,
-                                 sourceRange: range(start: startLoc))
-        } else {
-          return TupleTypeRefExpr(fieldNames: args,
-                                  sourceRange: range(start: startLoc))
-        }
-      case .leftBracket:
-        consumeToken()
-        let innerType = try parseType()
-        try consume(.rightBracket)
-        return ArrayTypeRefExpr(element: innerType,
-                                length: nil,
-                                sourceRange: range(start: startLoc))
-      case .operator(op: .star):
-        consumeToken()
-        return PointerTypeRefExpr(pointedTo: try parseType(),
-                                  level: 1,
-                                  sourceRange: range(start: startLoc))
-      case .identifier:
-        var id = try parseIdentifier()
-        let r = range(start: startLoc)
-        id = Identifier(name: id.name, range: r)
-        return TypeRefExpr(type: DataType(name: id.name),
-                           name: id, sourceRange: r)
-      default:
-        throw unexpectedToken()
-      }
-    }
-  }
-  
+ 
   /// Function Call Args
   ///
   /// func-call-args ::= ([<label>:] <val-expr>,*)

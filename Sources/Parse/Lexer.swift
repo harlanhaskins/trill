@@ -32,6 +32,7 @@ enum TokenKind: Equatable {
   case `deinit`
   case `extension`
   case `subscript`
+  case `protocol`
   case sizeOf
   case type
   case `while`
@@ -87,6 +88,7 @@ enum TokenKind: Equatable {
     case "type": self = .type
     case "extension": self = .extension
     case "subscript": self = .subscript
+    case "protocol": self = .protocol
     case "sizeof": self = .sizeOf
     case "while": self = .while
     case "if": self = .if
@@ -138,6 +140,7 @@ enum TokenKind: Equatable {
     case .func: return "func"
     case .extension: return "extension"
     case .subscript: return "subscript"
+    case .protocol: return "protocol"
     case .type: return "type"
     case .while: return "while"
     case .for: return "for"
@@ -177,6 +180,8 @@ enum TokenKind: Equatable {
     case .func, .while, .if, .in, .else, .for, .nil, .break, .case, .switch,
          .default, .continue, .return, .underscore, .extension, .sizeOf,
          .subscript, .var, .let, .type, .true, .false, .Init, .deinit,
+         .default, .continue, .return, .underscore, .extension, .protocol,
+         .subscript, .sizeOf, .var, .let, .type, .true, .false, .Init, .deinit,
          .poundFunction, .poundFile, .poundLine, .poundWarning, .poundError:
          return true
     case .identifier(let value):
@@ -248,6 +253,7 @@ func ==(lhs: TokenKind, rhs: TokenKind) -> Bool {
   case (.deinit, .deinit): return true
   case (.extension, .extension): return true
   case (.subscript, .subscript): return true
+  case (.protocol, .protocol): return true
   case (.operator, .operator): return true
   case (.sizeOf, .sizeOf): return true
   case (.type, .type): return true

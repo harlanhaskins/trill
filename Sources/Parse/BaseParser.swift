@@ -164,19 +164,19 @@ class Parser {
         break
       }
       consumeLineSeparators()
-      let attrs = try parseAttributes()
+      let modifiers = try parseModifiers()
       switch peek() {
       case .poundWarning, .poundError:
         context.add(try parsePoundDiagnosticExpr())
       case .func:
-        let decl = try parseFuncDecl(attrs)
+        let decl = try parseFuncDecl(modifiers)
         if let op = decl as? OperatorDecl {
           context.add(op)
         } else {
           context.add(decl)
         }
       case .type:
-        let expr = try parseTypeDecl(attrs)
+        let expr = try parseTypeDecl(modifiers)
         if let typeDecl = expr as? TypeDecl {
           context.add(typeDecl)
         } else if let alias = expr as? TypeAliasDecl {
@@ -186,8 +186,10 @@ class Parser {
         }
       case .extension:
         context.add(try parseExtensionDecl())
+      case .protocol:
+        context.add(try parseProtocolDecl(modifiers: modifiers))
       case .var, .let:
-        context.add(try parseVarAssignDecl(attrs))
+        context.add(try parseVarAssignDecl(modifiers: modifiers))
       default:
         throw Diagnostic.error(
           ParseError.unexpectedExpression(expected: "function, type, or extension"),
@@ -205,7 +207,7 @@ class Parser {
     return Identifier(name: name, range: consumeToken().range)
   }
   
-  func parseAttributes() throws -> [DeclModifier] {
+  func parseModifiers() throws -> [DeclModifier] {
     var attrs = [DeclModifier]()
     while case .identifier(let attrId) = peek() {
       if let attr = DeclModifier(rawValue: attrId) {
@@ -226,6 +228,8 @@ class Parser {
       nextKind = .type
     case .extension:
       nextKind = .extension
+    case .protocol:
+      nextKind = .protocol
     case .poundWarning, .poundError:
       nextKind = .diagnostic
     default:
@@ -239,7 +243,7 @@ class Parser {
     }
     return attrs
   }
-  
+
   func parseExtensionDecl() throws -> ExtensionDecl {
     let startLoc = sourceLoc
     try consume(.extension)
@@ -346,10 +350,10 @@ class Parser {
                     sourceRange: range(start: startLoc))
   }
   
-  /// Braced Expression Block
+  /// Compound Statement
   ///
   /// { [<if-expr> | <while-expr> | <var-assign-expr> | <return-expr> | <val-expr>];* }
-  func parseCompoundExpr() throws -> CompoundStmt {
+  func parseCompoundStmt() throws -> CompoundStmt {
     let startLoc = sourceLoc
     try consume(.leftBrace)
     let stmts = try parseStatements(terminators: [.rightBrace])

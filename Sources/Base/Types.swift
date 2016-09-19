@@ -321,7 +321,7 @@ class TypeRefExpr: DeclRefExpr<TypeDecl> {
   let name: Identifier
   init(type: DataType, name: Identifier, sourceRange: SourceRange? = nil) {
     self.name = name
-    super.init(sourceRange: sourceRange)
+    super.init(sourceRange: sourceRange ?? name.range)
     self.type = type
   }
 }

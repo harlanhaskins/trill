@@ -1,0 +1,3 @@
+protocol Debuggable: Printable {
+  func foo()
+}

@@ -57,6 +57,8 @@ protocol ASTVisitor {
   @discardableResult
   func visitOperatorDecl(_ decl: OperatorDecl) -> Result
   @discardableResult
+  func visitProtocolDecl(_ decl: ProtocolDecl) -> Result
+  @discardableResult
   func visitReturnStmt(_ stmt: ReturnStmt) -> Result
   @discardableResult
   func visitBreakStmt(_ stmt: BreakStmt) -> Result
@@ -131,6 +133,8 @@ extension ASTVisitor {
       return visitTypeDecl(decl)
     case let decl as ExtensionDecl:
       return visitExtensionDecl(decl)
+    case let decl as ProtocolDecl:
+      return visitProtocolDecl(decl)
     case let decl as TypeAliasDecl:
       return visitTypeAliasDecl(decl)
     default:

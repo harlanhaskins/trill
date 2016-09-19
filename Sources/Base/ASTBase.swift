@@ -116,7 +116,7 @@ func ==(lhs: Identifier, rhs: Identifier) -> Bool {
   return lhs.name == rhs.name
 }
 
-class ASTNode: Hashable {
+class ASTNode: Equatable, Hashable {
   let sourceRange: SourceRange?
   init(sourceRange: SourceRange? = nil) {
     self.sourceRange = sourceRange

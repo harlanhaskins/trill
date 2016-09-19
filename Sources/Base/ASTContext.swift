@@ -9,6 +9,7 @@ enum ASTError: Error, CustomStringConvertible {
   case duplicateVar(name: Identifier)
   case duplicateType(name: Identifier)
   case duplicateFunction(name: Identifier)
+  case duplicateProtocol(name: Identifier)
   case duplicateOperatorOverload(decl: OperatorDecl)
   case circularAlias(name: Identifier)
   case invalidMain(got: DataType)
@@ -21,6 +22,8 @@ enum ASTError: Error, CustomStringConvertible {
       return "invalid redeclaration of variable '\(name)'"
     case .duplicateFunction(let name):
       return "invalid redeclaration of function '\(name)'"
+    case .duplicateProtocol(let name):
+      return "invalid redeclaration of protocol '\(name)'"
     case .duplicateOperatorOverload(let decl):
       return "invalid redeclaration of overload for '\(decl.op)' with arguments '\(decl.formattedParameterList)'"
     case .circularAlias(let name):
@@ -87,11 +90,13 @@ public class ASTContext {
   var operators = [OperatorDecl]()
   var types = [TypeDecl]()
   var extensions = [ExtensionDecl]()
+  var protocols = [ProtocolDecl]()
   var diagnostics = [PoundDiagnosticStmt]()
   var globals = [VarAssignDecl]()
   var typeAliases = [TypeAliasDecl]()
   
   private var funcDeclMap = [String: [FuncDecl]]()
+  private var protocolDeclMap = [String: ProtocolDecl]()
   private var typeDeclMap: [DataType: TypeDecl] = [
     .int8: TypeDecl(name: "Int8",  fields: []),
     .int16: TypeDecl(name: "Int16",  fields: []),
@@ -354,6 +359,20 @@ public class ASTContext {
     funcDeclMap[funcDecl.name.name] = existing
   }
   
+  func add(_ protocolDecl: ProtocolDecl) {
+    protocols.append(protocolDecl)
+    
+    guard protocolDeclMap[protocolDecl.name.name] == nil else {
+      error(ASTError.duplicateProtocol(name: protocolDecl.name),
+            loc: protocolDecl.name.range?.start,
+            highlights: [
+              protocolDecl.name.range
+            ])
+      return
+    }
+    protocolDeclMap[protocolDecl.name.name] = protocolDecl
+  }
+  
   @discardableResult
   func add(_ typeDecl: TypeDecl) -> Bool {
     guard decl(for: typeDecl.type) == nil else {
@@ -432,6 +451,9 @@ public class ASTContext {
     }
     for file in context.sourceFiles {
       add(file)
+    }
+    for proto in context.protocols {
+      add(proto)
     }
   }
   

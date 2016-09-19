@@ -99,6 +99,12 @@ struct FunctionState {
 class IRGenerator: ASTVisitor, Pass {
   
   typealias Result = IRValue?
+
+  @discardableResult
+  internal func visitProtocolDecl(_ decl: ProtocolDecl) -> Result {
+    fatalError("protocols unsupported")
+  }
+  
   
   /// The LLVM module currently being generated
   let module: Module
