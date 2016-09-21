@@ -185,6 +185,7 @@ class TypeDecl: Decl {
   private var fieldDict = [String: DataType]()
   private var methodDict = [String: [MethodDecl]]()
   private var staticMethodDict = [String: [MethodDecl]]()
+  var conformances: [TypeRefExpr]
   
   let name: Identifier
   let deinitializer: DeinitializerDecl?
@@ -263,7 +264,12 @@ class TypeDecl: Decl {
        initializers: [InitializerDecl] = [],
        subscripts: [SubscriptDecl] = [],
        modifiers: [DeclModifier] = [],
+<<<<<<< 975db2bb64c0f36f2c08e122d381504b0fd08136
        deinit: DeinitializerDecl? = nil,
+=======
+       conformances: [TypeRefExpr] = [],
+       deinit: FuncDecl? = nil,
+>>>>>>> Added some conformance checking
        sourceRange: SourceRange? = nil) {
     self.fields = fields
     self.initializers = initializers
@@ -274,6 +280,7 @@ class TypeDecl: Decl {
                                                    modifiers: modifiers + [.implicit])
     self.initializers.append(synthInit)
     self.name = name
+    self.conformances = conformances
     super.init(type: type, modifiers: modifiers, sourceRange: sourceRange)
     for method in methods {
       self.addMethod(method, named: method.name.name)

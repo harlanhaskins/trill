@@ -224,6 +224,7 @@ extension Parser {
       
       try consume(.comma)
     }
+    try consume(.rightParen)
     return args
   }
 }

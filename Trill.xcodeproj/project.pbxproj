@@ -139,8 +139,8 @@
 		DC1BB6CA1D8F367700FE6BC7 /* Identifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6C81D8F367700FE6BC7 /* Identifier.swift */; };
 		DC1BB6CC1D8F369400FE6BC7 /* Decl.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CB1D8F369400FE6BC7 /* Decl.swift */; };
 		DC1BB6CD1D8F369400FE6BC7 /* Decl.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CB1D8F369400FE6BC7 /* Decl.swift */; };
-		DC1BB6CF1D8F36C800FE6BC7 /* Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CE1D8F36C800FE6BC7 /* Protocol.swift */; };
-		DC1BB6D01D8F36C800FE6BC7 /* Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CE1D8F36C800FE6BC7 /* Protocol.swift */; };
+		DC1BB6CF1D8F36C800FE6BC7 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */; };
+		DC1BB6D01D8F36C800FE6BC7 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */; };
 		DC1BB6D21D8F37A600FE6BC7 /* TypeParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */; };
 		DC1BB6D31D8F37A600FE6BC7 /* TypeParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */; };
 		DC217A071D4EAD3000729DF0 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC217A061D4EAD3000729DF0 /* main.swift */; };
@@ -427,7 +427,7 @@
 		DC1BB6C51D8F365900FE6BC7 /* SourceLocation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceLocation.swift; sourceTree = "<group>"; };
 		DC1BB6C81D8F367700FE6BC7 /* Identifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identifier.swift; sourceTree = "<group>"; };
 		DC1BB6CB1D8F369400FE6BC7 /* Decl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Decl.swift; sourceTree = "<group>"; };
-		DC1BB6CE1D8F36C800FE6BC7 /* Protocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocol.swift; sourceTree = "<group>"; };
+		DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
 		DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeParser.swift; sourceTree = "<group>"; };
 		DC1BF29A1D7F166C0055157B /* MangledOperators.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = MangledOperators.def; path = Sources/Runtime/MangledOperators.def; sourceTree = SOURCE_ROOT; };
 		DC1BF29B1D7F179F0055157B /* SpecialTypes.def */ = {isa = PBXFileReference; lastKnownFileType = text; name = SpecialTypes.def; path = Sources/Runtime/SpecialTypes.def; sourceTree = SOURCE_ROOT; };
@@ -749,7 +749,7 @@
 				DCF80B5F1D7487DB00463CBB /* SourceFile.swift */,
 				DC176FD51D6911A200FEFB85 /* Statements.swift */,
 				DC176FD61D6911A200FEFB85 /* Types.swift */,
-				DC1BB6CE1D8F36C800FE6BC7 /* Protocol.swift */,
+				DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */,
 				DC176FD71D6911A200FEFB85 /* Values.swift */,
 			);
 			name = Base;
@@ -1407,7 +1407,7 @@
 				DC1BB6C71D8F365900FE6BC7 /* SourceLocation.swift in Sources */,
 				DC1770331D69130700FEFB85 /* AttributedStringConsumer.swift in Sources */,
 				DC17703C1D69130700FEFB85 /* SourceDocument.swift in Sources */,
-				DC1BB6D01D8F36C800FE6BC7 /* Protocol.swift in Sources */,
+				DC1BB6D01D8F36C800FE6BC7 /* Protocols.swift in Sources */,
 				DC1770371D69130700FEFB85 /* InputViewController.swift in Sources */,
 				DC17703B1D69130700FEFB85 /* SourceAnnotator.swift in Sources */,
 				DC1770351D69130700FEFB85 /* DocumentViewController.swift in Sources */,
@@ -1541,7 +1541,7 @@
 				DC1770661D6913EF00FEFB85 /* StatementParser.swift in Sources */,
 				DC176FFC1D6911A200FEFB85 /* Statements.swift in Sources */,
 				DC176FFD1D6911A200FEFB85 /* Types.swift in Sources */,
-				DC1BB6CF1D8F36C800FE6BC7 /* Protocol.swift in Sources */,
+				DC1BB6CF1D8F36C800FE6BC7 /* Protocols.swift in Sources */,
 				DC176FFA1D6911A200FEFB85 /* Functions.swift in Sources */,
 				DC176FF81D6911A200FEFB85 /* ASTVisitor.swift in Sources */,
 				DC17700A1D6911A200FEFB85 /* RuntimeIRGen.swift in Sources */,

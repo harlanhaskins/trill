@@ -129,12 +129,12 @@ extension ASTVisitor {
       return visitOperatorDecl(decl)
     case let decl as FuncDecl:
       return visitFuncDecl(decl)
+    case let decl as ProtocolDecl:
+      return visitProtocolDecl(decl)
     case let decl as TypeDecl:
       return visitTypeDecl(decl)
     case let decl as ExtensionDecl:
       return visitExtensionDecl(decl)
-    case let decl as ProtocolDecl:
-      return visitProtocolDecl(decl)
     case let decl as TypeAliasDecl:
       return visitTypeAliasDecl(decl)
     default:

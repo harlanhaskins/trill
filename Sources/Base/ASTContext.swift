@@ -569,6 +569,14 @@ public class ASTContext {
     return sourceFileMap[name]
   }
   
+  func `protocol`(named name: Identifier) -> ProtocolDecl? {
+    return protocolDeclMap[name.name]
+  }
+  
+  func `protocol`(named name: String) -> ProtocolDecl? {
+    return protocolDeclMap[name]
+  }
+  
   func mutability(of expr: Expr) -> Mutability {
     switch expr {
     case let expr as VarExpr:

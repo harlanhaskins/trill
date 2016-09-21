@@ -243,8 +243,8 @@ class ASTTransformer: ASTVisitor {
     for method in decl.methods {
       visitFuncDecl(method)
     }
-    for inherited in decl.inherited {
-      visitTypeRefExpr(inherited)
+    for conformance in decl.conformances {
+      visitTypeRefExpr(conformance)
     }
   }
   

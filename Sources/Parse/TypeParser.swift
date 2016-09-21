@@ -15,6 +15,7 @@ extension Parser {
     try consume(.type)
     let startLoc = sourceLoc
     let name = try parseIdentifier()
+    var conformances = [TypeRefExpr]()
     
     if case .operator(op: .assign) = peek() {
       consumeToken()
@@ -22,6 +23,9 @@ extension Parser {
       return TypeAliasDecl(name: name,
                            bound: bound,
                            sourceRange: range(start: startLoc))
+    }
+    if case .colon = peek() {
+      conformances = try parseSeparated(by: .comma, until: .leftBrace, parseType)
     }
     try consume(.leftBrace)
     var fields = [VarAssignDecl]()
@@ -57,8 +61,20 @@ extension Parser {
     return TypeDecl(name: name, fields: fields, methods: methods,
                     initializers: initializers,
                     modifiers: modifiers,
+                    conformances: conformances,
                     deinit: deinitializer,
                     sourceRange: range(start: startLoc))
+  }
+  
+  func parseSeparated<T>(by separator: TokenKind, until end: TokenKind, _ parser: () throws -> T) throws -> [T] {
+    var values = [T]()
+    while peek() != end {
+      values.append(try parser())
+      if peek() != end {
+        try consume(separator)
+      }
+    }
+    return values
   }
   
   func parseType() throws -> TypeRefExpr {
@@ -80,14 +96,7 @@ extension Parser {
                                   sourceRange: range(start: startLoc))
       case .leftParen:
         consumeToken()
-        var args = [TypeRefExpr]()
-        while peek() != .rightParen {
-          let t = try parseType()
-          args.append(t)
-          if peek() != .rightParen {
-            try consume(.comma)
-          }
-        }
+        let args = try parseSeparated(by: .comma, until: .rightParen, parseType)
         try consume(.rightParen)
         if case .arrow = peek() {
           consumeToken()
@@ -149,7 +158,7 @@ extension Parser {
     let startLoc = sourceLoc
     try consume(.protocol)
     let name = try parseIdentifier()
-    var inherited = [TypeRefExpr]()
+    var conformances = [TypeRefExpr]()
     if case .colon = peek() {
       consumeToken()
       guard case .identifier = peek() else {
@@ -159,9 +168,9 @@ extension Parser {
                                  currentToken().range
                                ])
       }
-      while peek() != .leftBrace {
+      conformances = try parseSeparated(by: .comma, until: .leftBrace) {
         let name = try parseIdentifier()
-        inherited.append(TypeRefExpr(type: DataType(name: name.name), name: name))
+        return TypeRefExpr(type: DataType(name: name.name), name: name)
       }
     }
     try consume(.leftBrace)
@@ -178,6 +187,11 @@ extension Parser {
       }
       methods.append(try parseFuncDecl(modifiers))
     }
-    return ProtocolDecl(name: name, inherited: inherited, methods: methods, modifiers: [], sourceRange: range(start: startLoc))
+    return ProtocolDecl(name: name,
+                        fields: [],
+                        methods: methods,
+                        modifiers: [],
+                        conformances: conformances,
+                        sourceRange: range(start: startLoc))
   }
 }

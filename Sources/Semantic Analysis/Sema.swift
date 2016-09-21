@@ -8,6 +8,7 @@ import Foundation
 enum SemaError: Error, CustomStringConvertible {
   case unknownFunction(name: Identifier)
   case unknownType(type: DataType)
+  case unknownProtocol(name: Identifier)
   case callNonFunction(type: DataType?)
   case unknownField(typeDecl: TypeDecl, expr: FieldLookupExpr)
   case unknownVariableName(name: Identifier)
@@ -52,6 +53,8 @@ enum SemaError: Error, CustomStringConvertible {
       return "unknown function '\(name)'"
     case .unknownType(let type):
       return "unknown type '\(type)'"
+    case .unknownProtocol(let name):
+      return "unknown protocol '\(name)'"
     case .unknownVariableName(let name):
       return "unknown variable '\(name)'"
     case .unknownField(let typeDecl, let expr):
@@ -376,6 +379,43 @@ class Sema: ASTTransformer, Pass {
     varBindings[decl.name.name] = decl
   }
   
+<<<<<<< 1d1e5aea53822765f47c63e37c7b687d26a19518
+=======
+  func haveEqualSignatures(_ decl: FuncDecl, _ other: FuncDecl) -> Bool {
+    guard decl.args.count == other.args.count else { return false }
+    guard decl.hasVarArgs == other.hasVarArgs else { return false }
+    for (declArg, otherArg) in zip(decl.args, other.args) {
+      guard declArg.externalName == otherArg.externalName else { return false }
+      guard matches(declArg.type, otherArg.type) else { return false }
+    }
+    return true
+  }
+  
+  func candidate(forArgs args: [Argument], candidates: [FuncDecl]) -> FuncDecl? {
+    search: for candidate in candidates {
+      var candArgs = candidate.args
+      if let first = candArgs.first, first.isImplicitSelf {
+        candArgs.remove(at: 0)
+      }
+      if !candidate.hasVarArgs && candArgs.count != args.count { continue }
+      for (candArg, exprArg) in zip(candArgs, args) {
+        if let externalName = candArg.externalName,
+           exprArg.label != externalName { continue search }
+        guard var valType = exprArg.val.type else { continue search }
+        let type = context.canonicalType(candArg.type)
+        // automatically coerce number literals.
+        if propagateContextualType(type, to: exprArg.val) {
+          valType = type
+        }
+        if !matches(type, .any) && !matches(type, valType) {
+          continue search
+        }
+      }
+      return candidate
+    }
+    return nil
+  }
+  
   override func visitFieldLookupExpr(_ expr: FieldLookupExpr) {
     _ = visitFieldLookupExpr(expr, callArgs: nil)
   }
@@ -624,6 +664,47 @@ class Sema: ASTTransformer, Pass {
       error(SemaError.breakNotAllowed,
             loc: stmt.startLoc,
             highlights: [ stmt.sourceRange ])
+    }
+  }
+  
+<<<<<<< 1d1e5aea53822765f47c63e37c7b687d26a19518
+=======
+  func foreignDecl(args: [DataType], ret: DataType) -> FuncDecl {
+    let assigns: [FuncArgumentAssignDecl] = args.map {
+      let name = Identifier(name: "__implicit__")
+      return FuncArgumentAssignDecl(name: "", type: TypeRefExpr(type: $0, name: name))
+    }
+    let retName = Identifier(name: "\(ret)")
+    let typeRef = TypeRefExpr(type: ret, name: retName)
+    return FuncDecl(name: "",
+                        returnType: typeRef,
+                        args: assigns,
+                        body: nil,
+                        modifiers: [.foreign, .implicit])
+  }
+  
+  override func visitTypeDecl(_ decl: TypeDecl) {
+    super.visitTypeDecl(decl)
+    diagnoseConformances(decl)
+  }
+  
+  func diagnoseConformances(_ decl: TypeDecl) {
+    for conformance in decl.conformances {
+      guard let proto = context.protocol(named: conformance.name) else {
+        error(SemaError.unknownProtocol(name: conformance.name),
+              loc: conformance.startLoc,
+              highlights: [
+                conformance.sourceRange
+              ])
+        return
+      }
+      var missing = [FuncDecl]()
+      for method in proto.methods {
+        for candidate in decl.methods(named: method.name.name) where haveEqualSignatures(method, candidate) {
+          continue
+        }
+        missing.append(method)
+      }
     }
   }
   
