@@ -1,3 +1,9 @@
 protocol Debuggable: Printable {
-  func foo()
+  func debugDescription() -> String
+}
+
+type Bar: Debuggable {
+  func foo() {
+    printf("eyyy")
+  }
 }

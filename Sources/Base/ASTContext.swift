@@ -457,6 +457,10 @@ public class ASTContext {
     }
   }
   
+  func protocolDecl(for type: DataType) -> ProtocolDecl? {
+    return protocolDeclMap["\(type)"]
+  }
+    
   func decl(for type: DataType, canonicalized: Bool = true) -> TypeDecl? {
     let root = canonicalized ? canonicalType(type) : type
     return typeDeclMap[root]
@@ -682,6 +686,9 @@ public class ASTContext {
       let alias = isAlias(type: type)
       let can = alias ? canonicalType(type) : type
       if decl(for: can) != nil {
+        return true
+      }
+      if protocolDecl(for: can) != nil {
         return true
       }
       return alias ? isValidType(can) : false

@@ -25,6 +25,7 @@ extension Parser {
                            sourceRange: range(start: startLoc))
     }
     if case .colon = peek() {
+      consumeToken()
       conformances = try parseSeparated(by: .comma, until: .leftBrace, parseType)
     }
     try consume(.leftBrace)
@@ -185,7 +186,9 @@ extension Parser {
         throw Diagnostic.error(ParseError.unexpectedExpression(expected: "function"),
                                loc: sourceLoc)
       }
-      methods.append(try parseFuncDecl(modifiers))
+        methods.append(try parseFuncDecl(modifiers,
+                                         forType: DataType(name: name.name),
+                                         isProtocol: true))
     }
     return ProtocolDecl(name: name,
                         fields: [],

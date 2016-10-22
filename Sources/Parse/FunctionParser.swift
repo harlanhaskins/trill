@@ -23,7 +23,8 @@ extension Parser {
   ///
   /// func-decl ::= fun <name>([<name> [internal-name]: <typename>,]*): <typename> <braced-expr-block>
   func parseFuncDecl(_ modifiers: [DeclModifier],
-                     forType type: DataType? = nil) throws -> FuncDecl {
+                     forType type: DataType? = nil,
+                     isProtocol: Bool = false) throws -> FuncDecl {
     var modifiers = modifiers
     let startLoc = sourceLoc
     var args = [ParamDecl]()
@@ -48,7 +49,7 @@ extension Parser {
         if modifiers.contains(.static) {
           kind = .staticMethod
         } else {
-          kind = .method
+          kind = isProtocol ? .protocolMethod(type: type) : .method(type: type)
         }
       } else if case .operator(let op) = peek() {
         let tok = consumeToken()

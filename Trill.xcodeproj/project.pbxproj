@@ -147,6 +147,7 @@
 		DC25D59B1E23540F00580769 /* ORCJIT.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC25D59A1E23540F00580769 /* ORCJIT.swift */; };
 		DC31C10E1C82681E00F85807 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC31C10A1C82681E00F85807 /* main.swift */; };
 		DC47F5D01E197AC900595DCD /* AttributedStringStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC47F5CF1E197AC900595DCD /* AttributedStringStream.swift */; };
+		DC4BCD1B1DBBF89100E2FD01 /* SemaError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4BCD191DBBF89100E2FD01 /* SemaError.swift */; };
 		DC4CF0C81D7A76750090216B /* metadata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DC4CF0C61D7A76750090216B /* metadata.cpp */; };
 		DC4CF0CA1D7A88D20090216B /* Builtins.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC03B9081D79F84500C980D3 /* Builtins.swift */; };
 		DC4F087E1E2F113600CE19E6 /* libLLVMAMDGPUAsmParser.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC4F083B1E2F113600CE19E6 /* libLLVMAMDGPUAsmParser.a */; };
@@ -428,7 +429,7 @@
 		DC1BB6C81D8F367700FE6BC7 /* Identifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identifier.swift; sourceTree = "<group>"; };
 		DC1BB6CB1D8F369400FE6BC7 /* Decl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Decl.swift; sourceTree = "<group>"; };
 		DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
-		DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeParser.swift; sourceTree = "<group>"; };
+		DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = TypeParser.swift; sourceTree = "<group>"; tabWidth = 2; };
 		DC1BF29A1D7F166C0055157B /* MangledOperators.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = MangledOperators.def; path = Sources/Runtime/MangledOperators.def; sourceTree = SOURCE_ROOT; };
 		DC1BF29B1D7F179F0055157B /* SpecialTypes.def */ = {isa = PBXFileReference; lastKnownFileType = text; name = SpecialTypes.def; path = Sources/Runtime/SpecialTypes.def; sourceTree = SOURCE_ROOT; };
 		DC217A041D4EAD3000729DF0 /* trill-demangle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "trill-demangle"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -438,7 +439,8 @@
 		DC31C10A1C82681E00F85807 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/main.swift; sourceTree = SOURCE_ROOT; tabWidth = 2; };
 		DC3D7D1F1C78338C0076EED6 /* trill */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = trill; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC47F5CF1E197AC900595DCD /* AttributedStringStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AttributedStringStream.swift; sourceTree = "<group>"; tabWidth = 2; };
-		DC4CF0C61D7A76750090216B /* metadata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = metadata.cpp; path = Sources/Runtime/metadata.cpp; sourceTree = SOURCE_ROOT; tabWidth = 2; };
+		DC4BCD191DBBF89100E2FD01 /* SemaError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SemaError.swift; sourceTree = "<group>"; };
+		DC4CF0C61D7A76750090216B /* metadata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata.cpp; path = Sources/Runtime/metadata.cpp; sourceTree = SOURCE_ROOT; };
 		DC4CF0C71D7A76750090216B /* metadata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = metadata.h; path = Sources/Runtime/metadata.h; sourceTree = SOURCE_ROOT; };
 		DC4F083B1E2F113600CE19E6 /* libLLVMAMDGPUAsmParser.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMAMDGPUAsmParser.a; path = ../../../../../../usr/local/Cellar/llvm/3.9.1/lib/libLLVMAMDGPUAsmParser.a; sourceTree = "<group>"; };
 		DC4F083C1E2F113600CE19E6 /* libLLVMAMDGPUAsmPrinter.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMAMDGPUAsmPrinter.a; path = ../../../../../../usr/local/Cellar/llvm/3.9.1/lib/libLLVMAMDGPUAsmPrinter.a; sourceTree = "<group>"; };
@@ -818,6 +820,7 @@
 				DC176FF11D6911A200FEFB85 /* Mangler.swift */,
 				DC176FF21D6911A200FEFB85 /* Sema.swift */,
 				DC176FF31D6911A200FEFB85 /* TypeChecker.swift */,
+				DC4BCD191DBBF89100E2FD01 /* SemaError.swift */,
 			);
 			name = "Semantic Analysis";
 			path = "Sources/Semantic Analysis";
@@ -1379,6 +1382,9 @@
 				DC17703E1D69134B00FEFB85 /* ASTContext.swift in Sources */,
 				DC1770511D6913AC00FEFB85 /* ASTDumper.swift in Sources */,
 				DC1770411D69134B00FEFB85 /* ASTTransformer.swift in Sources */,
+				DC1770631D6913EF00FEFB85 /* FunctionParser.swift in Sources */,
+				DC4BCD1B1DBBF89100E2FD01 /* SemaError.swift in Sources */,
+				DC4CF0CA1D7A88D20090216B /* Builtins.swift in Sources */,
 				DC1770421D69134B00FEFB85 /* ASTVisitor.swift in Sources */,
 				DC47F5D01E197AC900595DCD /* AttributedStringStream.swift in Sources */,
 				DC1770611D6913EF00FEFB85 /* BaseParser.swift in Sources */,
@@ -1493,6 +1499,7 @@
 				C02F30BC1E5D680600BC3890 /* FloatType.swift in Sources */,
 				C02F30BD1E5D680600BC3890 /* Function.swift in Sources */,
 				DC1770071D6911A200FEFB85 /* FunctionIRGen.swift in Sources */,
+				DC4BCD1A1DBBF89100E2FD01 /* SemaError.swift in Sources */,
 				DC1770041D6911A200FEFB85 /* TableFormatter.swift in Sources */,
 				DC03B9091D79F84500C980D3 /* Builtins.swift in Sources */,
 				DC4F08331E2F110B00CE19E6 /* Switch.swift in Sources */,

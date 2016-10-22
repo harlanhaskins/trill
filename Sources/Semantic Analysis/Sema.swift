@@ -5,156 +5,6 @@
 
 import Foundation
 
-enum SemaError: Error, CustomStringConvertible {
-  case unknownFunction(name: Identifier)
-  case unknownType(type: DataType)
-  case unknownProtocol(name: Identifier)
-  case callNonFunction(type: DataType?)
-  case unknownField(typeDecl: TypeDecl, expr: FieldLookupExpr)
-  case unknownVariableName(name: Identifier)
-  case invalidOperands(op: BuiltinOperator, invalid: DataType)
-  case cannotSubscript(type: DataType)
-  case cannotCoerce(type: DataType, toType: DataType)
-  case varArgsInNonForeignDecl
-  case foreignFunctionWithBody(name: Identifier)
-  case nonForeignFunctionWithoutBody(name: Identifier)
-  case foreignVarWithRHS(name: Identifier)
-  case dereferenceNonPointer(type: DataType)
-  case cannotSwitch(type: DataType)
-  case nonPointerNil(type: DataType)
-  case notAllPathsReturn(type: DataType)
-  case caseMustBeConstant
-  case noViableOverload(name: Identifier, args: [Argument])
-  case candidates([FuncDecl])
-  case ambiguousReference(name: Identifier)
-  case addressOfRValue
-  case breakNotAllowed
-  case continueNotAllowed
-  case fieldOfFunctionType(type: DataType)
-  case duplicateMethod(name: Identifier, type: DataType)
-  case duplicateField(name: Identifier, type: DataType)
-  case referenceSelfInProp(name: Identifier)
-  case poundFunctionOutsideFunction
-  case assignToConstant(name: Identifier?)
-  case deinitOnStruct(name: Identifier?)
-  case incompleteTypeAccess(type: DataType, operation: String)
-  case indexIntoNonTuple
-  case outOfBoundsTupleField(field: Int, max: Int)
-  case nonMatchingArrayType(DataType, DataType)
-  case ambiguousType
-  case operatorsMustHaveTwoArgs(op: BuiltinOperator)
-  case cannotOverloadOperator(op: BuiltinOperator, type: String)
-  case isCheckAlways(fails: Bool)
-  case pointerFieldAccess(lhs: DataType, field: Identifier)
-  
-  var description: String {
-    switch self {
-    case .unknownFunction(let name):
-      return "unknown function '\(name)'"
-    case .unknownType(let type):
-      return "unknown type '\(type)'"
-    case .unknownProtocol(let name):
-      return "unknown protocol '\(name)'"
-    case .unknownVariableName(let name):
-      return "unknown variable '\(name)'"
-    case .unknownField(let typeDecl, let expr):
-      return "unknown field name '\(expr.name)' in type '\(typeDecl.type)'"
-    case .invalidOperands(let op, let invalid):
-      return "invalid argument for operator '\(op)' (got '\(invalid)')"
-    case .cannotSubscript(let type):
-      return "cannot subscript value of type '\(type)'"
-    case .cannotCoerce(let type, let toType):
-      return "cannot coerce '\(type)' to '\(toType)'"
-    case .cannotSwitch(let type):
-      return "cannot switch over values of type '\(type)'"
-    case .foreignFunctionWithBody(let name):
-      return "foreign function '\(name)' cannot have a body"
-    case .nonForeignFunctionWithoutBody(let name):
-      return "function '\(name)' must have a body"
-    case .foreignVarWithRHS(let name):
-      return "foreign var '\(name)' cannot have a value"
-    case .varArgsInNonForeignDecl:
-      return "varargs in non-foreign declarations are not yet supported"
-    case .nonPointerNil(let type):
-      return "cannot set non-pointer type '\(type)' to nil"
-    case .caseMustBeConstant:
-      return "case statement expressions must be constants"
-    case .dereferenceNonPointer(let type):
-      return "cannot dereference a value of non-pointer type '\(type)'"
-    case .addressOfRValue:
-      return "cannot get address of an r-value"
-    case .breakNotAllowed:
-      return "'break' not allowed outside loop"
-    case .continueNotAllowed:
-      return "'continue' not allowed outside loop"
-    case .notAllPathsReturn(let type):
-      return "missing return in a function expected to return \(type)"
-    case .noViableOverload(let name, let args):
-      var s = "could not find a viable overload for \(name) with arguments of type ("
-      s += args.map {
-        var d = ""
-        if let label = $0.label {
-          d += "\(label): "
-        }
-        if let t = $0.val.type {
-          d += t.description
-        } else {
-          d += "<<error type>>"
-        }
-        return d
-        }.joined(separator: ", ")
-      s += ")"
-      return s
-    case .candidates(let functions):
-      var s = "found candidates with these arguments: "
-      s += functions.map { $0.formattedParameterList }.joined(separator: ", ")
-      return s
-    case .ambiguousReference(let name):
-      return "ambiguous reference to '\(name)'"
-    case .callNonFunction(let type):
-      return "cannot call non-function type '" + (type.map { String(describing: $0) } ?? "<<error type>>") + "'"
-    case .fieldOfFunctionType(let type):
-      return "cannot find field on function of type \(type)"
-    case .duplicateMethod(let name, let type):
-      return "invalid redeclaration of method '\(name)' on type '\(type)'"
-    case .duplicateField(let name, let type):
-      return "invalid redeclaration of field '\(name)' on type '\(type)'"
-    case .referenceSelfInProp(let name):
-      return "type '\(name)' cannot have a property that references itself"
-    case .poundFunctionOutsideFunction:
-      return "'#function' is only valid inside function scope"
-    case .deinitOnStruct(let name):
-      return "cannot have a deinitializer in non-indirect type '\(name)'"
-    case .assignToConstant(let name):
-      let val: String
-      if let n = name {
-        val = "'\(n)'"
-      } else {
-        val = "expression"
-      }
-      return "cannot mutate \(val); expression is a 'let' constant"
-    case .indexIntoNonTuple:
-      return "cannot index into non-tuple expression"
-    case .outOfBoundsTupleField(let field, let max):
-      return "cannot access field \(field) in tuple with \(max) fields"
-    case .incompleteTypeAccess(let type, let operation):
-      return "cannot \(operation) incomplete type '\(type)'"
-    case .nonMatchingArrayType(let arrayType, let elementType):
-      return "element type '\(elementType)' does not match array type '\(arrayType)'"
-    case .ambiguousType:
-      return "type is ambiguous without more context"
-    case .operatorsMustHaveTwoArgs(let op):
-      return "definition for operator '\(op)' must have two arguments"
-    case .cannotOverloadOperator(let op, let type):
-      return "cannot overload \(type) operator '\(op)'"
-    case .isCheckAlways(let fails):
-      return "`is` check always \(fails ? "fails" : "succeeds")"
-    case .pointerFieldAccess(let lhs, let field):
-      return "cannot access field \(field) of pointer type \(lhs)"
-    }
-  }
-}
-
 enum FieldKind {
   case method, staticMethod, property
 }
@@ -222,39 +72,43 @@ class Sema: ASTTransformer, Pass {
       }
     }
   }
-  
-  override func visitFuncDecl(_ expr: FuncDecl) {
-    super.visitFuncDecl(expr)
-    if expr.has(attribute: .foreign) {
-      if !(expr is InitializerDecl) && expr.body != nil {
-        error(SemaError.foreignFunctionWithBody(name: expr.name),
-              loc: expr.name.range?.start,
+
+  override func visitFuncDecl(_ decl: FuncDecl) {
+    super.visitFuncDecl(decl)
+    if decl.has(attribute: .foreign) {
+      if !(decl is InitializerDecl) && decl.body != nil {
+        error(SemaError.foreignFunctionWithBody(name: decl.name),
+              loc: decl.name.range?.start,
               highlights: [
-                expr.name.range
+                decl.name.range
           ])
         return
       }
     } else {
-      if !expr.has(attribute: .implicit) && expr.body == nil {
-        error(SemaError.nonForeignFunctionWithoutBody(name: expr.name),
-              loc: expr.name.range?.start,
-              highlights: [
-                expr.name.range
-          ])
+      if !decl.has(attribute: .implicit) && decl.body == nil {
+        if case .protocolMethod = decl.kind {
+          /* don't diagnose functions without bodies for protocol methods */
+        } else {
+          error(SemaError.nonForeignFunctionWithoutBody(name: decl.name),
+                loc: decl.name.range?.start,
+                highlights: [
+                  decl.name.range
+                ])
+        }
         return
       }
-      if expr.hasVarArgs {
+      if decl.hasVarArgs {
         error(SemaError.varArgsInNonForeignDecl,
-              loc: expr.startLoc)
+              loc: decl.startLoc)
         return
       }
     }
-    let returnType = expr.returnType.type!
+    let returnType = decl.returnType.type!
     if !context.isValidType(returnType) {
       error(SemaError.unknownType(type: returnType),
-            loc: expr.returnType.startLoc,
+            loc: decl.returnType.startLoc,
             highlights: [
-              expr.returnType.sourceRange
+              decl.returnType.sourceRange
         ])
       return
     }
@@ -266,8 +120,8 @@ class Sema: ASTTransformer, Pass {
       error(SemaError.notAllPathsReturn(type: expr.returnType.type!),
             loc: expr.sourceRange?.start,
             highlights: [
-              expr.name.range,
-              expr.returnType.sourceRange
+              decl.name.range,
+              decl.returnType.sourceRange
         ])
       return
     }
@@ -372,19 +226,20 @@ class Sema: ASTTransformer, Pass {
     }
     decl.kind = .local(currentFunction!)
     let canTy = context.canonicalType(decl.type)
-    if case .custom = canTy,
-      context.decl(for: canTy)!.isIndirect {
+    if
+      case .custom = canTy,
+      let typeDecl = context.decl(for: canTy),
+      typeDecl.isIndirect {
       decl.mutable = true
     }
     varBindings[decl.name.name] = decl
   }
   
-<<<<<<< 1d1e5aea53822765f47c63e37c7b687d26a19518
-=======
   func haveEqualSignatures(_ decl: FuncDecl, _ other: FuncDecl) -> Bool {
     guard decl.args.count == other.args.count else { return false }
     guard decl.hasVarArgs == other.hasVarArgs else { return false }
     for (declArg, otherArg) in zip(decl.args, other.args) {
+      if declArg.isImplicitSelf && otherArg.isImplicitSelf { continue }
       guard declArg.externalName == otherArg.externalName else { return false }
       guard matches(declArg.type, otherArg.type) else { return false }
     }
@@ -667,8 +522,6 @@ class Sema: ASTTransformer, Pass {
     }
   }
   
-<<<<<<< 1d1e5aea53822765f47c63e37c7b687d26a19518
-=======
   func foreignDecl(args: [DataType], ret: DataType) -> FuncDecl {
     let assigns: [FuncArgumentAssignDecl] = args.map {
       let name = Identifier(name: "__implicit__")
@@ -700,10 +553,27 @@ class Sema: ASTTransformer, Pass {
       }
       var missing = [FuncDecl]()
       for method in proto.methods {
-        for candidate in decl.methods(named: method.name.name) where haveEqualSignatures(method, candidate) {
-          continue
+        var impl: FuncDecl?
+        for candidate in decl.methods(named: method.name.name) {
+          if haveEqualSignatures(method, candidate) {
+            impl = candidate
+            break
+          }
         }
-        missing.append(method)
+        if impl == nil {
+          missing.append(method)
+        }
+      }
+      if !missing.isEmpty {
+        error(SemaError.typeDoesNotConform(typeName: decl.name, protocol: proto.name),
+              loc: decl.startLoc,
+              highlights: [
+                conformance.name.range
+              ])
+      }
+      for decl in missing {
+        note(SemaError.missingImplementation(signature: "\(decl.name)\(decl.formattedParameterList)"),
+             loc: decl.startLoc)
       }
     }
   }

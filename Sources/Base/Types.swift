@@ -264,12 +264,8 @@ class TypeDecl: Decl {
        initializers: [InitializerDecl] = [],
        subscripts: [SubscriptDecl] = [],
        modifiers: [DeclModifier] = [],
-<<<<<<< 975db2bb64c0f36f2c08e122d381504b0fd08136
-       deinit: DeinitializerDecl? = nil,
-=======
        conformances: [TypeRefExpr] = [],
-       deinit: FuncDecl? = nil,
->>>>>>> Added some conformance checking
+       deinit: DeinitializerDecl? = nil,
        sourceRange: SourceRange? = nil) {
     self.fields = fields
     self.initializers = initializers
