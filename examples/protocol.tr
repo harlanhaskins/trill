@@ -1,4 +1,4 @@
-protocol Debuggable: Printable {
+protocol Debuggable {
   func debugDescription() -> String
 }
 
@@ -7,3 +7,4 @@ type Bar: Debuggable {
     printf("eyyy")
   }
 }
+

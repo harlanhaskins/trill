@@ -581,6 +581,28 @@ public class ASTContext {
     return protocolDeclMap[name]
   }
   
+  func requiredMethods(for protocolDecl: ProtocolDecl, visited: Set<String> = []) -> [FuncDecl]? {
+    var currentVisited = visited
+    var methods = [FuncDecl]()
+    for method in protocolDecl.methods {
+      let mangled = Mangler.mangle(method)
+      if currentVisited.contains(mangled) { continue }
+      currentVisited.insert(mangled)
+      methods.append(method)
+    }
+    for conformance in protocolDecl.conformances {
+      guard let proto = self.protocol(named: conformance.name) else {
+        // We will already have popped a diagnostic for this.
+        return nil
+      }
+      guard let required = requiredMethods(for: proto, visited: currentVisited) else {
+        return nil
+      }
+      methods.append(contentsOf: required)
+    }
+    return methods
+  }
+
   func mutability(of expr: Expr) -> Mutability {
     switch expr {
     case let expr as VarExpr:

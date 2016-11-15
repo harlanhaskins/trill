@@ -94,8 +94,8 @@ class Sema: ASTTransformer, Pass {
                 highlights: [
                   decl.name.range
                 ])
+          return
         }
-        return
       }
       if decl.hasVarArgs {
         error(SemaError.varArgsInNonForeignDecl,
@@ -541,18 +541,32 @@ class Sema: ASTTransformer, Pass {
     diagnoseConformances(decl)
   }
   
+  override func visitProtocolDecl(_ decl: ProtocolDecl) {
+    super.visitProtocolDecl(decl)
+    for conformance in decl.conformances {
+      diagnoseConformanceIfMissing(conformance)
+    }
+  }
+  
+  @discardableResult
+  func diagnoseConformanceIfMissing(_ conformance: TypeRefExpr) -> ProtocolDecl? {
+    guard let proto = context.protocol(named: conformance.name) else {
+      error(SemaError.unknownProtocol(name: conformance.name),
+            loc: conformance.startLoc,
+            highlights: [
+              conformance.sourceRange
+            ])
+      return nil
+    }
+    return proto
+  }
+  
   func diagnoseConformances(_ decl: TypeDecl) {
     for conformance in decl.conformances {
-      guard let proto = context.protocol(named: conformance.name) else {
-        error(SemaError.unknownProtocol(name: conformance.name),
-              loc: conformance.startLoc,
-              highlights: [
-                conformance.sourceRange
-              ])
-        return
-      }
+      guard let proto = diagnoseConformanceIfMissing(conformance) else { continue }
+      guard let methods = context.requiredMethods(for: proto) else { continue }
       var missing = [FuncDecl]()
-      for method in proto.methods {
+      for method in methods {
         var impl: FuncDecl?
         for candidate in decl.methods(named: method.name.name) {
           if haveEqualSignatures(method, candidate) {
