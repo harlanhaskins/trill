@@ -74,7 +74,6 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
                modifiers: modifiers,
                sourceRange: sourceRange)
   }
-  
   var formattedParameterList: String {
     var s = "("
     for (idx, arg) in args.enumerated() where !arg.isImplicitSelf {

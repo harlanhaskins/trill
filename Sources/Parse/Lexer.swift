@@ -179,9 +179,7 @@ enum TokenKind: Equatable {
     switch self {
     case .func, .while, .if, .in, .else, .for, .nil, .break, .case, .switch,
          .default, .continue, .return, .underscore, .extension, .sizeOf,
-         .subscript, .var, .let, .type, .true, .false, .Init, .deinit,
-         .default, .continue, .return, .underscore, .extension, .protocol,
-         .subscript, .sizeOf, .var, .let, .type, .true, .false, .Init, .deinit,
+         .protocol, .subscript, .var, .let, .type, .true, .false, .Init, .deinit,
          .poundFunction, .poundFile, .poundLine, .poundWarning, .poundError:
          return true
     case .identifier(let value):

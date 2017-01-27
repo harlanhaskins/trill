@@ -44,16 +44,3 @@ enum DeclModifier: String {
     }
   }
 }
-
-class Decl: ASTNode {
-  var type: DataType
-  let modifiers: Set<DeclModifier>
-  func has(attribute: DeclModifier) -> Bool {
-    return modifiers.contains(attribute)
-  }
-  init(type: DataType, modifiers: [DeclModifier], sourceRange: SourceRange? = nil) {
-    self.modifiers = Set(modifiers)
-    self.type = type
-    super.init(sourceRange: sourceRange)
-  }
-}

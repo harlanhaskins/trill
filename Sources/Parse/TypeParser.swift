@@ -133,28 +133,6 @@ extension Parser {
     }
   }
   
-  func parseExtensionDecl() throws -> ExtensionDecl {
-    let startLoc = sourceLoc
-    try consume(.extension)
-    let type = try parseType()
-    try consume(.leftBrace)
-    var methods = [FuncDecl]()
-    while true {
-      if case .rightBrace = peek() {
-        consumeToken()
-        break
-      }
-      let modifiers = try parseModifiers()
-      guard case .func = peek()  else {
-        throw Diagnostic.error(ParseError.unexpectedExpression(expected: "function"),
-                               loc: sourceLoc)
-      }
-      methods.append(try parseFuncDecl(modifiers, forType: type.type))
-    }
-    return ExtensionDecl(type: type, methods: methods,
-                         sourceRange: range(start: startLoc))
-  }
-  
   func parseProtocolDecl(modifiers: [DeclModifier]) throws -> ProtocolDecl {
     let startLoc = sourceLoc
     try consume(.protocol)

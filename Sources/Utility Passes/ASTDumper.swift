@@ -134,7 +134,7 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
   }
   
   override func visitProtocolDecl(_ decl: ProtocolDecl) {
-    printExpr("ProtocolDecl", decl.startLoc) {
+    printNode(decl) {
       super.visitProtocolDecl(decl)
     }
   }

@@ -260,7 +260,7 @@ class Parser {
         consumeToken()
         break
       }
-      let attrs = try parseAttributes()
+      let attrs = try parseModifiers()
       switch peek() {
       case .func:
         let decl = try parseFuncDecl(attrs, forType: type.type) as! MethodDecl
@@ -281,73 +281,6 @@ class Parser {
                          staticMethods: staticMethods,
                          subscripts: subscripts,
                          sourceRange: range(start: startLoc))
-  }
-  
-  /// Type Declaration
-  ///
-  /// type-decl ::= type <typename> {
-  ///   [<field-decl> | <func-decl>]*
-  /// }
-  func parseTypeDecl(_ modifiers: [DeclModifier]) throws -> ASTNode {
-    try consume(.type)
-    let startLoc = sourceLoc
-    let name = try parseIdentifier()
-    
-    if case .operator(op: .assign) = peek() {
-      consumeToken()
-      let bound = try parseType()
-      return TypeAliasDecl(name: name,
-                           bound: bound,
-                           sourceRange: range(start: startLoc))
-    }
-    try consume(.leftBrace)
-    var fields = [VarAssignDecl]()
-    var methods = [MethodDecl]()
-    var staticMethods = [MethodDecl]()
-    var subscripts = [SubscriptDecl]()
-    var initializers = [InitializerDecl]()
-    var deinitializer: DeinitializerDecl?
-    let type = DataType(name: name.name)
-    loop: while true {
-      if case .rightBrace = peek() {
-        consumeToken()
-        break
-      }
-      let attrs = try parseAttributes()
-      switch peek() {
-      case .poundError, .poundWarning:
-        context.add(try parsePoundDiagnosticExpr())
-      case .func:
-        let decl = try parseFuncDecl(attrs, forType: type) as! MethodDecl
-        if decl.has(attribute: .static) {
-          staticMethods.append(decl)
-        } else {
-          methods.append(decl)
-        }
-      case .Init:
-        initializers.append(try parseFuncDecl(attrs, forType: type) as! InitializerDecl)
-      case .subscript:
-        subscripts.append(try parseFuncDecl(attrs, forType: type) as! SubscriptDecl)
-      case .var, .let:
-        fields.append(try parseVarAssignDecl(attrs))
-      case .deinit:
-        if deinitializer != nil {
-          throw Diagnostic.error(ParseError.duplicateDeinit, loc: sourceLoc)
-        }
-        deinitializer = try parseFuncDecl(modifiers, forType: type) as? DeinitializerDecl
-      default:
-        throw unexpectedToken()
-      }
-      try consumeAtLeastOneLineSeparator()
-    }
-    return TypeDecl(name: name, fields: fields,
-                    methods: methods,
-                    staticMethods: staticMethods,
-                    initializers: initializers,
-                    subscripts: subscripts,
-                    modifiers: modifiers,
-                    deinit: deinitializer,
-                    sourceRange: range(start: startLoc))
   }
   
   /// Compound Statement

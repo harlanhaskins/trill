@@ -112,11 +112,11 @@ class Sema: ASTTransformer, Pass {
         ])
       return
     }
-    if let body = expr.body,
+    if let body = decl.body,
         !body.hasReturn,
         returnType != .void,
-        !expr.has(attribute: .implicit),
-        !(expr is InitializerDecl) {
+        !decl.has(attribute: .implicit),
+        !(decl is InitializerDecl) {
       error(SemaError.notAllPathsReturn(type: expr.returnType.type!),
             loc: expr.sourceRange?.start,
             highlights: [
@@ -259,7 +259,7 @@ class Sema: ASTTransformer, Pass {
         guard var valType = exprArg.val.type else { continue search }
         let type = context.canonicalType(candArg.type)
         // automatically coerce number literals.
-        if propagateContextualType(type, to: exprArg.val) {
+        if context.propagateContextualType(type, to: exprArg.val) {
           valType = type
         }
         if !matches(type, .any) && !matches(type, valType) {
@@ -579,14 +579,14 @@ class Sema: ASTTransformer, Pass {
         }
       }
       if !missing.isEmpty {
-        error(SemaError.typeDoesNotConform(typeName: decl.name, protocol: proto.name),
+        error(SemaError.typeDoesNotConform(decl.type, proto.type),
               loc: decl.startLoc,
               highlights: [
                 conformance.name.range
               ])
       }
       for decl in missing {
-        note(SemaError.missingImplementation(signature: "\(decl.name)\(decl.formattedParameterList)"),
+        note(SemaError.missingImplementation(decl),
              loc: decl.startLoc)
       }
     }
