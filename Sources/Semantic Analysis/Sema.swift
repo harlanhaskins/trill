@@ -579,7 +579,7 @@ class Sema: ASTTransformer, Pass {
         }
       }
       if !missing.isEmpty {
-        error(SemaError.typeDoesNotConform(decl.type, proto.type),
+        error(SemaError.typeDoesNotConform(decl.type, protocol: proto.type),
               loc: decl.startLoc,
               highlights: [
                 conformance.name.range

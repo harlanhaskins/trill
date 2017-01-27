@@ -37,15 +37,20 @@ class FuncCallExpr: Expr {
     super.init(sourceRange: sourceRange)
   }
 
-  var genericParams: [GenericParam]? {
-    guard let varExpr = lhs as? VarExpr else { return nil }
-    return varExpr.genericParams
+  var genericParams: [GenericParam] {
+    guard let expr = lhs as? GenericContainingExpr else { return [] }
+    return expr.genericParams
   }
 
   override func attributes() -> [String : Any] {
     var superAttrs = super.attributes()
     if let decl = decl {
       superAttrs["decl"] = decl.formattedName
+    }
+    if !genericParams.isEmpty {
+      let paramNames = genericParams.map { $0.typeName.name.name }
+                                    .joined(separator: ", ")
+      superAttrs["generic_params"] = "<\(paramNames)>"
     }
     return superAttrs
   }

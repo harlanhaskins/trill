@@ -31,6 +31,8 @@ extension Parser {
     try consume(.leftBrace)
     var fields = [VarAssignDecl]()
     var methods = [FuncDecl]()
+    var staticMethods = [FuncDecl]()
+    var subscripts = [SubscriptDecl]()
     var initializers = [FuncDecl]()
     var deinitializer: FuncDecl?
     let type = DataType(name: name.name)
@@ -44,11 +46,18 @@ extension Parser {
       case .poundError, .poundWarning:
         context.add(try parsePoundDiagnosticExpr())
       case .func:
-        methods.append(try parseFuncDecl(modifiers, forType: type))
+        let decl = try parseFuncDecl(modifiers, forType: type)
+        if decl.has(attribute: .static) {
+          staticMethods.append(decl)
+        } else {
+          methods.append(decl)
+        }
       case .Init:
         initializers.append(try parseFuncDecl(modifiers, forType: type))
       case .var, .let:
         fields.append(try parseVarAssignDecl(modifiers: modifiers))
+      case .subscript:
+          subscripts.append(try parseFuncDecl(modifiers, forType: type) as! SubscriptDecl)
       case .deinit:
         if deinitializer != nil {
           throw Diagnostic.error(ParseError.duplicateDeinit, loc: sourceLoc)
@@ -59,8 +68,11 @@ extension Parser {
       }
       try consumeAtLeastOneLineSeparator()
     }
-    return TypeDecl(name: name, fields: fields, methods: methods,
+    return TypeDecl(name: name, fields: fields,
+                    methods: methods,
+                    staticMethods: staticMethods,
                     initializers: initializers,
+                    subscripts: subscripts,
                     modifiers: modifiers,
                     conformances: conformances,
                     deinit: deinitializer,

@@ -241,6 +241,8 @@
 		DCDBBF211DCE8769008E18D9 /* ANSIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCEF07FE1DCD6BA90075FE15 /* ANSIColor.swift */; };
 		DCEF07FF1DCD6BA90075FE15 /* ANSIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCEF07FE1DCD6BA90075FE15 /* ANSIColor.swift */; };
 		DCF3B29A1E3AEB580045912E /* Generic.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF3B2991E3AEB580045912E /* Generic.swift */; };
+		DCF3B29B1E3B05890045912E /* SemaError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC4BCD191DBBF89100E2FD01 /* SemaError.swift */; };
+		DCF3B29C1E3B05A60045912E /* Generic.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF3B2991E3AEB580045912E /* Generic.swift */; };
 		DCF80B601D7487DB00463CBB /* SourceFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF80B5F1D7487DB00463CBB /* SourceFile.swift */; };
 		DCF80B611D74BB3D00463CBB /* SourceFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF80B5F1D7487DB00463CBB /* SourceFile.swift */; };
 /* End PBXBuildFile section */
@@ -440,7 +442,7 @@
 		DC31C10A1C82681E00F85807 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; name = main.swift; path = Sources/main.swift; sourceTree = SOURCE_ROOT; tabWidth = 2; };
 		DC3D7D1F1C78338C0076EED6 /* trill */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = trill; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC47F5CF1E197AC900595DCD /* AttributedStringStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AttributedStringStream.swift; sourceTree = "<group>"; tabWidth = 2; };
-		DC4BCD191DBBF89100E2FD01 /* SemaError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SemaError.swift; sourceTree = "<group>"; };
+		DC4BCD191DBBF89100E2FD01 /* SemaError.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SemaError.swift; sourceTree = "<group>"; tabWidth = 2; };
 		DC4CF0C61D7A76750090216B /* metadata.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata.cpp; path = Sources/Runtime/metadata.cpp; sourceTree = SOURCE_ROOT; };
 		DC4CF0C71D7A76750090216B /* metadata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = metadata.h; path = Sources/Runtime/metadata.h; sourceTree = SOURCE_ROOT; };
 		DC4F083B1E2F113600CE19E6 /* libLLVMAMDGPUAsmParser.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMAMDGPUAsmParser.a; path = ../../../../../../usr/local/Cellar/llvm/3.9.1/lib/libLLVMAMDGPUAsmParser.a; sourceTree = "<group>"; };
@@ -1408,6 +1410,16 @@
 				DC1770441D69134B00FEFB85 /* Functions.swift in Sources */,
 				DC1770371D69130700FEFB85 /* InputViewController.swift in Sources */,
 				DC1770501D6913AA00FEFB85 /* JavaScriptGen.swift in Sources */,
+				DC1770451D69134B00FEFB85 /* Operators.swift in Sources */,
+				DC1770651D6913EF00FEFB85 /* Lexer.swift in Sources */,
+				DC1770461D69134B00FEFB85 /* Statements.swift in Sources */,
+				DC1770511D6913AC00FEFB85 /* ASTDumper.swift in Sources */,
+				DCF3B29C1E3B05A60045912E /* Generic.swift in Sources */,
+				DC1770471D69134B00FEFB85 /* Types.swift in Sources */,
+				DC1770501D6913AA00FEFB85 /* JavaScriptGen.swift in Sources */,
+				DC1770481D69134B00FEFB85 /* Values.swift in Sources */,
+				DC1BB6D01D8F36C800FE6BC7 /* Protocols.swift in Sources */,
+				DC17703D1D69130700FEFB85 /* TimingViewController.swift in Sources */,
 				DC1770381D69130700FEFB85 /* JavaScriptRunner.swift in Sources */,
 				DC1770651D6913EF00FEFB85 /* Lexer.swift in Sources */,
 				DC1770571D6913CA00FEFB85 /* Mangler.swift in Sources */,
@@ -1415,7 +1427,6 @@
 				DC1770451D69134B00FEFB85 /* Operators.swift in Sources */,
 				DC1BB6C71D8F365900FE6BC7 /* SourceLocation.swift in Sources */,
 				DC17703C1D69130700FEFB85 /* SourceDocument.swift in Sources */,
-				DC1BB6D01D8F36C800FE6BC7 /* Protocols.swift in Sources */,
 				DC1770371D69130700FEFB85 /* InputViewController.swift in Sources */,
 				DC17703B1D69130700FEFB85 /* SourceAnnotator.swift in Sources */,
 				DC1770351D69130700FEFB85 /* DocumentViewController.swift in Sources */,
@@ -1461,6 +1472,7 @@
 				DC1770101D6911A200FEFB85 /* LLVMWrappers.cpp in Sources */,
 				DC4F08361E2F110B00CE19E6 /* TokenType.swift in Sources */,
 				DC4F081B1E2F110B00CE19E6 /* BasicBlock.swift in Sources */,
+				DCF3B29A1E3AEB580045912E /* Generic.swift in Sources */,
 				DC4F081D1E2F110B00CE19E6 /* Function.swift in Sources */,
 				DC1770051D6911A200FEFB85 /* BaseIRGen.swift in Sources */,
 				DC4F08321E2F110B00CE19E6 /* StructType.swift in Sources */,
@@ -1472,6 +1484,7 @@
 				DC03B90B1D79F98A00C980D3 /* BuiltinIRGen.swift in Sources */,
 				DC176FFF1D6911A200FEFB85 /* ClangImporter.swift in Sources */,
 				DC176FF91D6911A200FEFB85 /* ASTBase.swift in Sources */,
+				DCF3B29B1E3B05890045912E /* SemaError.swift in Sources */,
 				DC1770641D6913EF00FEFB85 /* Lexer.swift in Sources */,
 				DC25D59B1E23540F00580769 /* ORCJIT.swift in Sources */,
 				DC1BB6C91D8F367700FE6BC7 /* Identifier.swift in Sources */,
@@ -1579,7 +1592,6 @@
 				DC4F082F1E2F110B00CE19E6 /* PassManager.swift in Sources */,
 				DC4F081F1E2F110B00CE19E6 /* Global.swift in Sources */,
 				DC4F08221E2F110B00CE19E6 /* IntType.swift in Sources */,
-				DCF3B29A1E3AEB580045912E /* Generic.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

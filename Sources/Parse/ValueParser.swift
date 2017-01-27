@@ -7,7 +7,6 @@ import Foundation
 
 extension Parser {
   
-  
   /// Value Expression
   ///
   /// val-expr ::= <identifier>[. <identifier>]
@@ -158,10 +157,16 @@ extension Parser {
         let loc = sourceLoc
         if case .identifier = peek() {
           let field = try parseIdentifier()
+          var genericParams = [GenericParam]()
+          if case .operator(.lessThan) = currentToken().kind,
+            let genericParamList = try? attempt(try parseGenericParams()) {
+            genericParams = genericParamList
+          }
           expr = FieldLookupExpr(lhs: expr,
                                  name: field,
-                                 sourceRange: range(start: loc),
                                  dotLoc: dotToken.range.start)
+                                 genericParams: genericParams,
+                                 sourceRange: range(start: loc))
         } else if case .number(let n, _) = peek() {
           let tok = consumeToken()
             expr = TupleFieldLookupExpr(lhs: expr, field: Int(n),
@@ -259,14 +264,21 @@ extension Parser {
   /// or '>='
   func splitAndConsumeIfAngleBracketLike() -> Bool {
     let tok = currentToken()
-    guard case .operator(let op) = tok.kind else { return false }
-    let tokDesc = op.rawValue
+    let tokDesc: String
+    switch tok.kind {
+    case .operator(let op):
+      tokDesc = op.rawValue
+    case .unknown(let value):
+      tokDesc = value
+    default: return false
+    }
     guard tokDesc.hasPrefix(">") else { return false }
 
     // Consume the >-starting token and create a new token from the end piece
 
     consumeToken()
-    guard [.leftParen, .leftBracket, .dot].contains(currentToken().kind) else {
+    guard [.leftParen, .leftBracket,
+           .dot, .comma].contains(currentToken().kind) else {
       return false
     }
     let newTokDesc = tokDesc.substring(from:
@@ -275,7 +287,13 @@ extension Parser {
       var newStart = tok.range.start
       newStart.charOffset += 1
       newStart.column += 1
-      let newTok = Token(kind: .operator(op: BuiltinOperator(rawValue: newTokDesc)!),
+      let newTokKind: TokenKind
+      if let op = BuiltinOperator(rawValue: newTokDesc) {
+        newTokKind = .operator(op: op)
+      } else {
+        newTokKind = .unknown(char: newTokDesc)
+      }
+      let newTok = Token(kind: newTokKind,
                          range: SourceRange(start: newStart,
                                             end: tok.range.end))
 
