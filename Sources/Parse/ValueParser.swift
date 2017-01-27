@@ -277,8 +277,9 @@ extension Parser {
     // Consume the >-starting token and create a new token from the end piece
 
     consumeToken()
-    guard [.leftParen, .leftBracket,
-           .dot, .comma].contains(currentToken().kind) else {
+
+    if comesAfterLineSeparator() { return false }
+    guard [.leftParen, .leftBracket, .dot, .comma].contains(currentToken().kind) else {
       return false
     }
     let newTokDesc = tokDesc.substring(from:
@@ -296,7 +297,6 @@ extension Parser {
       let newTok = Token(kind: newTokKind,
                          range: SourceRange(start: newStart,
                                             end: tok.range.end))
-
       var newEnd = tok.range.start
       newEnd.column += 1
       newEnd.charOffset += 1
