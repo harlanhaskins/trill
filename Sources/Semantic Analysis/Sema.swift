@@ -530,10 +530,10 @@ class Sema: ASTTransformer, Pass {
     let retName = Identifier(name: "\(ret)")
     let typeRef = TypeRefExpr(type: ret, name: retName)
     return FuncDecl(name: "",
-                        returnType: typeRef,
-                        args: assigns,
-                        body: nil,
-                        modifiers: [.foreign, .implicit])
+                    returnType: typeRef,
+                    args: assigns,
+                    body: nil,
+                    modifiers: [.foreign, .implicit])
   }
   
   override func visitTypeDecl(_ decl: TypeDecl) {

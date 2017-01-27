@@ -366,6 +366,23 @@ class PointerTypeRefExpr: TypeRefExpr {
   }
 }
 
+class GenericTypeRefExpr: TypeRefExpr {
+  let unspecializedType: TypeRefExpr
+  let args: [GenericParam]
+
+  init(unspecializedType: TypeRefExpr, args: [GenericParam], sourceRange: SourceRange? = nil) {
+    self.unspecializedType = unspecializedType
+    self.args = args
+    let commaSepArgs = args.map { $0.typeName.name.name }
+                           .joined(separator: ", ")
+    let fullName = Identifier(name: "\(unspecializedType.name)<\(commaSepArgs)>",
+                              range: sourceRange)
+    super.init(type: unspecializedType.type!,
+               name: fullName,
+               sourceRange: sourceRange)
+  }
+}
+
 class ArrayTypeRefExpr: TypeRefExpr {
   let element: TypeRefExpr
   init(element: TypeRefExpr, length: Int? = nil, sourceRange: SourceRange? = nil) {

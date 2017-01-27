@@ -205,9 +205,11 @@ class VarExpr: Expr, LValue {
   let name: Identifier
   var isTypeVar = false
   var isSelf = false
+  var genericParams: [GenericParam]
   var decl: Decl? = nil
-  init(name: Identifier, sourceRange: SourceRange? = nil) {
+  init(name: Identifier, genericParams: [GenericParam] = [], sourceRange: SourceRange? = nil) {
     self.name = name
+    self.genericParams = genericParams
     super.init(sourceRange: sourceRange)
   }
   override func attributes() -> [String : Any] {

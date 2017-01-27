@@ -36,7 +36,12 @@ class FuncCallExpr: Expr {
     self.args = args
     super.init(sourceRange: sourceRange)
   }
-  
+
+  var genericParams: [GenericParam]? {
+    guard let varExpr = lhs as? VarExpr else { return nil }
+    return varExpr.genericParams
+  }
+
   override func attributes() -> [String : Any] {
     var superAttrs = super.attributes()
     if let decl = decl {
@@ -57,8 +62,10 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
   /// any substantial body behind it and should not be mangled as such.
   let isPlaceholder: Bool
 
+  let genericParams: [GenericParamDecl]
   init(name: Identifier, returnType: TypeRefExpr,
        args: [ParamDecl],
+       genericParams: [GenericParamDecl] = [],
        body: CompoundStmt? = nil,
        modifiers: [DeclModifier] = [],
        isPlaceholder: Bool = false,
@@ -67,6 +74,7 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
     self.args = args
     self.body = body
     self.name = name
+    self.genericParams = genericParams
     self.returnType = returnType
     self.hasVarArgs = hasVarArgs
     self.isPlaceholder = isPlaceholder

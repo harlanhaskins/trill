@@ -35,6 +35,7 @@ enum TokenKind: Equatable {
   case `protocol`
   case sizeOf
   case type
+  case `where`
   case `while`
   case `for`
   case `nil`
@@ -90,6 +91,7 @@ enum TokenKind: Equatable {
     case "subscript": self = .subscript
     case "protocol": self = .protocol
     case "sizeof": self = .sizeOf
+    case "where": self = .where
     case "while": self = .while
     case "if": self = .if
     case "in": self = .in
@@ -143,6 +145,7 @@ enum TokenKind: Equatable {
     case .protocol: return "protocol"
     case .type: return "type"
     case .while: return "while"
+    case .where: return "where"
     case .for: return "for"
     case .nil: return "nil"
     case .if: return "if"
@@ -178,7 +181,7 @@ enum TokenKind: Equatable {
   var isKeyword: Bool {
     switch self {
     case .func, .while, .if, .in, .else, .for, .nil, .break, .case, .switch,
-         .default, .continue, .return, .underscore, .extension, .sizeOf,
+         .default, .continue, .return, .underscore, .extension, .sizeOf, .where,
          .protocol, .subscript, .var, .let, .type, .true, .false, .Init, .deinit,
          .poundFunction, .poundFile, .poundLine, .poundWarning, .poundError:
          return true
@@ -256,6 +259,7 @@ func ==(lhs: TokenKind, rhs: TokenKind) -> Bool {
   case (.sizeOf, .sizeOf): return true
   case (.type, .type): return true
   case (.while, .while): return true
+  case (.where, .where): return true
   case (.for, .for): return true
   case (.nil, .nil): return true
   case (.if, .if): return true

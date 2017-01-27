@@ -125,8 +125,13 @@ extension Parser {
         var id = try parseIdentifier()
         let r = range(start: startLoc)
         id = Identifier(name: id.name, range: r)
-        return TypeRefExpr(type: DataType(name: id.name),
-                           name: id, sourceRange: r)
+        let type = TypeRefExpr(type: DataType(name: id.name),
+                               name: id, sourceRange: r)
+        guard case .operator(op: .lessThan) = currentToken().kind else {
+          return type
+        }
+        let args = try parseGenericParams()
+        return GenericTypeRefExpr(unspecializedType: type, args: args)
       default:
         throw unexpectedToken()
       }
