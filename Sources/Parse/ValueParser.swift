@@ -109,7 +109,7 @@ extension Parser {
     case .identifier:
       let name = try parseIdentifier()
       var genericParams = [GenericParam]()
-      if case .operator(.lessThan) = currentToken().kind,
+      if case .operator(.lessThan) = peek(),
          let genericParamList = try? attempt(try parseGenericParams()) {
         genericParams = genericParamList
       }
@@ -129,11 +129,12 @@ extension Parser {
       }
     case .leftBrace:
       consumeToken()
-      let (args, ret, _) = try parseFuncSignature()
+      let (genericParams, args, ret, _) = try parseFuncSignature()
       try consume(.in)
       let exprs = try parseStatements(terminators: [.rightBrace])
       consumeToken()
       valExpr = ClosureExpr(args: args,
+                            genericParams: genericParams,
                             returnType: ret,
                             body: CompoundStmt(stmts: exprs),
                             sourceRange: range(start: startLoc))
@@ -158,7 +159,7 @@ extension Parser {
         if case .identifier = peek() {
           let field = try parseIdentifier()
           var genericParams = [GenericParam]()
-          if case .operator(.lessThan) = currentToken().kind,
+          if case .operator(.lessThan) = peek(),
             let genericParamList = try? attempt(try parseGenericParams()) {
             genericParams = genericParamList
           }
@@ -279,7 +280,7 @@ extension Parser {
     consumeToken()
 
     if comesAfterLineSeparator() { return false }
-    guard [.leftParen, .leftBracket, .dot, .comma].contains(currentToken().kind) else {
+    guard [.leftParen, .leftBracket, .dot, .comma].contains(peek()) else {
       return false
     }
     let newTokDesc = tokDesc.substring(from:
@@ -290,9 +291,9 @@ extension Parser {
       newStart.column += 1
       let newTokKind: TokenKind
       if let op = BuiltinOperator(rawValue: newTokDesc) {
-        newTokKind = .operator(op: op)
+        newTokKind = .operator(op)
       } else {
-        newTokKind = .unknown(char: newTokDesc)
+        newTokKind = .unknown(newTokDesc)
       }
       let newTok = Token(kind: newTokKind,
                          range: SourceRange(start: newStart,
@@ -300,7 +301,7 @@ extension Parser {
       var newEnd = tok.range.start
       newEnd.column += 1
       newEnd.charOffset += 1
-      let oldTok = Token(kind: .operator(op: .lessThan),
+      let oldTok = Token(kind: .operator(.lessThan),
                          range: SourceRange(start: tok.range.start,
                                             end: newEnd))
       tokens.insert(oldTok, at: tokenIndex - 1)
@@ -310,7 +311,7 @@ extension Parser {
   }
 
   func parseGenericParams() throws -> [GenericParam] {
-    try consume(.operator(op: .lessThan))
+    try consume(.operator(.lessThan))
     var names = [TypeRefExpr]()
     while true {
       let id = try parseType()

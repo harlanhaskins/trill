@@ -177,6 +177,7 @@ class Decl: ASTNode {
 }
 
 class TypeDecl: Decl {
+  private(set) var genericParams: [GenericParamDecl]
   private(set) var fields: [VarAssignDecl]
   private(set) var methods = [MethodDecl]()
   private(set) var staticMethods = [MethodDecl]()
@@ -266,6 +267,7 @@ class TypeDecl: Decl {
        modifiers: [DeclModifier] = [],
        conformances: [TypeRefExpr] = [],
        deinit: DeinitializerDecl? = nil,
+       genericParams: [GenericParamDecl] = [],
        sourceRange: SourceRange? = nil) {
     self.fields = fields
     self.initializers = initializers
@@ -277,6 +279,7 @@ class TypeDecl: Decl {
     self.initializers.append(synthInit)
     self.name = name
     self.conformances = conformances
+    self.genericParams = genericParams
     super.init(type: type, modifiers: modifiers, sourceRange: sourceRange)
     for method in methods {
       self.addMethod(method, named: method.name.name)

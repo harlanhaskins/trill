@@ -28,6 +28,7 @@ extension Parser {
     var modifiers = modifiers
     let startLoc = sourceLoc
     var args = [ParamDecl]()
+    var genericArgs = [GenericParamDecl]()
     var returnType = TypeRefExpr(type: .void, name: "Void")
     var hasVarArgs = false
     var kind: FunctionKind = .free
@@ -70,7 +71,7 @@ extension Parser {
     }
     if case .deinitializer = kind {
     } else {
-      (args, returnType, hasVarArgs) = try parseFuncSignature()
+      (genericArgs, args, returnType, hasVarArgs) = try parseFuncSignature()
     }
     var body: CompoundStmt? = nil
     if case .leftBrace = peek() {
@@ -83,6 +84,7 @@ extension Parser {
     case .operator(let op):
       return OperatorDecl(op: op,
                           args: args,
+                          genericParams: genericArgs,
                           returnType: returnType,
                           body: body,
                           modifiers: modifiers,
@@ -92,6 +94,7 @@ extension Parser {
       return SubscriptDecl(returnType: returnType,
                            args: args,
                            parentType: type!,
+                           genericParams: genericArgs,
                            body: body,
                            modifiers: modifiers,
                            sourceRange: range(start: startLoc))
@@ -134,9 +137,24 @@ extension Parser {
                       hasVarArgs: hasVarArgs,
                       sourceRange: range(start: startLoc))
     }
+    return FuncDecl(name: name,
+                    returnType: returnType,
+                    args: args,
+                    genericParams: genericArgs,
+                    kind: kind,
+                    body: body,
+                    modifiers: modifiers,
+                    hasVarArgs: hasVarArgs,
+                    sourceRange: range(start: startLoc))
   }
   
-  func parseFuncSignature() throws -> (args: [ParamDecl], ret: TypeRefExpr, hasVarArgs: Bool) {
+  func parseFuncSignature() throws -> (genericArgs: [GenericParamDecl], args: [ParamDecl], ret: TypeRefExpr, hasVarArgs: Bool) {
+    var genericArgs = [GenericParamDecl]()
+
+    if case .operator(.lessThan) = peek() {
+      genericArgs = try parseGenericParamDecls()
+    }
+
     try consume(.leftParen)
     var hasVarArgs = false
     var args = [ParamDecl]()
@@ -191,7 +209,50 @@ extension Parser {
     } else {
       returnType = TypeRefExpr(type: .void, name: "Void")
     }
-    return (args: args, ret: returnType, hasVarArgs: hasVarArgs)
+    return (genericArgs: genericArgs, args: args, ret: returnType, hasVarArgs: hasVarArgs)
+  }
+
+  func parseGenericParamDecls() throws -> [GenericParamDecl] {
+    try consume(.leftAngle)
+    var names = [Identifier]()
+    var constraints = [String: [TypeRefExpr]]()
+
+    var hasWhere = false
+    loop: while true {
+      names.append(try parseIdentifier())
+      let tok = currentToken()
+      switch tok.kind {
+      case .where:
+        consumeToken()
+        hasWhere = true
+        break loop
+      case .operator(.greaterThan):
+        break loop
+      case .comma:
+        consumeToken()
+        continue
+      default:
+        throw unexpectedToken()
+      }
+    }
+
+    if hasWhere {
+      let values = try parseSeparated(by: .comma, until: .rightAngle) {
+        () -> (Identifier, TypeRefExpr) in
+        let name = try parseIdentifier()
+        try consume(.colon)
+        let type = try parseType()
+        return (name, type)
+      }
+      for (name, type) in values {
+        var newVals = constraints[name.name] ?? []
+        newVals.append(type)
+        constraints[name.name] = newVals
+      }
+    }
+    try consume(.rightAngle)
+
+    return names.map { GenericParamDecl(name: $0, constraints: constraints[$0.name] ?? []) }
   }
  
   /// Function Call Args

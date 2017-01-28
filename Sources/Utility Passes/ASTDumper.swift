@@ -129,6 +129,9 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
   
   override func visitFuncDecl(_ decl: FuncDecl) -> Result {
     printNode(decl) {
+      for param in decl.genericParams {
+        self.printNode(param)
+      }
       super.visitFuncDecl(decl)
     }
   }
@@ -183,11 +186,17 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
   }
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
     printNode(expr) {
+      for param in expr.genericParams {
+        self.printNode(param)
+      }
       super.visitFuncCallExpr(expr)
     }
   }
   override func visitTypeDecl(_ decl: TypeDecl) -> Result {
     printNode(decl) {
+      for param in decl.genericParams {
+        self.printNode(param)
+      }
       super.visitTypeDecl(decl)
     }
   }

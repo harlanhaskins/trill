@@ -210,6 +210,7 @@ public class ASTContext {
                             ParamDecl(name: "", type: lhs.type!.ref()),
                             ParamDecl(name: "", type: lhs.type!.ref())
                           ],
+                          genericParams: [],
                           returnType: DataType.bool.ref(),
                           body: nil,
                           modifiers: [.implicit])
@@ -770,12 +771,15 @@ extension OperatorDecl {
                      _ rhsType: DataType,
                      _ returnType: DataType,
                      modifiers: [DeclModifier] = [.implicit]) {
-        self.init(op: op, args: [
-            ParamDecl(name: "lhs", type: lhsType.ref()),
-            ParamDecl(name: "rhs", type: rhsType.ref()),
-            ], returnType: returnType.ref(),
-               body: nil,
-               modifiers: modifiers)
+        self.init(op: op,
+                  args: [
+                    ParamDecl(name: "lhs", type: lhsType.ref()),
+                    ParamDecl(name: "rhs", type: rhsType.ref()),
+                  ],
+                  genericParams: [],
+                  returnType: returnType.ref(),
+                  body: nil,
+                  modifiers: modifiers)
     }
 }
   

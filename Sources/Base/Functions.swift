@@ -47,11 +47,6 @@ class FuncCallExpr: Expr {
     if let decl = decl {
       superAttrs["decl"] = decl.formattedName
     }
-    if !genericParams.isEmpty {
-      let paramNames = genericParams.map { $0.typeName.name.name }
-                                    .joined(separator: ", ")
-      superAttrs["generic_params"] = "<\(paramNames)>"
-    }
     return superAttrs
   }
 }
@@ -135,6 +130,7 @@ class MethodDecl: FuncDecl {
 
   init(name: Identifier,
        parentType: DataType,
+       genericParams: [GenericParamDecl],
        args: [ParamDecl],
        returnType: TypeRefExpr,
        body: CompoundStmt?,
@@ -167,6 +163,7 @@ class MethodDecl: FuncDecl {
 class InitializerDecl: MethodDecl {
   init(parentType: DataType,
        args: [ParamDecl],
+       genericParams: [GenericParamDecl],
        returnType: TypeRefExpr,
        body: CompoundStmt?,
        modifiers: [DeclModifier],
@@ -202,6 +199,7 @@ class DeinitializerDecl: MethodDecl {
 class SubscriptDecl: MethodDecl {
   init(returnType: TypeRefExpr,
        args: [ParamDecl],
+       genericParams: [GenericParamDecl],
        parentType: DataType,
        body: CompoundStmt?,
        modifiers: [DeclModifier],
@@ -210,6 +208,7 @@ class SubscriptDecl: MethodDecl {
                parentType: parentType,
                args: args,
                returnType: returnType,
+               genericParams: genericParams,
                body: body,
                modifiers: modifiers,
                hasVarArgs: false,
@@ -232,13 +231,18 @@ class ParamDecl: VarAssignDecl {
 
 class ClosureExpr: Expr {
   let args: [ParamDecl]
+  let genericParams: [GenericParamDecl]
   let returnType: TypeRefExpr
   let body: CompoundStmt
   
   private(set) var captures = Set<ASTNode>()
-  
-  init(args: [ParamDecl], returnType: TypeRefExpr,
-       body: CompoundStmt, sourceRange: SourceRange? = nil) {
+
+  init(args: [ParamDecl],
+       genericParams: [GenericParamDecl],
+       returnType: TypeRefExpr,
+       body: CompoundStmt,
+       sourceRange: SourceRange? = nil) {
+    self.genericParams = genericParams
     self.args = args
     self.returnType = returnType
     self.body = body

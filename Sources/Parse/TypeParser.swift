@@ -16,6 +16,11 @@ extension Parser {
     let startLoc = sourceLoc
     let name = try parseIdentifier()
     var conformances = [TypeRefExpr]()
+    var genericParams = [GenericParamDecl]()
+
+    if peek() == .leftAngle {
+      genericParams = try parseGenericParamDecls()
+    }
     
     if case .operator(op: .assign) = peek() {
       consumeToken()
@@ -75,6 +80,7 @@ extension Parser {
                     subscripts: subscripts,
                     modifiers: modifiers,
                     conformances: conformances,
+                    genericParams: genericParams,
                     deinit: deinitializer,
                     sourceRange: range(start: startLoc))
   }
@@ -139,7 +145,7 @@ extension Parser {
         id = Identifier(name: id.name, range: r)
         let type = TypeRefExpr(type: DataType(name: id.name),
                                name: id, sourceRange: r)
-        guard case .operator(op: .lessThan) = currentToken().kind else {
+        guard case .operator(op: .lessThan) = peek() else {
           return type
         }
         let args = try parseGenericParams()

@@ -9,7 +9,7 @@
 import Foundation
 
 class GenericParamDecl: TypeDecl {
-    init(name: Identifier, constraints: [TypeRefExpr], sourceRange: SourceRange? = nil) {
+    init(name: Identifier, constraints: [TypeRefExpr]) {
         super.init(name: name,
                    fields: [],
                    methods: [],
@@ -19,7 +19,15 @@ class GenericParamDecl: TypeDecl {
                    modifiers: [],
                    conformances: constraints,
                    deinit: nil,
-                   sourceRange: sourceRange)
+                   sourceRange: name.range)
+    }
+
+    override func attributes() -> [String : Any] {
+        var superAttrs = super.attributes()
+        if !conformances.isEmpty {
+            superAttrs["conformances"] = conformances.map { $0.name.name }.joined(separator: ", ")
+        }
+        return superAttrs
     }
 }
 
@@ -27,8 +35,17 @@ class GenericParam: ASTNode {
     let typeName: TypeRefExpr
     var decl: GenericParamDecl? = nil
 
-    init(typeName: TypeRefExpr, sourceRange: SourceRange? = nil) {
+    init(typeName: TypeRefExpr) {
         self.typeName = typeName
-        super.init(sourceRange: sourceRange)
+        super.init(sourceRange: typeName.sourceRange)
+    }
+
+    override func attributes() -> [String : Any] {
+        var superAttrs = super.attributes()
+        superAttrs["type"] = typeName.name.name
+        if let decl = decl {
+            superAttrs["decl"] = decl.name.name
+        }
+        return superAttrs
     }
 }
