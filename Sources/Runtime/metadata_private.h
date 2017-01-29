@@ -27,8 +27,14 @@ typedef struct TypeMetadata {
 } TypeMetadata;
 
 
-typedef struct AnyHeader {
+
+typedef struct AnyBox {
     void *typeMetadata;
-} AnyHeader;
+} AnyBox;
+
+typedef struct GenericBox {
+    void *typeMetadata;
+    void *witnessTable;
+} GenericBox;
 
 #endif /* metadata_private_h */

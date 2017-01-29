@@ -225,6 +225,8 @@
 		DC7968341D765A1000FF7A02 /* libclangFrontend.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC7968331D765A1000FF7A02 /* libclangFrontend.a */; };
 		DC7968361D765A1E00FF7A02 /* libclangEdit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC7968351D765A1E00FF7A02 /* libclangEdit.a */; };
 		DC7968381D765A2000FF7A02 /* libclangFrontendTool.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC7968371D765A2000FF7A02 /* libclangFrontendTool.a */; };
+		DC89CAA81E3D3F5F0070461B /* generics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DC89CAA61E3D3F5F0070461B /* generics.cpp */; };
+		DC89CAAA1E3D53130070461B /* GenericIRGen.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC89CAA91E3D53130070461B /* GenericIRGen.swift */; };
 		DC9254DF1E18B57F00587BC4 /* ColoredStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C51E16ED1200875545 /* ColoredStream.swift */; };
 		DC98BBBB1D59A31400677C66 /* libclangAST.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC5F38E01D1FBF52003A8DED /* libclangAST.a */; };
 		DC98BBBC1D59A31500677C66 /* libclangParse.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC5F38E41D1FBF52003A8DED /* libclangParse.a */; };
@@ -431,7 +433,7 @@
 		DC1BB6C51D8F365900FE6BC7 /* SourceLocation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceLocation.swift; sourceTree = "<group>"; };
 		DC1BB6C81D8F367700FE6BC7 /* Identifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Identifier.swift; sourceTree = "<group>"; };
 		DC1BB6CB1D8F369400FE6BC7 /* Decl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Decl.swift; sourceTree = "<group>"; };
-		DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		DC1BB6CE1D8F36C800FE6BC7 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; tabWidth = 2; };
 		DC1BB6D11D8F37A600FE6BC7 /* TypeParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = TypeParser.swift; sourceTree = "<group>"; tabWidth = 2; };
 		DC1BF29A1D7F166C0055157B /* MangledOperators.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = MangledOperators.def; path = Sources/Runtime/MangledOperators.def; sourceTree = SOURCE_ROOT; };
 		DC1BF29B1D7F179F0055157B /* SpecialTypes.def */ = {isa = PBXFileReference; lastKnownFileType = text; name = SpecialTypes.def; path = Sources/Runtime/SpecialTypes.def; sourceTree = SOURCE_ROOT; };
@@ -561,6 +563,9 @@
 		DC7968331D765A1000FF7A02 /* libclangFrontend.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libclangFrontend.a; path = ../../../../../../usr/local/llvm/lib/libclangFrontend.a; sourceTree = "<group>"; };
 		DC7968351D765A1E00FF7A02 /* libclangEdit.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libclangEdit.a; path = ../../../../../../usr/local/llvm/lib/libclangEdit.a; sourceTree = "<group>"; };
 		DC7968371D765A2000FF7A02 /* libclangFrontendTool.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libclangFrontendTool.a; path = ../../../../../../usr/local/llvm/lib/libclangFrontendTool.a; sourceTree = "<group>"; };
+		DC89CAA61E3D3F5F0070461B /* generics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = generics.cpp; path = Sources/Runtime/generics.cpp; sourceTree = SOURCE_ROOT; };
+		DC89CAA71E3D3F5F0070461B /* generics.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = generics.h; path = Sources/Runtime/generics.h; sourceTree = SOURCE_ROOT; tabWidth = 2; };
+		DC89CAA91E3D53130070461B /* GenericIRGen.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = GenericIRGen.swift; sourceTree = "<group>"; tabWidth = 2; };
 		DC98BBC51D5EE92F00677C66 /* libtinygc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtinygc.a; path = ../../../../usr/local/lib/libtinygc.a; sourceTree = "<group>"; };
 		DC98BBE71D6012A800677C66 /* DemangleBridgingHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DemangleBridgingHeader.h; sourceTree = "<group>"; };
 		DCA5CC481DEE442D001B66A1 /* metadata_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = metadata_private.h; path = Sources/Runtime/metadata_private.h; sourceTree = SOURCE_ROOT; };
@@ -803,6 +808,7 @@
 				DC176FE91D6911A200FEFB85 /* TypeIRGen.swift */,
 				DC176FEA1D6911A200FEFB85 /* ValueIRGen.swift */,
 				DC5EA0C31E15A10E00875545 /* VarBinding.swift */,
+				DC89CAA91E3D53130070461B /* GenericIRGen.swift */,
 			);
 			name = IRGen;
 			path = Sources/IRGen;
@@ -893,6 +899,8 @@
 				DC1770151D69128500FEFB85 /* demangle.h */,
 				DC1BF29A1D7F166C0055157B /* MangledOperators.def */,
 				DC4CF0C61D7A76750090216B /* metadata.cpp */,
+				DC89CAA61E3D3F5F0070461B /* generics.cpp */,
+				DC89CAA71E3D3F5F0070461B /* generics.h */,
 				DC4CF0C71D7A76750090216B /* metadata.h */,
 				DCA5CC481DEE442D001B66A1 /* metadata_private.h */,
 				DC1770161D69128500FEFB85 /* runtime.cpp */,
@@ -1497,6 +1505,16 @@
 				DC4F082E1E2F110B00CE19E6 /* OpCode.swift in Sources */,
 				DC176FF41D6911A200FEFB85 /* ASTContext.swift in Sources */,
 				DC17704D1D69139900FEFB85 /* ASTDumper.swift in Sources */,
+				DC1770121D6911A200FEFB85 /* Sema.swift in Sources */,
+				DC4F08381E2F110B00CE19E6 /* VectorType.swift in Sources */,
+				DC1770131D6911A200FEFB85 /* TypeChecker.swift in Sources */,
+				DC4F08271E2F110B00CE19E6 /* IRValue.swift in Sources */,
+				DC1770681D6913EF00FEFB85 /* ValueParser.swift in Sources */,
+				DC4F081A1E2F110B00CE19E6 /* ArrayType.swift in Sources */,
+				DC4F08391E2F110B00CE19E6 /* VoidType.swift in Sources */,
+				DC4F08251E2F110B00CE19E6 /* IRType.swift in Sources */,
+				DC89CAAA1E3D53130070461B /* GenericIRGen.swift in Sources */,
+				DC1770111D6911A200FEFB85 /* Mangler.swift in Sources */,
 				DC176FF71D6911A200FEFB85 /* ASTTransformer.swift in Sources */,
 				DC176FF81D6911A200FEFB85 /* ASTVisitor.swift in Sources */,
 				DC1770051D6911A200FEFB85 /* BaseIRGen.swift in Sources */,
@@ -1514,6 +1532,7 @@
 				C02F30BC1E5D680600BC3890 /* FloatType.swift in Sources */,
 				C02F30BD1E5D680600BC3890 /* Function.swift in Sources */,
 				DC1770071D6911A200FEFB85 /* FunctionIRGen.swift in Sources */,
+				DC89CAA81E3D3F5F0070461B /* generics.cpp in Sources */,
 				DC1770041D6911A200FEFB85 /* TableFormatter.swift in Sources */,
 				DC03B9091D79F84500C980D3 /* Builtins.swift in Sources */,
 				DC4F08331E2F110B00CE19E6 /* Switch.swift in Sources */,
