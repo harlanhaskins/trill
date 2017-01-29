@@ -523,9 +523,9 @@ class Sema: ASTTransformer, Pass {
   }
   
   func foreignDecl(args: [DataType], ret: DataType) -> FuncDecl {
-    let assigns: [FuncArgumentAssignDecl] = args.map {
+    let assigns: [ParamDecl] = args.map {
       let name = Identifier(name: "__implicit__")
-      return FuncArgumentAssignDecl(name: "", type: TypeRefExpr(type: $0, name: name))
+      return ParamDecl(name: "", type: TypeRefExpr(type: $0, name: name))
     }
     let retName = Identifier(name: "\(ret)")
     let typeRef = TypeRefExpr(type: ret, name: retName)
