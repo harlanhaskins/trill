@@ -246,6 +246,7 @@ class TypeDecl: Decl {
   }
   
   static func synthesizeInitializer(fields: [VarAssignDecl],
+                                    genericParams: [GenericParamDecl],
                                     type: DataType,
                                     modifiers: [DeclModifier]) -> InitializerDecl {
     let initFields = fields.map { field in
@@ -253,6 +254,7 @@ class TypeDecl: Decl {
     }
     return InitializerDecl(parentType: type,
                            args: initFields,
+                           genericParams: genericParams,
                            returnType: type.ref(),
                            body: CompoundStmt(stmts: []),
                            modifiers: modifiers)
@@ -274,6 +276,7 @@ class TypeDecl: Decl {
     let type = DataType(name: name.name)
     self.deinitializer = `deinit`
     let synthInit = TypeDecl.synthesizeInitializer(fields: fields,
+                                                   genericParams: genericParams,
                                                    type: type,
                                                    modifiers: modifiers + [.implicit])
     self.initializers.append(synthInit)

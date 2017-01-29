@@ -86,7 +86,7 @@ class Sema: ASTTransformer, Pass {
       }
     } else {
       if !decl.has(attribute: .implicit) && decl.body == nil {
-        if case .protocolMethod = decl.kind {
+        if decl is ProtocolMethodDecl {
           /* don't diagnose functions without bodies for protocol methods */
         } else {
           error(SemaError.nonForeignFunctionWithoutBody(name: decl.name),
@@ -117,18 +117,18 @@ class Sema: ASTTransformer, Pass {
         returnType != .void,
         !decl.has(attribute: .implicit),
         !(decl is InitializerDecl) {
-      error(SemaError.notAllPathsReturn(type: expr.returnType.type!),
-            loc: expr.sourceRange?.start,
+      error(SemaError.notAllPathsReturn(type: decl.returnType.type!),
+            loc: decl.sourceRange?.start,
             highlights: [
               decl.name.range,
               decl.returnType.sourceRange
         ])
       return
     }
-    if let destr = expr as? DeinitializerDecl,
-       let decl = context.decl(for: destr.parentType, canonicalized: true),
-       !decl.isIndirect {
-     error(SemaError.deinitOnStruct(name: decl.name))
+    if let destr = decl as? DeinitializerDecl,
+       let typeDecl = context.decl(for: destr.parentType, canonicalized: true),
+       !typeDecl.isIndirect {
+     error(SemaError.deinitOnStruct(name: typeDecl.name))
     }
   }
   

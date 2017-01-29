@@ -35,11 +35,11 @@ extension Parser {
     }
     try consume(.leftBrace)
     var fields = [VarAssignDecl]()
-    var methods = [FuncDecl]()
-    var staticMethods = [FuncDecl]()
+    var methods = [MethodDecl]()
+    var staticMethods = [MethodDecl]()
     var subscripts = [SubscriptDecl]()
-    var initializers = [FuncDecl]()
-    var deinitializer: FuncDecl?
+    var initializers = [InitializerDecl]()
+    var deinitializer: DeinitializerDecl?
     let type = DataType(name: name.name)
     loop: while true {
       if case .rightBrace = peek() {
@@ -51,14 +51,14 @@ extension Parser {
       case .poundError, .poundWarning:
         context.add(try parsePoundDiagnosticExpr())
       case .func:
-        let decl = try parseFuncDecl(modifiers, forType: type)
+        let decl = try parseFuncDecl(modifiers, forType: type) as! MethodDecl
         if decl.has(attribute: .static) {
           staticMethods.append(decl)
         } else {
           methods.append(decl)
         }
       case .Init:
-        initializers.append(try parseFuncDecl(modifiers, forType: type))
+        initializers.append(try parseFuncDecl(modifiers, forType: type) as! InitializerDecl)
       case .var, .let:
         fields.append(try parseVarAssignDecl(modifiers: modifiers))
       case .subscript:
@@ -67,7 +67,7 @@ extension Parser {
         if deinitializer != nil {
           throw Diagnostic.error(ParseError.duplicateDeinit, loc: sourceLoc)
         }
-        deinitializer = try parseFuncDecl(modifiers, forType:type, isDeinit: true)
+        deinitializer = try parseFuncDecl(modifiers, forType:type) as? DeinitializerDecl
       default:
         throw unexpectedToken()
       }
@@ -80,8 +80,8 @@ extension Parser {
                     subscripts: subscripts,
                     modifiers: modifiers,
                     conformances: conformances,
-                    genericParams: genericParams,
                     deinit: deinitializer,
+                    genericParams: genericParams,
                     sourceRange: range(start: startLoc))
   }
   
@@ -176,7 +176,7 @@ extension Parser {
       }
     }
     try consume(.leftBrace)
-    var methods = [FuncDecl]()
+    var methods = [ProtocolMethodDecl]()
     while true {
       if case .rightBrace = peek() {
         consumeToken()
@@ -187,9 +187,9 @@ extension Parser {
         throw Diagnostic.error(ParseError.unexpectedExpression(expected: "function"),
                                loc: sourceLoc)
       }
-        methods.append(try parseFuncDecl(modifiers,
-                                         forType: DataType(name: name.name),
-                                         isProtocol: true))
+      methods.append(try parseFuncDecl(modifiers,
+                                       forType: DataType(name: name.name),
+                                       isProtocol: true) as! ProtocolMethodDecl)
     }
     return ProtocolDecl(name: name,
                         fields: [],

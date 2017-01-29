@@ -9,6 +9,9 @@
 import Foundation
 
 class GenericParamDecl: TypeDecl {
+    var constraints: [TypeRefExpr] {
+        return conformances
+    }
     init(name: Identifier, constraints: [TypeRefExpr]) {
         super.init(name: name,
                    fields: [],

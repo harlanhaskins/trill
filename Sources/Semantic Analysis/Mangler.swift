@@ -43,7 +43,7 @@ enum Mangler {
     case let d as InitializerDecl:
       s += "I" + mangle(d.parentType, root: false)
     case let d as MethodDecl:
-      let sigil = d.isStatic ? "m" : "M"
+      let sigil = d.has(attribute: .static) ? "m" : "M"
       s += sigil + mangle(d.parentType, root: false)
       s += d.name.name.withCount
     case let d as OperatorDecl:

@@ -5,19 +5,6 @@
 
 import Foundation
 
-enum FunctionKind {
-  case initializer(type: DataType)
-  case deinitializer(type: DataType)
-  case method(type: DataType)
-  case staticMethod(type: DataType)
-  case protocolMethod(type: DataType)
-  case `operator`(op: BuiltinOperator)
-  case `subscript`(type: DataType)
-  case property(type: DataType)
-  case variable
-  case free
-}
-
 struct Argument {
   let label: Identifier?
   let val: Expr
@@ -126,22 +113,19 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
 
 class MethodDecl: FuncDecl {
   let parentType: DataType
-  var isStatic: Bool
 
   init(name: Identifier,
        parentType: DataType,
-       genericParams: [GenericParamDecl],
        args: [ParamDecl],
+       genericParams: [GenericParamDecl],
        returnType: TypeRefExpr,
        body: CompoundStmt?,
        modifiers: [DeclModifier],
-       isStatic: Bool = false,
        hasVarArgs: Bool = false,
        sourceRange: SourceRange? = nil) {
     self.parentType = parentType
-    self.isStatic = isStatic
     var fullArgs = args
-    if !isStatic {
+    if !modifiers.contains(.static) {
       let selfParam = ParamDecl(name: "self",
                                 type: parentType.ref(),
                                 externalName: nil, rhs: nil,
@@ -153,12 +137,15 @@ class MethodDecl: FuncDecl {
     super.init(name: name,
                returnType: returnType,
                args: fullArgs,
+               genericParams: genericParams,
                body: body,
                modifiers: modifiers,
                hasVarArgs: hasVarArgs,
                sourceRange: sourceRange)
   }
 }
+
+class ProtocolMethodDecl: MethodDecl {}
 
 class InitializerDecl: MethodDecl {
   init(parentType: DataType,
@@ -170,13 +157,15 @@ class InitializerDecl: MethodDecl {
        hasVarArgs: Bool = false,
        sourceRange: SourceRange? = nil) {
 
+    var newModifiers = Set(modifiers)
+    newModifiers.insert(.static)
     super.init(name: "init",
                parentType: parentType,
                args: args,
+               genericParams: genericParams,
                returnType: returnType,
                body: body,
-               modifiers: modifiers,
-               isStatic: true,
+               modifiers: Array(newModifiers),
                hasVarArgs: hasVarArgs,
                sourceRange: sourceRange)
   }
@@ -189,6 +178,7 @@ class DeinitializerDecl: MethodDecl {
     super.init(name: "deinit",
                parentType: parentType,
                args: [],
+               genericParams: [],
                returnType: DataType.void.ref(),
                body: body,
                modifiers: [],
@@ -207,8 +197,8 @@ class SubscriptDecl: MethodDecl {
     super.init(name: Identifier(name: "subscript"),
                parentType: parentType,
                args: args,
-               returnType: returnType,
                genericParams: genericParams,
+               returnType: returnType,
                body: body,
                modifiers: modifiers,
                hasVarArgs: false,

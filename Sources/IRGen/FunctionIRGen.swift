@@ -206,7 +206,7 @@ extension IRGenerator {
     
     let findImplicitSelf: (FuncCallExpr) -> Expr? = { expr in
       guard let decl = expr.decl as? MethodDecl else { return nil }
-      if decl.isStatic { return nil }
+      if decl.has(attribute: .static) { return nil }
       switch decl {
       case _ as SubscriptDecl:
         return expr.lhs

@@ -5,12 +5,12 @@
 
 import Foundation
 
-/// Distinguishes the
+/// Distinguishes the different kinds of functions in the language.
 enum FunctionKind {
   case initializer
   case deinitializer
+  case protocolMethod
   case method
-  case staticMethod
   case `operator`(op: BuiltinOperator)
   case `subscript`
   case property
@@ -31,48 +31,49 @@ extension Parser {
     var genericArgs = [GenericParamDecl]()
     var returnType = TypeRefExpr(type: .void, name: "Void")
     var hasVarArgs = false
-    var kind: FunctionKind = .free
     var nameRange: SourceRange? = nil
-    if case .Init = peek() {
+    var name: Identifier = ""
+    let kind: FunctionKind
+
+    // Parse the discriminating token (init, func, deinit, subscript, etc)
+    // and optionally the name if it's a 'func'.
+    switch peek() {
+    case .Init:
       modifiers.append(.mutating)
       kind = .initializer
       nameRange = consumeToken().range
-    } else if case .deinit = peek() {
+    case .deinit:
       kind = .deinitializer
       nameRange = consumeToken().range
-    } else if case .subscript = peek() {
-      let tok = consumeToken()
-      nameRange = tok.range
+    case .subscript:
       kind = .subscript
-    } else {
-      try consume(.func)
-      if type != nil {
-        if modifiers.contains(.static) {
-          kind = .staticMethod
-        } else {
-          kind = isProtocol ? .protocolMethod(type: type) : .method(type: type)
-        }
-      } else if case .operator(let op) = peek() {
+      nameRange = consumeToken().range
+    case .func:
+      consumeToken()
+      if case .operator(let op) = peek() {
         let tok = consumeToken()
         nameRange = tok.range
         kind = .operator(op: op)
-      } else if case .subscript = peek() {
-        throw Diagnostic.error(ParseError.globalSubscript,
-                               loc: currentToken().range.start)
-      } else {
-        kind = .free
+        break
       }
-    }
-    var name: Identifier = ""
-    switch kind {
-    case .free, .method, .staticMethod:
       name = try parseIdentifier()
-    default: break
+      nameRange = name.range
+      if type == nil {
+        kind = .free
+      } else {
+        kind = isProtocol ? .method : .protocolMethod
+      }
+    default:
+      throw unexpectedToken()
     }
+
+    // Deinitializers don't have arguments or return types.
     if case .deinitializer = kind {
     } else {
       (genericArgs, args, returnType, hasVarArgs) = try parseFuncSignature()
     }
+
+    // Try to parse a body.
     var body: CompoundStmt? = nil
     if case .leftBrace = peek() {
       body = try parseCompoundStmt()
@@ -80,6 +81,9 @@ extension Parser {
         returnType = type!.ref()
       }
     }
+
+    // Create a function based on what we parsed.
+
     switch kind {
     case .operator(let op):
       return OperatorDecl(op: op,
@@ -93,14 +97,15 @@ extension Parser {
     case .subscript:
       return SubscriptDecl(returnType: returnType,
                            args: args,
-                           parentType: type!,
                            genericParams: genericArgs,
+                           parentType: type!,
                            body: body,
                            modifiers: modifiers,
                            sourceRange: range(start: startLoc))
     case .initializer:
       return InitializerDecl(parentType: type!,
                              args: args,
+                             genericParams: genericArgs,
                              returnType: returnType,
                              body: body,
                              modifiers: modifiers,
@@ -113,39 +118,32 @@ extension Parser {
       return MethodDecl(name: name,
                         parentType: type!,
                         args: args,
+                        genericParams: genericArgs,
                         returnType: returnType,
                         body: body,
                         modifiers: modifiers,
                         hasVarArgs: hasVarArgs,
                         sourceRange: range(start: startLoc))
-    case .staticMethod:
-      return MethodDecl(name: name,
-                        parentType: type!,
-                        args: args,
-                        returnType: returnType,
-                        body: body,
-                        modifiers: modifiers,
-                        isStatic: true,
-                        hasVarArgs: hasVarArgs,
-                        sourceRange: range(start: startLoc))
+    case .protocolMethod:
+      return ProtocolMethodDecl(name: name,
+                                parentType: type!,
+                                args: args,
+                                genericParams: genericArgs,
+                                returnType: returnType,
+                                body: body,
+                                modifiers: modifiers,
+                                hasVarArgs: hasVarArgs,
+                                sourceRange: range(start: startLoc))
     default:
       return FuncDecl(name: name,
                       returnType: returnType,
                       args: args,
+                      genericParams: genericArgs,
                       body: body,
                       modifiers: modifiers,
                       hasVarArgs: hasVarArgs,
                       sourceRange: range(start: startLoc))
     }
-    return FuncDecl(name: name,
-                    returnType: returnType,
-                    args: args,
-                    genericParams: genericArgs,
-                    kind: kind,
-                    body: body,
-                    modifiers: modifiers,
-                    hasVarArgs: hasVarArgs,
-                    sourceRange: range(start: startLoc))
   }
   
   func parseFuncSignature() throws -> (genericArgs: [GenericParamDecl], args: [ParamDecl], ret: TypeRefExpr, hasVarArgs: Bool) {
