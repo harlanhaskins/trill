@@ -13,6 +13,9 @@ enum ParseError: Error, CustomStringConvertible {
   case unexpectedExpression(expected: String)
   case duplicateDeinit
   case invalidAttribute(DeclModifier, DeclKind)
+  case duplicateSetter
+  case duplicateGetter
+  case computedPropertyRequiresType
   case globalSubscript
   
   var description: String {
@@ -33,6 +36,12 @@ enum ParseError: Error, CustomStringConvertible {
       return "'\(attr)' is not valid on \(kind)s"
     case .globalSubscript:
       return "subscript is only valid inside a type"
+    case .duplicateSetter:
+      return "only one setter is allowed per property"
+    case .duplicateGetter:
+      return "only one getter is allowed per property"
+    case .computedPropertyRequiresType:
+      return "computed properties require an explicit type"
     }
   }
 }
@@ -155,7 +164,7 @@ class Parser {
   }
   
   func backtrack(_ n: Int = 1) {
-    tokenIndex -= n
+    tokenIndex -= 1
   }
   
   func parseTopLevel(into context: ASTContext) throws {
@@ -285,10 +294,16 @@ class Parser {
   
   /// Compound Statement
   ///
-  /// { [<if-expr> | <while-expr> | <var-assign-expr> | <return-expr> | <val-expr>];* }
-  func parseCompoundStmt() throws -> CompoundStmt {
+  /// { [<stmt>]* }
+  func parseCompoundStmt(leftBraceOptional: Bool = false) throws -> CompoundStmt {
     let startLoc = sourceLoc
-    try consume(.leftBrace)
+    if leftBraceOptional {
+      if case .leftBrace = peek() {
+        consumeToken()
+      }
+    } else {
+      try consume(.leftBrace)
+    }
     let stmts = try parseStatements(terminators: [.rightBrace])
     consumeToken()
     return CompoundStmt(stmts: stmts, sourceRange: range(start: startLoc))

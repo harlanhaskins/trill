@@ -241,7 +241,7 @@ class SizeofExpr: Expr {
 
 class SubscriptExpr: FuncCallExpr, LValue {}
 
-class FieldLookupExpr: GenericContainingExpr, LValue {
+class PropertyRefExpr: GenericContainingExpr, LValue {
   let lhs: Expr
   var decl: Decl? = nil
   var typeDecl: TypeDecl? = nil

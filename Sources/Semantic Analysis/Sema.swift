@@ -39,17 +39,17 @@ class Sema: ASTTransformer, Pass {
     for expr in context.types {
       let oldBindings = varBindings
       defer { varBindings = oldBindings }
-      var fieldNames = Set<String>()
-      for field in expr.fields {
-        field.kind = .property(expr)
-        if fieldNames.contains(field.name.name) {
-          error(SemaError.duplicateField(name: field.name,
+      var propertyNames = Set<String>()
+      for property in expr.properties {
+        property.kind = .property(expr)
+        if propertyNames.contains(property.name.name) {
+          error(SemaError.duplicateField(name: property.name,
                                          type: expr.type),
-                loc: field.startLoc,
+                loc: property.startLoc,
                 highlights: [ expr.name.range ])
           continue
         }
-        fieldNames.insert(field.name.name)
+        propertyNames.insert(property.name.name)
       }
       var methodNames = Set<String>()
       for method in expr.methods + expr.staticMethods {
@@ -271,14 +271,14 @@ class Sema: ASTTransformer, Pass {
     return nil
   }
   
-  override func visitFieldLookupExpr(_ expr: FieldLookupExpr) {
-    _ = visitFieldLookupExpr(expr, callArgs: nil)
+  override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
+    _ = visitPropertyRefExpr(expr, callArgs: nil)
   }
   
   /// - returns: true if the resulting decl is a field of function type,
   ///            instead of a method
-  func visitFieldLookupExpr(_ expr: FieldLookupExpr, callArgs: [Argument]?) -> FieldKind {
-    super.visitFieldLookupExpr(expr)
+  func visitPropertyRefExpr(_ expr: PropertyRefExpr, callArgs: [Argument]?) -> FieldKind {
+    super.visitPropertyRefExpr(expr)
     guard let type = expr.lhs.type else {
       // An error will already have been thrown from here
       return .property
@@ -315,18 +315,18 @@ class Sema: ASTTransformer, Pass {
     }
     let candidateMethods = typeDecl.methods(named: expr.name.name)
     if let callArgs = callArgs,
-       let index = typeDecl.indexOf(fieldName: expr.name) {
-      let field = typeDecl.fields[index]
-      if case .function(let args, _) = field.type {
+       let index = typeDecl.indexOfProperty(named: expr.name) {
+      let property = typeDecl.properties[index]
+      if case .function(let args, _) = property.type {
         let types = callArgs.flatMap { $0.val.type }
         if types.count == callArgs.count && args == types {
-          expr.decl = field
-          expr.type = field.type
+          expr.decl = property
+          expr.type = property.type
           return .property
         }
       }
     }
-    if let decl = typeDecl.field(named: expr.name.name) {
+    if let decl = typeDecl.property(named: expr.name.name) {
       expr.decl = decl
       expr.type = decl.type
       return .property
@@ -346,7 +346,7 @@ class Sema: ASTTransformer, Pass {
         return .property
       }
     } else {
-      error(SemaError.unknownField(typeDecl: typeDecl, expr: expr),
+      error(SemaError.unknownProperty(typeDecl: typeDecl, expr: expr),
             loc: expr.startLoc,
             highlights: [ expr.name.range ])
       return .property
@@ -618,13 +618,13 @@ class Sema: ASTTransformer, Pass {
     var setLHSDecl: (Decl) -> Void = {_ in }
     
     switch expr.lhs {
-    case let lhs as FieldLookupExpr:
+    case let lhs as PropertyRefExpr:
       name = lhs.name
-      let fieldKind = visitFieldLookupExpr(lhs, callArgs: expr.args)
+      let propertyKind = visitPropertyRefExpr(lhs, callArgs: expr.args)
       guard let typeDecl = lhs.typeDecl else {
         return
       }
-      switch fieldKind {
+      switch propertyKind {
       case .property:
         if case .function(var args, let ret)? = lhs.type {
           candidates.append(context.implicitDecl(args: args, ret: ret))
@@ -693,7 +693,7 @@ class Sema: ASTTransformer, Pass {
     expr.decl = decl
     expr.type = decl.returnType.type
     
-    if let lhs = expr.lhs as? FieldLookupExpr {
+    if let lhs = expr.lhs as? PropertyRefExpr {
       if case .immutable(let culprit) = context.mutability(of: lhs),
         decl.has(attribute: .mutating), decl is MethodDecl {
         error(SemaError.assignToConstant(name: culprit),

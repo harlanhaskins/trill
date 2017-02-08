@@ -163,7 +163,7 @@ extension Parser {
             let genericParamList = try? attempt(try parseGenericParams()) {
             genericParams = genericParamList
           }
-          expr = FieldLookupExpr(lhs: expr,
+          expr = PropertyRefExpr(lhs: expr,
                                  name: field,
                                  dotLoc: dotToken.range.start)
                                  genericParams: genericParams,

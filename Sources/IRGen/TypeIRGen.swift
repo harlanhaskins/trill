@@ -18,7 +18,7 @@ extension IRGenerator {
     }
     let structure = builder.createStruct(name: expr.name.name)
     typeIRBindings[expr.type] = structure
-    let fieldTypes = expr.fields.map { resolveLLVMType($0.type) }
+    let fieldTypes = expr.properties.map { resolveLLVMType($0.type) }
     structure.setBody(fieldTypes)
     
     for method in expr.methods + expr.staticMethods {
@@ -62,7 +62,7 @@ extension IRGenerator {
     var pointerLevel = 0
     let fullName = "\(type.rootType)"
     let name = Mangler.mangle(type)
-    var fields = [(String?, DataType)]()
+    var properties = [(String?, DataType)]()
     switch type {
     case .pointer:
       pointerLevel = type.pointerLevel()
@@ -70,9 +70,12 @@ extension IRGenerator {
       guard let decl = context.decl(for: type) else {
         fatalError("no decl?")
       }
-      fields = decl.fields.map { ($0.name.name, $0.type) }
+      properties = decl.properties
+                       .lazy
+                       .filter { !$0.isComputed }
+                       .map { ($0.name.name, $0.type) }
     case .tuple(let types):
-      fields = types.map { (nil, $0) }
+      properties = types.map { (nil, $0) }
     default:
       break
     }
@@ -93,33 +96,33 @@ extension IRGenerator {
     var global = builder.addGlobal(metaName, type: metaType)
     typeMetadataMap[type] = global
     
-    let fieldMetaType = StructType(elementTypes: [
+    let propertyMetaType = StructType(elementTypes: [
       PointerType.toVoid,   // name string
       PointerType.toVoid,   // field type metadata
       IntType.int64         // field count
     ])
     
-    var fieldVals = [IRValue]()
-    for (idx, (fieldName, type)) in fields.enumerated() {
+    var propertyVals = [IRValue]()
+    for (idx, (propName, type)) in properties.enumerated() {
       let meta = codegenTypeMetadata(type)
       
       let name: IRValue
-      if let fieldName = fieldName {
-        name = codegenGlobalStringPtr(fieldName)
+      if let propName = propName {
+        name = codegenGlobalStringPtr(propName)
       } else {
         name = PointerType.toVoid.null()
       }
-      fieldVals.append(StructType.constant(values: [
+      propertyVals.append(StructType.constant(values: [
         builder.buildBitCast(name, type: PointerType.toVoid),
         builder.buildBitCast(meta, type: PointerType.toVoid),
         IntType.int64.constant(
           layout.offsetOfElement(at: idx, type: irType as! StructType))
       ]))
     }
-    let fieldVec = ArrayType.constant(fieldVals, type: fieldMetaType)
+    let propVec = ArrayType.constant(propertyVals, type: propertyMetaType)
     
-    var globalFieldVec = builder.addGlobal("\(metaName).fields.metadata", type: fieldVec.type)
-    globalFieldVec.initializer = fieldVec
+    var globalFieldVec = builder.addGlobal("\(metaName).fields.metadata", type: propVec.type)
+    globalFieldVec.initializer = propVec
     
     let gep = builder.buildInBoundsGEP(globalFieldVec, indices: [IntType.int64.zero()])
     
@@ -128,7 +131,7 @@ extension IRGenerator {
       builder.buildBitCast(gep, type: PointerType.toVoid),
       IntType.int8.constant(storage(for: type) == .reference ? 1 : 0, signExtend: true),
       IntType.int64.constant(layout.sizeOfTypeInBits(irType), signExtend: true),
-      IntType.int64.constant(fields.count, signExtend: true),
+      IntType.int64.constant(properties.count, signExtend: true),
       IntType.int64.constant(pointerLevel, signExtend: true),
     ])
     return global
@@ -137,7 +140,6 @@ extension IRGenerator {
   /// Declares the prototypes of all methods in an extension.
   /// - parameters:
   ///   - expr: The ExtensionDecl to declare.
-  @discardableResult
   func codegenExtensionPrototype(_ expr: ExtensionDecl) {
     for method in expr.methods + expr.staticMethods {
       codegenFunctionPrototype(method)
@@ -155,6 +157,7 @@ extension IRGenerator {
     _ = expr.deinitializer.map(visitFuncDecl)
     _ = expr.subscripts.map(visitFuncDecl)
     _ = expr.staticMethods.map(visitFuncDecl)
+    _ = expr.properties.map(visitPropertyDecl)
     
     return nil
   }
@@ -171,7 +174,7 @@ extension IRGenerator {
   }
   
   /// Gives a valid pointer to any given Expr.
-  /// FieldLookupExpr: it will yield a getelementptr instruction.
+  /// PropertyRefExpr: it will yield a getelementptr instruction.
   /// VarExpr: it'll look through any variable bindings to find the
   ///          pointer that represents the value. For reference bindings, it'll
   ///          yield the underlying pointer. For value bindings, it'll yield the
@@ -197,7 +200,7 @@ extension IRGenerator {
       return alloca.ref
     }
     switch expr {
-    case let expr as FieldLookupExpr:
+    case let expr as PropertyRefExpr:
       return elementPtr(expr)
     case let expr as VarExpr:
       guard let binding = resolveVarBinding(expr) else {
@@ -228,11 +231,11 @@ extension IRGenerator {
     }
   }
   
-  /// Builds a getelementptr instruction for a FieldLookupExpr.
+  /// Builds a getelementptr instruction for a PropertyRefExpr.
   /// This will perform the arithmetic necessary to get at a struct field.
-  func elementPtr(_ expr: FieldLookupExpr) -> IRValue {
+  func elementPtr(_ expr: PropertyRefExpr) -> IRValue {
     guard let decl = expr.typeDecl else { fatalError("unresolved type") }
-    guard let idx = decl.indexOf(fieldName: expr.name) else {
+    guard let idx = decl.indexOfProperty(named: expr.name) else {
       fatalError("invalid index in decl fields")
     }
     var ptr = resolvePtr(expr.lhs)
@@ -244,7 +247,7 @@ extension IRGenerator {
     return builder.buildStructGEP(ptr, index: idx, name: "\(expr.name)-gep")
   }
   
-  func visitFieldLookupExpr(_ expr: FieldLookupExpr) -> Result {
+  func visitPropertyRefExpr(_ expr: PropertyRefExpr) -> Result {
     return builder.buildLoad(elementPtr(expr), name: expr.name.name)
   }
 }

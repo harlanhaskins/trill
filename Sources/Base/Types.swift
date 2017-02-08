@@ -178,12 +178,12 @@ class Decl: ASTNode {
 
 class TypeDecl: Decl {
   private(set) var genericParams: [GenericParamDecl]
-  private(set) var fields: [VarAssignDecl]
+  private(set) var properties: [PropertyDecl]
   private(set) var methods = [MethodDecl]()
   private(set) var staticMethods = [MethodDecl]()
   private(set) var subscripts = [SubscriptDecl]()
   private(set) var initializers = [InitializerDecl]()
-  private var fieldDict = [String: DataType]()
+  private var propertyDict = [String: DataType]()
   private var methodDict = [String: [MethodDecl]]()
   private var staticMethodDict = [String: [MethodDecl]]()
   var conformances: [TypeRefExpr]
@@ -191,9 +191,9 @@ class TypeDecl: Decl {
   let name: Identifier
   let deinitializer: DeinitializerDecl?
   
-  func indexOf(fieldName: Identifier) -> Int? {
-    return fields.index { field in
-      field.name == fieldName
+  func indexOfProperty(named name: Identifier) -> Int? {
+    return properties.index { property in
+      property.name == name
     }
   }
   
@@ -219,9 +219,9 @@ class TypeDecl: Decl {
     self.subscripts.append(decl)
   }
   
-  func addField(_ field: VarAssignDecl) {
-    fields.append(field)
-    fieldDict[field.name.name] = field.type
+  func addProperty(_ property: PropertyDecl) {
+    properties.append(property)
+    propertyDict[property.name.name] = property.type
   }
   
   func methods(named name: String) -> [MethodDecl] {
@@ -232,28 +232,32 @@ class TypeDecl: Decl {
     return staticMethodDict[name] ?? []
   }
   
-  func field(named name: String) -> VarAssignDecl? {
-    for field in fields where field.name.name == name { return field }
+  func property(named name: String) -> VarAssignDecl? {
+    for property in properties where property.name.name == name {
+      return property
+    }
     return nil
   }
   
   func typeOf(_ field: String) -> DataType? {
-    return fieldDict[field]
+    return propertyDict[field]
   }
   
   func createRef() -> TypeRefExpr {
     return TypeRefExpr(type: self.type, name: self.name)
   }
   
-  static func synthesizeInitializer(fields: [VarAssignDecl],
+  static func synthesizeInitializer(properties: [VarAssignDecl],
                                     genericParams: [GenericParamDecl],
                                     type: DataType,
                                     modifiers: [DeclModifier]) -> InitializerDecl {
-    let initFields = fields.map { field in
-      ParamDecl(name: field.name, type: field.typeRef, externalName: field.name)
+    let initProperties = properties.map { property in
+      ParamDecl(name: property.name,
+                type: property.typeRef,
+                externalName: property.name)
     }
     return InitializerDecl(parentType: type,
-                           args: initFields,
+                           args: initProperties,
                            genericParams: genericParams,
                            returnType: type.ref(),
                            body: CompoundStmt(stmts: []),
@@ -261,7 +265,7 @@ class TypeDecl: Decl {
   }
   
   init(name: Identifier,
-       fields: [VarAssignDecl],
+       properties: [PropertyDecl],
        methods: [MethodDecl] = [],
        staticMethods: [MethodDecl] = [],
        initializers: [InitializerDecl] = [],
@@ -271,11 +275,11 @@ class TypeDecl: Decl {
        deinit: DeinitializerDecl? = nil,
        genericParams: [GenericParamDecl] = [],
        sourceRange: SourceRange? = nil) {
-    self.fields = fields
+    self.properties = properties
     self.initializers = initializers
     let type = DataType(name: name.name)
     self.deinitializer = `deinit`
-    let synthInit = TypeDecl.synthesizeInitializer(fields: fields,
+    let synthInit = TypeDecl.synthesizeInitializer(properties: properties,
                                                    genericParams: genericParams,
                                                    type: type,
                                                    modifiers: modifiers + [.implicit])
@@ -293,8 +297,8 @@ class TypeDecl: Decl {
     for subscriptDecl in subscripts {
       self.addSubscript(subscriptDecl)
     }
-    for field in fields {
-      fieldDict[field.name.name] = field.type
+    for property in properties {
+      propertyDict[property.name.name] = property.type
     }
   }
   
@@ -307,6 +311,63 @@ class DeclRefExpr<DeclType: Decl>: Expr {
   weak var decl: DeclType? = nil
   override init(sourceRange: SourceRange?) {
     super.init(sourceRange: sourceRange)
+  }
+}
+
+class PropertyDecl: VarAssignDecl {
+  let getter: PropertyGetterDecl?
+  let setter: PropertySetterDecl?
+
+  var isComputed: Bool {
+    return getter != nil || setter != nil
+  }
+
+  init(name: Identifier, type: TypeRefExpr?,
+       mutable: Bool, rhs: Expr?, modifiers: [DeclModifier],
+       getter: PropertyGetterDecl?, setter: PropertySetterDecl?,
+       sourceRange: SourceRange? = nil) {
+    self.getter = getter
+    self.setter = setter
+
+    super.init(name: name, typeRef: type,
+               rhs: rhs, modifiers: modifiers,
+               mutable: mutable, sourceRange: sourceRange)
+  }
+}
+
+class PropertyGetterDecl: MethodDecl {
+  let propertyName: Identifier
+  init(parentType: DataType, propertyName: Identifier, type: TypeRefExpr, body: CompoundStmt, sourceRange: SourceRange? = nil) {
+    self.propertyName = propertyName
+    super.init(name: "",
+               parentType: parentType,
+               args: [],
+               genericParams: [],
+               returnType: type,
+               body: body,
+               modifiers: [],
+               hasVarArgs: false,
+               sourceRange: sourceRange)
+  }
+}
+
+class PropertySetterDecl: MethodDecl {
+  let propertyName: Identifier
+  init(parentType: DataType,
+       propertyName: Identifier,
+       type: TypeRefExpr,
+       body: CompoundStmt,
+       sourceRange: SourceRange? = nil) {
+    self.propertyName = propertyName
+    super.init(name: "",
+               parentType: parentType,
+               args: [ParamDecl(name: "newValue", type: type)],
+               genericParams: [],
+               returnType: DataType.void.ref(),
+               body: body,
+               modifiers: [],
+               hasVarArgs: false,
+               sourceRange: sourceRange)
   }
 }
 

@@ -98,19 +98,19 @@ public class ASTContext {
   private var funcDeclMap = [String: [FuncDecl]]()
   private var protocolDeclMap = [String: ProtocolDecl]()
   private var typeDeclMap: [DataType: TypeDecl] = [
-    .int8: TypeDecl(name: "Int8",  fields: []),
-    .int16: TypeDecl(name: "Int16",  fields: []),
-    .int32: TypeDecl(name: "Int32",  fields: []),
-    .int64: TypeDecl(name: "Int",  fields: []),
-    .uint8: TypeDecl(name: "UInt8",  fields: []),
-    .uint16: TypeDecl(name: "UInt16",  fields: []),
-    .uint32: TypeDecl(name: "UInt32",  fields: []),
-    .uint64: TypeDecl(name: "UInt",  fields: []),
-    .double: TypeDecl(name: "Double",  fields: []),
-    .float: TypeDecl(name: "Float",  fields: []),
-    .float80: TypeDecl(name: "Float80",  fields: []),
-    .bool: TypeDecl(name: "Bool", fields: []),
-    .void: TypeDecl(name: "Void", fields: [])
+    .int8: TypeDecl(name: "Int8",  properties: []),
+    .int16: TypeDecl(name: "Int16",  properties: []),
+    .int32: TypeDecl(name: "Int32",  properties: []),
+    .int64: TypeDecl(name: "Int",  properties: []),
+    .uint8: TypeDecl(name: "UInt8",  properties: []),
+    .uint16: TypeDecl(name: "UInt16",  properties: []),
+    .uint32: TypeDecl(name: "UInt32",  properties: []),
+    .uint64: TypeDecl(name: "UInt",  properties: []),
+    .double: TypeDecl(name: "Double",  properties: []),
+    .float: TypeDecl(name: "Float",  properties: []),
+    .float80: TypeDecl(name: "Float80",  properties: []),
+    .bool: TypeDecl(name: "Bool", properties: []),
+    .void: TypeDecl(name: "Void", properties: [])
   ]
   
   private static let numericTypes: [DataType] = [.int8, .int16, .int32, .int64,
@@ -504,9 +504,9 @@ public class ASTContext {
   
   func containsInLayout(type: DataType, typeDecl: TypeDecl, base: Bool = false) -> Bool {
     if !base && matchRank(typeDecl.type, type) != nil { return true }
-    for field in typeDecl.fields {
-      if case .pointer = field.type { continue }
-      if let decl = decl(for: field.type),
+    for property in typeDecl.properties {
+      if case .pointer = property.type { continue }
+      if let decl = decl(for: property.type),
         !decl.isIndirect,
         containsInLayout(type: type, typeDecl: decl) {
         return true
@@ -608,7 +608,7 @@ public class ASTContext {
     switch expr {
     case let expr as VarExpr:
       return mutability(of: expr)
-    case let expr as FieldLookupExpr:
+    case let expr as PropertyRefExpr:
       return mutability(of: expr)
     case let expr as SubscriptExpr:
       return mutability(of: expr.lhs)
@@ -644,7 +644,7 @@ public class ASTContext {
     }
   }
   
-  func mutability(of expr: FieldLookupExpr) -> Mutability {
+  func mutability(of expr: PropertyRefExpr) -> Mutability {
     guard let decl = expr.decl else { fatalError("no decl in mutability check") }
     let lhsMutability = mutability(of: expr.lhs)
     guard case .mutable = lhsMutability else {

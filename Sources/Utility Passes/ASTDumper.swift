@@ -24,7 +24,7 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
   required init(context: ASTContext) {
     fatalError("Cannot instantiate with just context")
   }
-    
+
   func printAttributes(_ attributes: [String: Any]) {
     var attrs = [(String, String)]()
     for key in attributes.keys.sorted() {
@@ -200,6 +200,11 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
       super.visitTypeDecl(decl)
     }
   }
+  override func visitPropertyDecl(_ decl: PropertyDecl) -> Void {
+    printNode(decl) {
+      super.visitPropertyDecl(decl)
+    }
+  }
   override func visitExtensionDecl(_ decl: ExtensionDecl) -> Result {
     printNode(decl) {
       super.visitExtensionDecl(decl)
@@ -255,9 +260,9 @@ class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
       super.visitPrefixOperatorExpr(expr)
     }
   }
-  override func visitFieldLookupExpr(_ expr: FieldLookupExpr) -> Result {
+  override func visitPropertyRefExpr(_ expr: PropertyRefExpr) -> Result {
     printNode(expr) {
-      super.visitFieldLookupExpr(expr)
+      super.visitPropertyRefExpr(expr)
     }
   }
   override func visitNilExpr(_ expr: NilExpr) {

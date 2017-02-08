@@ -185,8 +185,8 @@ class ASTTransformer: ASTVisitor {
       for method in decl.staticMethods {
         visitFuncDecl(method)
       }
-      for field in decl.fields {
-        visitVarAssignDecl(field)
+      for property in decl.properties {
+        visitPropertyDecl(property)
       }
       for subscriptDecl in decl.subscripts {
         visitFuncDecl(subscriptDecl)
@@ -196,6 +196,16 @@ class ASTTransformer: ASTVisitor {
       }
     }
   }
+
+  func visitPropertyDecl(_ decl: PropertyDecl) {
+    if let getter = decl.getter {
+      visitFuncDecl(getter)
+    }
+    if let setter = decl.setter {
+      visitFuncDecl(setter)
+    }
+  }
+
   func visitExtensionDecl(_ decl: ExtensionDecl) {
     decl.methods.forEach(visitFuncDecl)
     decl.subscripts.forEach(visitFuncDecl)
@@ -278,7 +288,7 @@ class ASTTransformer: ASTVisitor {
     visit(expr.rhs)
   }
   
-  func visitFieldLookupExpr(_ expr: FieldLookupExpr) {
+  func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     visit(expr.lhs)
   }
   

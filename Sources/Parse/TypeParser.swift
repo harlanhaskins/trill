@@ -34,7 +34,7 @@ extension Parser {
       conformances = try parseSeparated(by: .comma, until: .leftBrace, parseType)
     }
     try consume(.leftBrace)
-    var fields = [VarAssignDecl]()
+    var properties = [PropertyDecl]()
     var methods = [MethodDecl]()
     var staticMethods = [MethodDecl]()
     var subscripts = [SubscriptDecl]()
@@ -60,9 +60,9 @@ extension Parser {
       case .Init:
         initializers.append(try parseFuncDecl(modifiers, forType: type) as! InitializerDecl)
       case .var, .let:
-        fields.append(try parseVarAssignDecl(modifiers: modifiers))
+        properties.append(try parsePropertyDecl(modifiers, forType: type))
       case .subscript:
-          subscripts.append(try parseFuncDecl(modifiers, forType: type) as! SubscriptDecl)
+        subscripts.append(try parseFuncDecl(modifiers, forType: type) as! SubscriptDecl)
       case .deinit:
         if deinitializer != nil {
           throw Diagnostic.error(ParseError.duplicateDeinit, loc: sourceLoc)
@@ -73,7 +73,8 @@ extension Parser {
       }
       try consumeAtLeastOneLineSeparator()
     }
-    return TypeDecl(name: name, fields: fields,
+    return TypeDecl(name: name,
+                    properties: properties,
                     methods: methods,
                     staticMethods: staticMethods,
                     initializers: initializers,
@@ -84,7 +85,102 @@ extension Parser {
                     genericParams: genericParams,
                     sourceRange: range(start: startLoc))
   }
-  
+
+  func parsePropertyDecl(_ modifiers: [DeclModifier],
+                         forType type: DataType) throws -> PropertyDecl {
+    let startLoc = sourceLoc
+    let mutable: Bool
+    if case .var = peek() {
+      mutable = true
+    } else if case .let = peek() {
+      mutable = false
+    } else {
+      throw unexpectedToken()
+    }
+    consumeToken()
+    let id = try parseIdentifier()
+    var rhs: Expr? = nil
+    var getter: PropertyGetterDecl? = nil
+    var setter: PropertySetterDecl? = nil
+    var propType: TypeRefExpr?
+    if case .colon = peek() {
+      consumeToken()
+      propType = try parseType()
+    }
+    switch peek() {
+    case .operator(op: .assign):
+      consumeToken()
+      rhs = try parseValExpr()
+    case .leftBrace:
+      guard let propType = propType else {
+        throw Diagnostic.error(ParseError.computedPropertyRequiresType,
+                               loc: sourceLoc)
+      }
+      consumeToken()
+      accessors: while true {
+        switch peek() {
+        case .identifier("get"):
+          guard getter == nil else {
+            throw Diagnostic.error(ParseError.duplicateGetter,
+                                   loc: sourceLoc)
+          }
+          getter = try parsePropertyGetter(type: type, name: id, propType: propType)
+        case .identifier("set"):
+          guard setter == nil else {
+            throw Diagnostic.error(ParseError.duplicateSetter,
+                                   loc: sourceLoc)
+          }
+          setter = try parsePropertySetter(type: type, name: id, propType: propType)
+        case .rightBrace:
+          consumeToken()
+          break accessors
+        default:
+          let loc = sourceLoc
+          let body = try parseCompoundStmt(leftBraceOptional: true)
+          getter = PropertyGetterDecl(parentType: type,
+                                      propertyName: id,
+                                      type: propType,
+                                      body: body,
+                                      sourceRange: range(start: loc))
+          break accessors
+        }
+      }
+    default:
+      break
+    }
+    return PropertyDecl(name: id,
+                        type: propType,
+                        mutable: mutable,
+                        rhs: rhs,
+                        modifiers: modifiers,
+                        getter: getter,
+                        setter: setter,
+                        sourceRange: range(start: startLoc))
+  }
+
+  func parsePropertyGetter(type: DataType, name: Identifier, propType: TypeRefExpr) throws -> PropertyGetterDecl {
+    let loc = sourceLoc
+    try consume(.identifier("get"))
+    let body = try parseCompoundStmt()
+
+    return PropertyGetterDecl(parentType: type,
+                              propertyName: name,
+                              type: propType,
+                              body: body,
+                              sourceRange: range(start: loc))
+  }
+
+  func parsePropertySetter(type: DataType, name: Identifier, propType: TypeRefExpr) throws -> PropertySetterDecl {
+    let loc = sourceLoc
+    try consume(.identifier("set"))
+    let body = try parseCompoundStmt()
+    return PropertySetterDecl(parentType: type,
+                              propertyName: name,
+                              type: propType,
+                              body: body,
+                              sourceRange: range(start: loc))
+  }
+
   func parseSeparated<T>(by separator: TokenKind, until end: TokenKind, _ parser: () throws -> T) throws -> [T] {
     var values = [T]()
     while peek() != end {
@@ -192,7 +288,7 @@ extension Parser {
                                        isProtocol: true) as! ProtocolMethodDecl)
     }
     return ProtocolDecl(name: name,
-                        fields: [],
+                        properties: [],
                         methods: methods,
                         modifiers: [],
                         conformances: conformances,

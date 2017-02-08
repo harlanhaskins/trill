@@ -14,7 +14,7 @@ class GenericParamDecl: TypeDecl {
     }
     init(name: Identifier, constraints: [TypeRefExpr]) {
         super.init(name: name,
-                   fields: [],
+                   properties: [],
                    methods: [],
                    staticMethods: [],
                    initializers: [],

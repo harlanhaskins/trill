@@ -13,7 +13,7 @@ enum SemaError: Error, CustomStringConvertible {
   case unknownType(type: DataType)
   case unknownProtocol(name: Identifier)
   case callNonFunction(type: DataType?)
-  case unknownField(typeDecl: TypeDecl, expr: FieldLookupExpr)
+  case unknownProperty(typeDecl: TypeDecl, expr: PropertyRefExpr)
   case unknownVariableName(name: Identifier)
   case invalidOperands(op: BuiltinOperator, invalid: DataType)
   case cannotSubscript(type: DataType)
@@ -40,7 +40,7 @@ enum SemaError: Error, CustomStringConvertible {
   case referenceSelfInProp(name: Identifier)
   case poundFunctionOutsideFunction
   case assignToConstant(name: Identifier?)
-  case deinitOnStruct(name: Identifier?)
+  case deinitOnStruct(name: Identifier)
   case incompleteTypeAccess(type: DataType, operation: String)
   case indexIntoNonTuple
   case outOfBoundsTupleField(field: Int, max: Int)
@@ -61,8 +61,8 @@ enum SemaError: Error, CustomStringConvertible {
       return "unknown protocol '\(name)'"
     case .unknownVariableName(let name):
       return "unknown variable '\(name)'"
-    case .unknownField(let typeDecl, let expr):
-      return "unknown field name '\(expr.name)' in type '\(typeDecl.type)'"
+    case .unknownProperty(let typeDecl, let expr):
+      return "unknown property '\(expr.name)' in type '\(typeDecl.type)'"
     case .invalidOperands(let op, let invalid):
       return "invalid argument for operator '\(op)' (got '\(invalid)')"
     case .cannotSubscript(let type):

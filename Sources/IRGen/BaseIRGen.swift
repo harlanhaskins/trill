@@ -337,7 +337,6 @@ class IRGenerator: ASTVisitor, Pass {
   /// 2. Visit all types, extensions, and functions, and declare their members.
   /// - note: Global variables are declared lazily as they're accessed, so
   ///         they should not be emitted here.
-  @discardableResult
   func run(in context: ASTContext) {
     for type in context.types {
       codegenTypePrototype(type)
@@ -494,6 +493,16 @@ class IRGenerator: ASTVisitor, Pass {
     currentContinueTarget = oldContinueTarget
     varIRBindings = oldVarIRBindings
   }
+
+  func visitPropertyDecl(_ decl: PropertyDecl) -> IRValue? {
+    if let getter = decl.getter {
+      _ = visitFuncDecl(getter)
+    }
+    if let setter = decl.setter {
+      _ = visitFuncDecl(setter)
+    }
+    return nil
+  }
   
   /// Will emit a diagnostic
   func visitClosureExpr(_ expr: ClosureExpr) -> Result {
@@ -529,7 +538,7 @@ extension FunctionPassManager {
 
     if level == O2 { return }
     
-    add(.loopUnroll, .tailCallElimination)
+    add(.tailCallElimination, .loopUnroll)
   }
 }
 

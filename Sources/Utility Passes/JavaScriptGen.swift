@@ -331,8 +331,8 @@ class JavaScriptGen<StreamType: TextOutputStream>: ASTTransformer {
       stream.write("\(mangled)")
     }
     stream.write("(")
-    if let field = expr.lhs as? FieldLookupExpr, !isForeign {
-      visit(field.lhs)
+    if let property = expr.lhs as? PropertyRefExpr, !isForeign {
+      visit(property.lhs)
       if expr.args.count > 0 {
         stream.write(", ")
       }
@@ -350,7 +350,7 @@ class JavaScriptGen<StreamType: TextOutputStream>: ASTTransformer {
     }
   }
   
-  override func visitFieldLookupExpr(_ expr: FieldLookupExpr) {
+  override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     if !(expr.lhs is VarExpr) {
       withParens {
         visit(expr.lhs)

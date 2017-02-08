@@ -217,6 +217,7 @@
 		DC4F08BE1E2F113600CE19E6 /* libLLVMX86Disassembler.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC4F087B1E2F113600CE19E6 /* libLLVMX86Disassembler.a */; };
 		DC4F08BF1E2F113600CE19E6 /* libLLVMX86Info.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC4F087C1E2F113600CE19E6 /* libLLVMX86Info.a */; };
 		DC4F08C01E2F113600CE19E6 /* libLLVMX86Utils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DC4F087D1E2F113600CE19E6 /* libLLVMX86Utils.a */; };
+		DC5D05581E43D3BA0022FA10 /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5D05571E43D3BA0022FA10 /* Constant.swift */; };
 		DC5EA0C41E15A10E00875545 /* VarBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C31E15A10E00875545 /* VarBinding.swift */; };
 		DC5EA0C61E16ED1200875545 /* ColoredStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C51E16ED1200875545 /* ColoredStream.swift */; };
 		DC5EA0C81E185C8300875545 /* StreamConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C71E185C8300875545 /* StreamConsumer.swift */; };
@@ -516,6 +517,7 @@
 		DC4F087D1E2F113600CE19E6 /* libLLVMX86Utils.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMX86Utils.a; path = ../../../../../../usr/local/Cellar/llvm/3.9.1/lib/libLLVMX86Utils.a; sourceTree = "<group>"; };
 		DC5996661D7A487C0040073F /* libLLVMDebugInfoCodeView.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMDebugInfoCodeView.a; path = ../../../../../../usr/local/llvm/lib/libLLVMDebugInfoCodeView.a; sourceTree = "<group>"; };
 		DC5996671D7A487C0040073F /* libLLVMDebugInfoDWARF.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMDebugInfoDWARF.a; path = ../../../../../../usr/local/llvm/lib/libLLVMDebugInfoDWARF.a; sourceTree = "<group>"; };
+		DC5D05571E43D3BA0022FA10 /* Constant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		DC5EA0C31E15A10E00875545 /* VarBinding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VarBinding.swift; sourceTree = "<group>"; };
 		DC5EA0C51E16ED1200875545 /* ColoredStream.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColoredStream.swift; sourceTree = "<group>"; };
 		DC5EA0C71E185C8300875545 /* StreamConsumer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StreamConsumer.swift; sourceTree = "<group>"; };
@@ -998,6 +1000,40 @@
 				C02F30B41E5D680600BC3890 /* VectorType.swift */,
 				C02F30B51E5D680600BC3890 /* VoidType.swift */,
 				C02F30B61E5D680600BC3890 /* X86MMXType.swift */,
+				DC4F07F71E2F110B00CE19E6 /* Alias.swift */,
+				DC4F07F81E2F110B00CE19E6 /* ArrayType.swift */,
+				DC5D05571E43D3BA0022FA10 /* Constant.swift */,
+				DC4F07F91E2F110B00CE19E6 /* BasicBlock.swift */,
+				DC4F07FA1E2F110B00CE19E6 /* FloatType.swift */,
+				DC4F07FB1E2F110B00CE19E6 /* Function.swift */,
+				DC4F07FC1E2F110B00CE19E6 /* FunctionType.swift */,
+				DC4F07FD1E2F110B00CE19E6 /* Global.swift */,
+				DC4F07FE1E2F110B00CE19E6 /* Initialization.swift */,
+				DC4F07FF1E2F110B00CE19E6 /* Instruction.swift */,
+				DC4F08001E2F110B00CE19E6 /* IntType.swift */,
+				DC4F08011E2F110B00CE19E6 /* IRBuilder.swift */,
+				DC4F08021E2F110B00CE19E6 /* IRGlobal.swift */,
+				DC4F08031E2F110B00CE19E6 /* IRType.swift */,
+				DC4F08041E2F110B00CE19E6 /* IRValue+Kinds.swift */,
+				DC4F08051E2F110B00CE19E6 /* IRValue.swift */,
+				DC4F08071E2F110B00CE19E6 /* LabelType.swift */,
+				DC4F08081E2F110B00CE19E6 /* Linkage.swift */,
+				DC4F08091E2F110B00CE19E6 /* MemoryBuffer.swift */,
+				DC4F080A1E2F110B00CE19E6 /* MetadataType.swift */,
+				DC4F080B1E2F110B00CE19E6 /* Module.swift */,
+				DC4F080C1E2F110B00CE19E6 /* OpCode.swift */,
+				DC4F080D1E2F110B00CE19E6 /* PassManager.swift */,
+				DC4F080E1E2F110B00CE19E6 /* PhiNode.swift */,
+				DC4F080F1E2F110B00CE19E6 /* PointerType.swift */,
+				DC4F08101E2F110B00CE19E6 /* StructType.swift */,
+				DC4F08111E2F110B00CE19E6 /* Switch.swift */,
+				DC4F08121E2F110B00CE19E6 /* TargetData.swift */,
+				DC4F08131E2F110B00CE19E6 /* TargetMachine.swift */,
+				DC4F08141E2F110B00CE19E6 /* TokenType.swift */,
+				DC4F08151E2F110B00CE19E6 /* Use.swift */,
+				DC4F08161E2F110B00CE19E6 /* VectorType.swift */,
+				DC4F08171E2F110B00CE19E6 /* VoidType.swift */,
+				DC4F08181E2F110B00CE19E6 /* X86MMXType.swift */,
 			);
 			name = LLVM;
 			path = LLVMSwift/Sources/LLVM;
@@ -1471,12 +1507,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-<<<<<<< a8ab515be3cdae9dc7a9f8dabb7fd25829b595dc
 				C02F30B71E5D680600BC3890 /* Alias.swift in Sources */,
 				DCEF07FF1DCD6BA90075FE15 /* ANSIColor.swift in Sources */,
 				C02F30B81E5D680600BC3890 /* ArrayType.swift in Sources */,
 				DC176FF91D6911A200FEFB85 /* ASTBase.swift in Sources */,
-=======
 				DC1770101D6911A200FEFB85 /* LLVMWrappers.cpp in Sources */,
 				DC4F08361E2F110B00CE19E6 /* TokenType.swift in Sources */,
 				DC4F081B1E2F110B00CE19E6 /* BasicBlock.swift in Sources */,
@@ -1579,6 +1613,18 @@
 				DC1BB6CC1D8F369400FE6BC7 /* Decl.swift in Sources */,
 				DC17700B1D6911A200FEFB85 /* StatementIRGen.swift in Sources */,
 				DC1770661D6913EF00FEFB85 /* StatementParser.swift in Sources */,
+				DC4F08191E2F110B00CE19E6 /* Alias.swift in Sources */,
+				DC4F08211E2F110B00CE19E6 /* Instruction.swift in Sources */,
+				DC4F08291E2F110B00CE19E6 /* LabelType.swift in Sources */,
+				DC4F082C1E2F110B00CE19E6 /* MetadataType.swift in Sources */,
+				DC176FFE1D6911A200FEFB85 /* Values.swift in Sources */,
+				DC4F083A1E2F110B00CE19E6 /* X86MMXType.swift in Sources */,
+				DC4F08311E2F110B00CE19E6 /* PointerType.swift in Sources */,
+				DC5D05581E43D3BA0022FA10 /* Constant.swift in Sources */,
+				DCEF07FF1DCD6BA90075FE15 /* ANSIColor.swift in Sources */,
+				DC4F08261E2F110B00CE19E6 /* IRValue+Kinds.swift in Sources */,
+				DC1770001D6911A200FEFB85 /* DiagnosticConsumer.swift in Sources */,
+				DC4F08231E2F110B00CE19E6 /* IRBuilder.swift in Sources */,
 				DC176FFC1D6911A200FEFB85 /* Statements.swift in Sources */,
 				DC176FFD1D6911A200FEFB85 /* Types.swift in Sources */,
 				DC1BB6CF1D8F36C800FE6BC7 /* Protocols.swift in Sources */,
@@ -1856,6 +1902,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_PEDANTIC = NO;
 				HEADER_SEARCH_PATHS = /usr/local/opt/llvm/include;
 				LD_RUNPATH_SEARCH_PATHS = "/usr/local/llvm/lib @executable_path";
 				LIBRARY_SEARCH_PATHS = (
@@ -1875,6 +1923,8 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_PEDANTIC = NO;
 				HEADER_SEARCH_PATHS = /usr/local/opt/llvm/include;
 				LD_RUNPATH_SEARCH_PATHS = "/usr/local/llvm/lib @executable_path";
 				LIBRARY_SEARCH_PATHS = (
