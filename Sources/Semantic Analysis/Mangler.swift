@@ -42,18 +42,20 @@ enum Mangler {
       s += "D" + mangle(d.parentType, root: false)
     case let d as InitializerDecl:
       s += "I" + mangle(d.parentType, root: false)
+    case let d as PropertyGetterDecl:
+      s += "g" + mangle(d.parentType, root: false)
+      s += d.propertyName.name.withCount
+      s += mangle(d.returnType.type!, root: false)
+      return s
+    case let d as PropertySetterDecl:
+      s += "s" + mangle(d.parentType, root: false)
+      s += d.propertyName.name.withCount
+      s += mangle(d.args[0].type, root: false)
+      return s
     case let d as MethodDecl:
       let sigil = d.has(attribute: .static) ? "m" : "M"
       s += sigil + mangle(d.parentType, root: false)
       s += d.name.name.withCount
-    case let d as PropertyGetterDecl:
-      s += "g" + mangle(d.parentType, root: false)
-      s += d.propertyName.name.withCount
-      s += mangle(d.type, root: false)
-    case let d as PropertySetterDecl:
-      s += "s" + mangle(d.parentType, root: false)
-      s += d.propertyName.name.withCount
-      s += mangle(d.type, root: false)
     case let d as OperatorDecl:
       s += "O"
       switch d.op {

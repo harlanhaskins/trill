@@ -248,6 +248,12 @@ extension IRGenerator {
   }
   
   func visitPropertyRefExpr(_ expr: PropertyRefExpr) -> Result {
+    if let propDecl = expr.decl as? PropertyDecl,
+       let getterDecl = propDecl.getter {
+      let implicitSelf = resolvePtr(expr.lhs)
+      let getterFn = codegenFunctionPrototype(getterDecl)
+      return builder.buildCall(getterFn, args: [implicitSelf])
+    }
     return builder.buildLoad(elementPtr(expr), name: expr.name.name)
   }
 }

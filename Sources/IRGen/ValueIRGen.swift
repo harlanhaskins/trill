@@ -312,6 +312,13 @@ extension IRGenerator {
       if case .any? = expr.lhs.type {
         rhs = codegenPromoteToAny(value: rhs, type: expr.rhs.type!)
       }
+      if let propRef = expr.lhs as? PropertyRefExpr,
+         let propDecl = propRef.decl as? PropertyDecl,
+         let propSetter = propDecl.setter {
+        let setterFn = codegenFunctionPrototype(propSetter)
+        let implicitSelf = resolvePtr(propRef.lhs)
+        return builder.buildCall(setterFn, args: [implicitSelf, rhs])
+      }
       let ptr = resolvePtr(expr.lhs)
       return builder.buildStore(rhs, to: ptr)
     } else if context.canBeNil(expr.lhs.type!) && expr.rhs is NilExpr {

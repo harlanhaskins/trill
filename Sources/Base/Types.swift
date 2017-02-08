@@ -247,17 +247,17 @@ class TypeDecl: Decl {
     return TypeRefExpr(type: self.type, name: self.name)
   }
   
-  static func synthesizeInitializer(properties: [VarAssignDecl],
+  static func synthesizeInitializer(properties: [PropertyDecl],
                                     genericParams: [GenericParamDecl],
                                     type: DataType,
                                     modifiers: [DeclModifier]) -> InitializerDecl {
-    let initProperties = properties.map { property in
-      ParamDecl(name: property.name,
-                type: property.typeRef,
-                externalName: property.name)
-    }
+    let initProperties = properties.lazy
+                                   .filter { !$0.isComputed }
+                                   .map { ParamDecl(name: $0.name,
+                                                    type: $0.typeRef,
+                                                    externalName: $0.name) }
     return InitializerDecl(parentType: type,
-                           args: initProperties,
+                           args: Array(initProperties),
                            genericParams: genericParams,
                            returnType: type.ref(),
                            body: CompoundStmt(stmts: []),
