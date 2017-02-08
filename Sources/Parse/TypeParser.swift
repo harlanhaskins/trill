@@ -112,9 +112,13 @@ extension Parser {
       consumeToken()
       rhs = try parseValExpr()
     case .leftBrace:
+      guard mutable else {
+        throw Diagnostic.error(ParseError.computedPropertyMustBeMutable,
+                               loc: startLoc)
+      }
       guard let propType = propType else {
         throw Diagnostic.error(ParseError.computedPropertyRequiresType,
-                               loc: sourceLoc)
+                               loc: startLoc)
       }
       consumeToken()
       accessors: while true {

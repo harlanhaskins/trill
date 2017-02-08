@@ -50,7 +50,7 @@ enum Mangler {
     case let d as PropertySetterDecl:
       s += "s" + mangle(d.parentType, root: false)
       s += d.propertyName.name.withCount
-      s += mangle(d.args[0].type, root: false)
+      s += mangle(d.args[1].type, root: false)
       return s
     case let d as MethodDecl:
       let sigil = d.has(attribute: .static) ? "m" : "M"

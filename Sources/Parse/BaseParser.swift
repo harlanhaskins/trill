@@ -16,6 +16,7 @@ enum ParseError: Error, CustomStringConvertible {
   case duplicateSetter
   case duplicateGetter
   case computedPropertyRequiresType
+  case computedPropertyMustBeMutable
   case globalSubscript
   
   var description: String {
@@ -42,6 +43,8 @@ enum ParseError: Error, CustomStringConvertible {
       return "only one getter is allowed per property"
     case .computedPropertyRequiresType:
       return "computed properties require an explicit type"
+    case .computedPropertyMustBeMutable:
+      return "computed property must be declared with 'var'"
     }
   }
 }

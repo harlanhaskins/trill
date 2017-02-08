@@ -150,15 +150,21 @@ bool demangleFunction(std::string &symbol, std::string &out) {
     } else if (symbol.front() == 'g') {
       symbol.erase(0, 1);
       out += "getter for ";
+      if (!readType(symbol, out)) { return false; }
+      out += '.';
       if (!readName(symbol, out)) { return false; }
       out += ": ";
       if (!readType(symbol, out)) { return false; }
+      return true;
     } else if (symbol.front() == 's') {
       symbol.erase(0, 1);
       out += "setter for ";
+      if (!readType(symbol, out)) { return false; }
+      out += '.';
       if (!readName(symbol, out)) { return false; }
       out += ": ";
       if (!readType(symbol, out)) { return false; }
+      return true;
     } else if (symbol.front() == 'I') {
       symbol.erase(0, 1);
       if (!readType(symbol, out)) { return false; }
