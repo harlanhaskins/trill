@@ -1,3 +1,7 @@
+/// HACK until we get this in LLVMSwift proper
+@testable import LLVM
+import cllvm
+
 public class ORCJIT {
     internal let llvm: LLVMExecutionEngineRef
     

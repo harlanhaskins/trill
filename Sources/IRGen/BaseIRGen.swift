@@ -4,6 +4,8 @@
 //
 
 import Foundation
+import LLVM
+
 private var fatalErrorConsumer: StreamConsumer<ColoredANSIStream<FileHandle>>? = nil
 
 /// An error that represents a problem with LLVM IR generation or JITting.
@@ -531,7 +533,7 @@ extension FunctionPassManager {
     if level == O0 { return }
     
     add(.instructionCombining, .reassociate)
-    
+
     if level == O1 { return }
     
     add(.gvn, .cfgSimplification, .promoteMemoryToRegister)
