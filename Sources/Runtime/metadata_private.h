@@ -26,7 +26,11 @@ typedef struct TypeMetadata {
     uint64_t pointerLevel;
 } TypeMetadata;
 
-
+typedef struct ProtocolMetadata {
+    const char *name;
+    const char **methodNames;
+    size_t methodCount;
+} ProtocolMetadata;
 
 typedef struct AnyBox {
     void *typeMetadata;

@@ -196,7 +196,8 @@ class IRGenerator: ASTVisitor, Pass {
     builder = IRBuilder(module: module)
     passManager = FunctionPassManager(module: module)
     passManager.addPasses(for: options.optimizationLevel)
-    
+    passManager.initialize()
+
     var stream = ColoredANSIStream(&stderr,
                                    colored: true)
     fatalErrorConsumer = StreamConsumer(context: context,
@@ -532,7 +533,7 @@ extension FunctionPassManager {
   func addPasses(for level: OptimizationLevel) {
     if level == O0 { return }
     
-    add(.instructionCombining, .reassociate)
+    add(.basicAliasAnalysis, .instructionCombining, .reassociate)
 
     if level == O1 { return }
     

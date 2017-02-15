@@ -567,14 +567,16 @@ class Sema: ASTTransformer, Pass {
       guard let methods = context.requiredMethods(for: proto) else { continue }
       var missing = [FuncDecl]()
       for method in methods {
-        var impl: FuncDecl?
+        var impl: MethodDecl?
         for candidate in decl.methods(named: method.name.name) {
           if haveEqualSignatures(method, candidate) {
             impl = candidate
             break
           }
         }
-        if impl == nil {
+        if let impl = impl {
+          impl.satisfiedProtocols.insert(proto)
+        } else {
           missing.append(method)
         }
       }

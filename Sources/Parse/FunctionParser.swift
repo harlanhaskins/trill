@@ -61,7 +61,7 @@ extension Parser {
       if type == nil {
         kind = .free
       } else {
-        kind = isProtocol ? .method : .protocolMethod
+        kind = isProtocol ? .protocolMethod : .method
       }
     default:
       throw unexpectedToken()

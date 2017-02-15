@@ -246,6 +246,10 @@ class TypeDecl: Decl {
   func createRef() -> TypeRefExpr {
     return TypeRefExpr(type: self.type, name: self.name)
   }
+
+  func methodsSatisfyingRequirements(of proto: ProtocolDecl) -> [MethodDecl] {
+    return methods.filter { $0.satisfiedProtocols.contains(proto) }
+  }
   
   static func synthesizeInitializer(properties: [PropertyDecl],
                                     genericParams: [GenericParamDecl],

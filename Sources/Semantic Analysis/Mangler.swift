@@ -31,6 +31,13 @@ enum Mangler {
     s += decl.name.name.withCount
     return s
   }
+
+  static func mangle(_ t: WitnessTable) -> String {
+    var s = "_WW"
+    s += t.implementingType.name.name.withCount
+    s += t.proto.name.name.withCount
+    return s
+  }
   
   static func mangle(_ d: FuncDecl, root: Bool = true) -> String {
     if d.has(attribute: .foreign) && !(d is OperatorDecl) {

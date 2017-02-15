@@ -114,6 +114,12 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
 class MethodDecl: FuncDecl {
   let parentType: DataType
 
+  /// The protocols for which this method implementation satisfies a requirement
+  var satisfiedProtocols = Set<ProtocolDecl>()
+
+  /// Whether or not this method satisfies a requirement from any protocols
+  var satisfiesProtocol: Bool { return satisfiedProtocols.isEmpty }
+
   init(name: Identifier,
        parentType: DataType,
        args: [ParamDecl],

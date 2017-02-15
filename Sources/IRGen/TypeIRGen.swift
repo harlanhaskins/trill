@@ -159,6 +159,8 @@ extension IRGenerator {
     _ = expr.subscripts.map(visitFuncDecl)
     _ = expr.staticMethods.map(visitFuncDecl)
     _ = expr.properties.map(visitPropertyDecl)
+
+    _ = codegenWitnessTables(expr)
     
     return nil
   }

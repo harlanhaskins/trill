@@ -191,6 +191,15 @@ void trill_debugPrintAny(void *ptr_) {
   }
   std::cout << "}" << std::endl;
 }
+
+void trill_dumpProtocol(ProtocolMetadata *proto) {
+    trill_assert(proto != nullptr);
+    std::cout << proto->name << " {" << std::endl;
+    for (size_t i = 0; i < proto->methodCount; ++i) {
+        std::cout << "  " << proto->methodNames[i] << std::endl;
+    }
+    std::cout << "}" << std::endl;
+}
   
 uint8_t trill_checkTypes(void *anyValue_, void *typeMetadata_) {
   AnyBox *anyValue = (AnyBox *)anyValue_;

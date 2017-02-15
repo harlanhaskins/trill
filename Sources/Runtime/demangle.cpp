@@ -228,6 +228,15 @@ bool demangleGlobal(std::string &symbol, std::string &out, const char *kind) {
   return true;
 }
 
+bool demangleWitnessTable(std::string &symbol, std::string &out) {
+  symbol.erase(0, 1);
+  out += "witness table for ";
+  if (!readName(symbol, out)) { return false; }
+  out += " to ";
+  if (!readName(symbol, out)) { return false; }
+  return true;
+}
+
 bool demangleClosure(std::string &symbol, std::string &out) {
   assert(false && "closure demangling is unimplemented");
   return false;
@@ -252,6 +261,8 @@ bool demangle(std::string &symbol, std::string &out) {
     return demangleGlobal(symbol, out, "accessor");
   case 'G':
     return demangleGlobal(symbol, out, "initializer");
+  case 'W':
+    return demangleWitnessTable(symbol, out);
   }
   return false;
 }
