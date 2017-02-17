@@ -5,12 +5,20 @@
 
 import Foundation
 
+enum Promotion {
+  case any, generic
+}
+
 class Expr: ASTNode {
   var type: DataType? = nil
+  var promotion: Promotion? = nil
   override func attributes() -> [String : Any] {
     var attrs = super.attributes()
     if let type = type {
       attrs["type"] = type.description
+    }
+    if let promotion = promotion {
+      attrs["promotion"] = "\(promotion)"
     }
     return attrs
   }

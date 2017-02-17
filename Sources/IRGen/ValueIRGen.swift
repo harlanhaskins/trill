@@ -253,16 +253,16 @@ extension IRGenerator {
     fatalError("unknown decl \(decl)")
   }
   
-  func codegenShortCircuit(_ expr: InfixOperatorExpr) -> PhiNode {
-    guard let block = builder.insertBlock else {
-      fatalError("no insert block?")
-    }
+  func codegenShortCircuit(_ expr: InfixOperatorExpr) -> IRValue {
     guard let function = currentFunction?.functionRef else {
       fatalError("outside function")
     }
     let secondCaseBB = function.appendBasicBlock(named: "secondcase", in: llvmContext)
     let endBB = function.appendBasicBlock(named: "end", in: llvmContext)
+    let result = createEntryBlockAlloca(function, type: IntType.int1,
+                                        name: "op-result", storage: .value)
     let lhs = visit(expr.lhs)!
+    result.write(lhs)
     if expr.op == .and {
       builder.buildCondBr(condition: lhs, then: secondCaseBB, else: endBB)
     } else {
@@ -270,14 +270,10 @@ extension IRGenerator {
     }
     builder.positionAtEnd(of: secondCaseBB)
     let rhs = visit(expr.rhs)!
+    result.write(rhs)
     builder.buildBr(endBB)
     builder.positionAtEnd(of: endBB)
-    let phi = builder.buildPhi(IntType.int1, name: "op-phi")
-    phi.addIncoming([
-      (lhs, block),
-      (rhs, secondCaseBB)
-    ])
-    return phi
+    return result.read()
   }
   
   func visitParenExpr(_ expr: ParenExpr) -> Result {
@@ -370,22 +366,21 @@ extension IRGenerator {
     guard let type = expr.type else { fatalError("no ternary type") }
     let irType = resolveLLVMType(type)
     let cond = visit(expr.condition)!
+    let result = createEntryBlockAlloca(function, type: irType,
+                                        name: "ternary-result", storage: .value)
     let truebb = function.appendBasicBlock(named: "true-case", in: llvmContext)
     let falsebb = function.appendBasicBlock(named: "false-case", in: llvmContext)
     let endbb = function.appendBasicBlock(named: "ternary-end", in: llvmContext)
     builder.buildCondBr(condition: cond, then: truebb, else: falsebb)
     builder.positionAtEnd(of: truebb)
     let trueVal = visit(expr.trueCase)!
+    result.write(trueVal)
     builder.buildBr(endbb)
     builder.positionAtEnd(of: falsebb)
     let falseVal = visit(expr.falseCase)!
+    result.write(falseVal)
     builder.buildBr(endbb)
     builder.positionAtEnd(of: endbb)
-    let phi = builder.buildPhi(irType, name: "ternary-phi")
-    phi.addIncoming([
-      (trueVal, truebb),
-      (falseVal, falsebb)
-    ])
-    return phi
+    return result.read()
   }
 }

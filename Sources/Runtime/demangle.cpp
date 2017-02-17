@@ -242,6 +242,13 @@ bool demangleClosure(std::string &symbol, std::string &out) {
   return false;
 }
 
+bool demangleProtocol(std::string &symbol, std::string &out) {
+  symbol.erase(0, 1);
+  out += "protocol ";
+  if (!readName(symbol, out)) { return false; }
+  return true;
+}
+
 bool demangle(std::string &symbol, std::string &out) {
   if (symbol.substr(0, 2) == "_W") {
     symbol.erase(0, 2);
@@ -263,6 +270,8 @@ bool demangle(std::string &symbol, std::string &out) {
     return demangleGlobal(symbol, out, "initializer");
   case 'W':
     return demangleWitnessTable(symbol, out);
+  case 'P':
+    return demangleProtocol(symbol, out);
   }
   return false;
 }

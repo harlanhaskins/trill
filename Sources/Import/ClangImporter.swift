@@ -394,7 +394,7 @@ class ClangImporter: Pass {
     clang_annotateTokens(tu, tokens, tokenCount, nil)
     
     let name = clang_getTokenSpelling(tu, tokens[0]).asSwift()
-    guard context.global(named: name) == nil else { return }
+    guard context.global(named: Identifier(name: name)) == nil else { return }
     guard clang_getTokenKind(tokens[1]) == CXToken_Literal else { return }
     guard let assign = parse(tu: tu, token: tokens[1], name: name) else { return }
     context.add(assign)

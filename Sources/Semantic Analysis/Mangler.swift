@@ -111,6 +111,11 @@ enum Mangler {
     }
     return s
   }
+
+  static func mangle(_ proto: ProtocolDecl) -> String {
+    return "_WP\(proto.name.name.withCount)"
+  }
+
   static func mangle(_ t: DataType, root: Bool = true) -> String {
     var s = root ? "_WT" : ""
     switch t {

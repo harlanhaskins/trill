@@ -222,7 +222,7 @@
 		DC5EA0C61E16ED1200875545 /* ColoredStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C51E16ED1200875545 /* ColoredStream.swift */; };
 		DC5EA0C81E185C8300875545 /* StreamConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC5EA0C71E185C8300875545 /* StreamConsumer.swift */; };
 		DC5F39511D1FC107003A8DED /* libclang.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DC5F38DE1D1FBC98003A8DED /* libclang.dylib */; };
-		DC69C0811E5100150071F842 /* LLVM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCBE02EA1E4E498D00DCD474 /* LLVM.framework */; };
+		DC69C0811E5100150071F842 /* LLVM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DCBE02EA1E4E498D00DCD474 /* LLVM.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		DC73602B1E4B7A70005272C4 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73602A1E4B7A70005272C4 /* main.swift */; };
 		DC78DA421D7920930015035A /* defines.h in Headers */ = {isa = PBXBuildFile; fileRef = DC78DA411D7920930015035A /* defines.h */; };
 		DC7968321D76219B00FF7A02 /* Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7968311D76219B00FF7A02 /* Options.swift */; };

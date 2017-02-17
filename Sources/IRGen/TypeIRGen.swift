@@ -32,11 +32,48 @@ extension IRGenerator {
     
     return structure
   }
+
+  /// Generates type metadata for a given protocol and caches it.
+  ///
+  /// These are layout-compatible with the structs declared in
+  /// `metadata_private.h`, namely:
+  /// 
+  /// ```
+  /// typedef struct ProtocolMetadata {
+  ///   const char *name;
+  ///   const char **methodNames;
+  ///   size_t methodCount;
+  /// } ProtocolMetadata;
+  /// ```
+  /// There is a unique metadata record for every protocol at compile time.
+  func codegenProtocolMetadata(_ proto: ProtocolDecl) -> Global {
+    let symbol = Mangler.mangle(proto) + ".metadata"
+    if let cached = module.global(named: symbol) { return cached }
+    let name = builder.buildGlobalStringPtr(proto.name.name)
+    let methodNames = proto.methods.map { $0.formattedName }.map {
+      builder.buildGlobalStringPtr($0)
+    }
+    let methodNamesType = ArrayType(elementType: PointerType.toVoid,
+                                    count: proto.methods.count)
+    var metaNames = builder.addGlobal("\(symbol).methods", type: methodNamesType)
+    metaNames.initializer = ArrayType.constant(methodNames, type: PointerType.toVoid)
+
+    let metadata = StructType.constant(values: [
+      name,
+      builder.buildBitCast(metaNames, type: PointerType.toVoid),
+      IntType.int64.constant(proto.methods.count)
+    ])
+
+    var metaGlobal = builder.addGlobal(symbol, type: metadata.type)
+    metaGlobal.initializer = metadata
+
+    return metaGlobal
+  }
   
   /// Generates type metadata for a given type and caches it.
   ///
-  /// These are layout-compatible with the structs declared in runtime.cpp,
-  /// namely:
+  /// These are layout-compatible with the structs declared in
+  /// `metadata_private.h`, namely:
   ///
   /// ```
   /// typedef struct FieldMetadata {
@@ -55,8 +92,6 @@ extension IRGenerator {
   /// ```
   ///
   /// There is a unique metadata record for every type at compile time.
-  /// This function should only be called when generating the intrinsic
-  /// typeOf(_: Any) function, as it will only generate the metadata requested.
   func codegenTypeMetadata(_ _type: DataType) -> Global {
     let type = context.canonicalType(_type)
     if let cached = typeMetadataMap[type] { return cached }

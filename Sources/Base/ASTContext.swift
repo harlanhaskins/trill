@@ -546,7 +546,12 @@ public class ASTContext {
       return nil
     }
   }
-  
+
+
+  /// Returns all overloaded functions with the given name at top-level scope.
+  ///
+  /// - Parameter name: The function's base name.
+  /// - Returns: An array of functions with that base name.
   func functions(named name: Identifier) -> [FuncDecl] {
     var results = [FuncDecl]()
     if let decls = funcDeclMap[name.name] {
@@ -557,11 +562,21 @@ public class ASTContext {
     }
     return results
   }
-  
+
+
+  /// Finds all overloaded operator declarations for a given operator.
+  ///
+  /// - Parameter op: The operator you're looking for.
+  /// - Returns: All OperatorDecls overloading that operator.
   func operators(for op: BuiltinOperator) -> [OperatorDecl] {
     return operatorMap[op] ?? []
   }
-  
+
+
+  /// Finds the global variable with a given name
+  ///
+  /// - Parameter name: The global's name
+  /// - Returns: A VarAssignDecl for that global, if it exists.
   func global(named name: Identifier) -> VarAssignDecl? {
     return globalDeclMap[name.name]
   }
@@ -577,14 +592,18 @@ public class ASTContext {
   func `protocol`(named name: Identifier) -> ProtocolDecl? {
     return protocolDeclMap[name.name]
   }
-  
-  func `protocol`(named name: String) -> ProtocolDecl? {
-    return protocolDeclMap[name]
-  }
-  
-  func requiredMethods(for protocolDecl: ProtocolDecl, visited: Set<String> = []) -> [FuncDecl]? {
+
+  /// Traverses the protocol hierarchy and adds all methods required to satisfy
+  /// this protocol and all its parent requirements.
+  ///
+  /// - Parameters:
+  ///   - protocolDecl: The protocol you're inspecting
+  ///   - visited: A set of mangled names we've seen so far.
+  /// - Returns: An array of MethodDecls that are required for a type to
+  ///            conform to a protocol.
+  func requiredMethods(for protocolDecl: ProtocolDecl, visited: Set<String> = Set()) -> [MethodDecl]? {
     var currentVisited = visited
-    var methods = [FuncDecl]()
+    var methods = [MethodDecl]()
     for method in protocolDecl.methods {
       let mangled = Mangler.mangle(method)
       if currentVisited.contains(mangled) { continue }

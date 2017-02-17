@@ -19,14 +19,21 @@ extension IRGenerator {
     return globals
   }
 
+  /// Generates code for a witness table that contains all requirements of a
+  /// type conforming to a given protocol.
+  ///
   /// A Witness Table for a protocol consists of:
   ///
-  /// - A pointer to the type metadata for the protocol type.
+  /// - A pointer to the type metadata for the protocol type
   /// - A pointer to an array of the protocol's witness table
   func codegenWitnessTable(_ table: WitnessTable) -> Global {
+    let tableSymbol = Mangler.mangle(table)
+    if let global = module.global(named: tableSymbol) {
+      return global
+    }
     let methodArrayType = ArrayType(elementType: PointerType.toVoid,
                                      count: table.proto.methods.count)
-    var array = builder.addGlobal(Mangler.mangle(table),
+    var array = builder.addGlobal(tableSymbol,
                                   type: methodArrayType)
 
     let methods = table.implementingType.methodsSatisfyingRequirements(of: table.proto)
@@ -37,6 +44,8 @@ extension IRGenerator {
     }
 
     array.initializer = ArrayType.constant(entries, type: PointerType.toVoid)
+
+    codegenProtocolMetadata(table.proto)
 
     return array
   }
