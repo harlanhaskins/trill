@@ -216,6 +216,6 @@ extension Parser {
                          rhs: rhs,
                          modifiers: modifiers,
                          mutable: mutable,
-                         sourceRange: range(start: startLoc))
+                         sourceRange: range(start: startLoc))!
   }
 }

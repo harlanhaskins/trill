@@ -345,7 +345,7 @@ class ClangImporter: Pass {
                                   typeRef: DataType.int32.ref(),
                                   modifiers: [.foreign, .implicit],
                                   mutable: false,
-                                  sourceRange: range)
+                                  sourceRange: range)!
       context.add(varExpr)
       return CXChildVisit_Continue
     }

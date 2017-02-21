@@ -258,7 +258,7 @@ class TypeDecl: Decl {
     let initProperties = properties.lazy
                                    .filter { !$0.isComputed }
                                    .map { ParamDecl(name: $0.name,
-                                                    type: $0.typeRef,
+                                                    type: $0.typeRef!,
                                                     externalName: $0.name) }
     return InitializerDecl(parentType: type,
                            args: Array(initProperties),
@@ -326,7 +326,7 @@ class PropertyDecl: VarAssignDecl {
     return getter != nil || setter != nil
   }
 
-  init(name: Identifier, type: TypeRefExpr?,
+  init(name: Identifier, type: TypeRefExpr,
        mutable: Bool, rhs: Expr?, modifiers: [DeclModifier],
        getter: PropertyGetterDecl?, setter: PropertySetterDecl?,
        sourceRange: SourceRange? = nil) {
@@ -335,7 +335,7 @@ class PropertyDecl: VarAssignDecl {
 
     super.init(name: name, typeRef: type,
                rhs: rhs, modifiers: modifiers,
-               mutable: mutable, sourceRange: sourceRange)
+               mutable: mutable, sourceRange: sourceRange)!
   }
 }
 

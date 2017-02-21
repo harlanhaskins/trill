@@ -216,12 +216,12 @@ class ParamDecl: VarAssignDecl {
   var isImplicitSelf = false
   let externalName: Identifier?
   init(name: Identifier,
-       type: TypeRefExpr?,
+       type: TypeRefExpr,
        externalName: Identifier? = nil,
        rhs: Expr? = nil,
        sourceRange: SourceRange? = nil) {
     self.externalName = externalName
-    super.init(name: name, typeRef: type, kind: .global, rhs: rhs, mutable: false, sourceRange: sourceRange)
+    super.init(name: name, typeRef: type, kind: .global, rhs: rhs, mutable: false, sourceRange: sourceRange)!
   }
 }
 

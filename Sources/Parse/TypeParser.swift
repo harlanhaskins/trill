@@ -102,11 +102,8 @@ extension Parser {
     var rhs: Expr? = nil
     var getter: PropertyGetterDecl? = nil
     var setter: PropertySetterDecl? = nil
-    var propType: TypeRefExpr?
-    if case .colon = peek() {
-      consumeToken()
-      propType = try parseType()
-    }
+    try consume(.colon)
+    let propType = try parseType()
     switch peek() {
     case .operator(op: .assign):
       consumeToken()
@@ -114,10 +111,6 @@ extension Parser {
     case .leftBrace:
       guard mutable else {
         throw Diagnostic.error(ParseError.computedPropertyMustBeMutable,
-                               loc: startLoc)
-      }
-      guard let propType = propType else {
-        throw Diagnostic.error(ParseError.computedPropertyRequiresType,
                                loc: startLoc)
       }
       consumeToken()

@@ -1,10 +1,5 @@
 import LLVM
 
-struct WitnessTable {
-  let proto: ProtocolDecl
-  let implementingType: TypeDecl
-}
-
 extension IRGenerator {
 
   func codegenWitnessTables(_ type: TypeDecl) -> [Global] {
