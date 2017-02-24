@@ -53,7 +53,6 @@
 		DC8EBAE21E5FCFA500AE577C /* JSONDiagnosticConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD31E5FCFA500AE577C /* JSONDiagnosticConsumer.swift */; };
 		DC8EBAE31E5FCFA500AE577C /* JSONDiagnosticConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD31E5FCFA500AE577C /* JSONDiagnosticConsumer.swift */; };
 		DC8EBAE41E5FCFA500AE577C /* Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD41E5FCFA500AE577C /* Options.swift */; };
-		DC8EBAE51E5FCFA500AE577C /* Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD41E5FCFA500AE577C /* Options.swift */; };
 		DC8EBAE61E5FCFA500AE577C /* StreamConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD51E5FCFA500AE577C /* StreamConsumer.swift */; };
 		DC8EBAE71E5FCFA500AE577C /* StreamConsumer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD51E5FCFA500AE577C /* StreamConsumer.swift */; };
 		DC8EBAE81E5FCFA500AE577C /* TableFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAD61E5FCFA500AE577C /* TableFormatter.swift */; };
@@ -285,6 +284,7 @@
 		DC8EBCB51E5FD42A00AE577C /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = DC8EBCA91E5FD42A00AE577C /* LICENSE */; };
 		DC8EBCB61E5FD42A00AE577C /* README in Resources */ = {isa = PBXBuildFile; fileRef = DC8EBCAA1E5FD42A00AE577C /* README */; };
 		DC8EBCB71E5FD42A00AE577C /* tinygc.c in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBCAB1E5FD42A00AE577C /* tinygc.c */; };
+		DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAEF1E5FCFB200AE577C /* Builtins.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1411,6 +1411,7 @@
 				DC8EBABB1E5FCF6E00AE577C /* SourceFile.swift in Sources */,
 				DC8EBAA91E5FCF6E00AE577C /* ASTContext.swift in Sources */,
 				DC8EBAEB1E5FCFA500AE577C /* Utilities.swift in Sources */,
+				DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */,
 				DC8EBAAB1E5FCF6E00AE577C /* ASTTransformer.swift in Sources */,
 				DC8EBAC31E5FCF6E00AE577C /* Types.swift in Sources */,
 				DC8EBAB31E5FCF6E00AE577C /* Generic.swift in Sources */,
@@ -1440,7 +1441,6 @@
 				DC8EBB111E5FCFC500AE577C /* FunctionParser.swift in Sources */,
 				DC8EBAAD1E5FCF6E00AE577C /* ASTVisitor.swift in Sources */,
 				DC8EBADD1E5FCFA500AE577C /* DiagnosticConsumer.swift in Sources */,
-				DC8EBAE51E5FCFA500AE577C /* Options.swift in Sources */,
 				DC8EBAE31E5FCFA500AE577C /* JSONDiagnosticConsumer.swift in Sources */,
 				DC8EBB171E5FCFC500AE577C /* TypeParser.swift in Sources */,
 				DC8EBB3F1E5FCFD500AE577C /* SemaError.swift in Sources */,
@@ -1663,7 +1663,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = W7GJMYD5A4;
-				INFOPLIST_FILE = "Trill iOS/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/iOS App/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.harlanhaskins.Trill-iOS";
@@ -1681,7 +1681,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEVELOPMENT_TEAM = W7GJMYD5A4;
-				INFOPLIST_FILE = "Trill iOS/Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/iOS App/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.harlanhaskins.Trill-iOS";
