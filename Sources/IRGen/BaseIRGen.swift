@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import LLVM
 
 private var fatalErrorConsumer: StreamConsumer<ColoredANSIStream<FileHandle>>? = nil
 
@@ -196,7 +195,6 @@ class IRGenerator: ASTVisitor, Pass {
     builder = IRBuilder(module: module)
     passManager = FunctionPassManager(module: module)
     passManager.addPasses(for: options.optimizationLevel)
-    passManager.initialize()
 
     var stream = ColoredANSIStream(&stderr,
                                    colored: true)

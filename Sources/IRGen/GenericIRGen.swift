@@ -1,5 +1,3 @@
-import LLVM
-
 extension IRGenerator {
 
   func codegenWitnessTables(_ type: TypeDecl) -> [Global] {
@@ -40,7 +38,7 @@ extension IRGenerator {
 
     array.initializer = ArrayType.constant(entries, type: PointerType.toVoid)
 
-    codegenProtocolMetadata(table.proto)
+    _ = codegenProtocolMetadata(table.proto)
 
     return array
   }

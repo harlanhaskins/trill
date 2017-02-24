@@ -165,8 +165,8 @@ extension Parser {
           }
           expr = PropertyRefExpr(lhs: expr,
                                  name: field,
-                                 dotLoc: dotToken.range.start)
                                  genericParams: genericParams,
+                                 dotLoc: dotToken.range.start,
                                  sourceRange: range(start: loc))
         } else if case .number(let n, _) = peek() {
           let tok = consumeToken()
