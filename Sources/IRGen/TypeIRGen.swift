@@ -110,7 +110,7 @@ extension IRGenerator {
                        .filter { !$0.isComputed }
                        .map { ($0.name.name, $0.type) }
     case .tuple(let types):
-      properties = properties.enumerated().map { (".\($0.offset)", $0.element) }
+      properties = types.enumerated().map { (".\($0.offset)", $0.element) }
     default:
       break
     }
@@ -147,7 +147,7 @@ extension IRGenerator {
     for (idx, (propName, type)) in properties.enumerated() {
       let meta = codegenTypeMetadata(type)
       
-      let name = codegenGlobalStringPtr(fieldName)
+      let name = codegenGlobalStringPtr(propName)
 
       propertyVals.append(StructType.constant(values: [
         builder.buildBitCast(name, type: PointerType.toVoid),

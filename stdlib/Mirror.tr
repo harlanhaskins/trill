@@ -27,11 +27,11 @@ type Mirror {
   }
 
   func child(_ index: Int) -> Any {
-    return trill_extractAnyField(*((&self.value) as **Void), index as UInt)
+    return trill_extractAnyField(self.value, index as UInt)
   }
 
   func set(value: Any, forChild index: Int) {
-    trill_updateAny(*((&self.value) as **Void), index as UInt, *((&value) as **Void))
+    trill_updateAny(self.value, index as UInt, value)
   }
 
   func set(value: Any, forKey name: *Int8) {

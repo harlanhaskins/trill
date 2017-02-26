@@ -411,7 +411,7 @@ class ClangImporter: Pass {
                                   modifiers: [.implicit],
                                   mutable: false,
                                   sourceRange: SourceRange(clangRange: range))
-      context.add(varDecl)
+      context.add(varDecl!)
     default:
       return
     }
@@ -429,7 +429,7 @@ class ClangImporter: Pass {
                               rhs: nil,
                               modifiers: [.foreign, .implicit],
                               mutable: false,
-                              sourceRange: identifier.range))
+                              sourceRange: identifier.range)!)
   }
   
   // FIXME: Actually use Clang's lexer instead of re-implementing parts of
@@ -612,6 +612,7 @@ class ClangImporter: Pass {
     "int32_t": .int32,
     "int16_t": .int16,
     "int8_t": .int8,
+    "TRILL_ANY": .any,
   ]
   
   func convertToTrillType(_ type: CXType) -> DataType? {
