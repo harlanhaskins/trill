@@ -594,6 +594,10 @@ public class ASTContext {
   func sourceFile(named name: String) -> SourceFile? {
     return sourceFileMap[name]
   }
+
+  func type(named name: String) -> TypeDecl? {
+    return typeDeclMap[DataType(name: name)]
+  }
   
   func `protocol`(named name: Identifier) -> ProtocolDecl? {
     return protocolDeclMap[name.name]

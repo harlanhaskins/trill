@@ -6,11 +6,12 @@
 import Foundation
 
 extension IRGenerator {
-  func codegenGlobalStringPtr(_ string: String) -> IRValue {
+  func codegenGlobalStringPtr(_ string: String) -> (ptr: IRValue, length: Int) {
     if let global = globalStringMap[string] { return global }
     let globalStringPtr = builder.buildGlobalStringPtr(string)
-    globalStringMap[string] = globalStringPtr
-    return globalStringPtr
+    let length = string.utf8.count
+    globalStringMap[string] = (globalStringPtr, length)
+    return (globalStringPtr, length)
   }
   
   func codegenTupleType(_ type: DataType) -> IRType {
@@ -152,7 +153,17 @@ extension IRGenerator {
   }
   
   func visitStringExpr(_ expr: StringExpr) -> Result {
-    return codegenGlobalStringPtr(expr.value)
+    let globalString = codegenGlobalStringPtr(expr.value)
+    let zero = IntType.int64.zero()
+    let indices = [zero, zero]
+    let ptr = globalString.ptr.constGEP(indices: indices)
+    guard let stringTypeDecl = context.type(named: "String") else { fatalError("use of string literal without stdlib String") }
+    guard let inititalizer = stringTypeDecl.initializers.first(where: { initializer in
+      initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
+    }) else { fatalError("use of string literal without stdlib String global initializer") }
+
+    let function = codegenFunctionPrototype(inititalizer)
+    return builder.buildCall(function, args: [ptr, globalString.length], name: "string-init")
   }
   
   func visitSubscriptExpr(_ expr: SubscriptExpr) -> Result {
