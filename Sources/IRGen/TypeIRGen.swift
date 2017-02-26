@@ -95,9 +95,9 @@ extension IRGenerator {
     let type = context.canonicalType(_type)
     if let cached = typeMetadataMap[type] { return cached }
     var pointerLevel = 0
-    let fullName = "\(type.rootType)"
+    let fullName = type.description
     let name = Mangler.mangle(type)
-    var properties = [(String?, DataType)]()
+    var properties = [(String, DataType)]()
     switch type {
     case .pointer:
       pointerLevel = type.pointerLevel()
@@ -110,7 +110,7 @@ extension IRGenerator {
                        .filter { !$0.isComputed }
                        .map { ($0.name.name, $0.type) }
     case .tuple(let types):
-      properties = types.map { (nil, $0) }
+      properties = properties.enumerated().map { (".\($0.offset)", $0.element) }
     default:
       break
     }
@@ -141,12 +141,8 @@ extension IRGenerator {
     for (idx, (propName, type)) in properties.enumerated() {
       let meta = codegenTypeMetadata(type)
       
-      let name: IRValue
-      if let propName = propName {
-        name = codegenGlobalStringPtr(propName)
-      } else {
-        name = PointerType.toVoid.null()
-      }
+      let name = codegenGlobalStringPtr(fieldName)
+
       propertyVals.append(StructType.constant(values: [
         builder.buildBitCast(name, type: PointerType.toVoid),
         builder.buildBitCast(meta, type: PointerType.toVoid),
