@@ -64,6 +64,27 @@ type Mirror {
     }
   }
 
+  func print(to file: *FILE) {
+    if trill_anyIsNil(self.value) != 0 {
+      fprintf(file, "nil")
+      return
+    }
+    fprintf(file, "%s(", self.name())
+    for var i = 0; i < self.numberOfFields(); i += 1 {
+      let field = self.field(at: i)
+      if i != 0 { fprintf(file, ", ") }
+      let name = field.name()
+      if name == nil { // tuple
+        fprintf(file, ".%d: ", i)
+      }
+      else {
+        fprintf(file, "%s: ", name)
+      }
+      print(self.child(i))
+    }
+    fprintf(file, ")", self.value)
+  }
+
   func field(at index: Int) -> FieldMirror {
     return FieldMirror(reflecting: trill_getFieldMetadata(self._metadata, index as UInt))
   }
