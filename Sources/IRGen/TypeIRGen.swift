@@ -114,7 +114,13 @@ extension IRGenerator {
     default:
       break
     }
-    let irType = resolveLLVMType(type)
+    var irType = resolveLLVMType(type)
+    var isIndirect = storage(for: type) == .reference
+    
+    if case .custom = type, let pointerType = irType as? PointerType {
+      isIndirect = true
+      irType = pointerType.pointee
+    }
     
     let metaName = name + ".metadata"
     let nameValue = codegenGlobalStringPtr(fullName)
@@ -160,7 +166,7 @@ extension IRGenerator {
     global.initializer = StructType.constant(values: [
       nameValue,
       builder.buildBitCast(gep, type: PointerType.toVoid),
-      IntType.int8.constant(storage(for: type) == .reference ? 1 : 0, signExtend: true),
+      IntType.int8.constant(isIndirect ? 1 : 0, signExtend: true),
       IntType.int64.constant(layout.sizeOfTypeInBits(irType), signExtend: true),
       IntType.int64.constant(properties.count, signExtend: true),
       IntType.int64.constant(pointerLevel, signExtend: true),
