@@ -1614,10 +1614,7 @@
 			buildSettings = {
 				DEVELOPMENT_TEAM = W7GJMYD5A4;
 				HEADER_SEARCH_PATHS = /usr/local/opt/llvm/include;
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/llvm/3.9.1/lib,
-				);
+				LIBRARY_SEARCH_PATHS = /usr/local/opt/llvm/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = NO_SWIFTPM;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Sources/trill/BridgingHeader.h";
@@ -1630,10 +1627,7 @@
 			buildSettings = {
 				DEVELOPMENT_TEAM = W7GJMYD5A4;
 				HEADER_SEARCH_PATHS = /usr/local/opt/llvm/include;
-				LIBRARY_SEARCH_PATHS = (
-					/usr/local/opt/llvm/lib,
-					/usr/local/Cellar/llvm/3.9.1/lib,
-				);
+				LIBRARY_SEARCH_PATHS = /usr/local/opt/llvm/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = NO_SWIFTPM;
 				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Sources/trill/BridgingHeader.h";
