@@ -107,16 +107,23 @@ type AnyDictionary {
   }
 
   func dump() {
-    printf("size: %d\ncapacity: %d\nelements: [\n", self.count, self.capacity)
-    for var i = 0; i < self.capacity; i += 1 {
+    let count = self.count
+    let capacity = self.capacity
+    if count == 0 { print("{}"); return }
+    print("{")
+    var seen = 0
+    for var i = 0; i < capacity; i += 1 {
       let bucket = self.storage[i]
-      if bucket == nil {
-        printf("  <nil>\n")
-      } else {
-        printf("  \"%s\": ", bucket.key.cString())
-        println(bucket.value)
+      if bucket != nil {
+        seen += 1
+        print(bucket.key)
+        print(": ")
+        print(bucket.value)
+        if seen < count {
+          print(", ")
+        }
       }
     }
-    printf("]\n")
+    print("}")
   }
 }
