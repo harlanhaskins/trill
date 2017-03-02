@@ -4,7 +4,7 @@
 
 using namespace trill;
 
-void *trill_createGenericBox(void *typeMetadata, void *witnessTable) {
+void *trill_createGenericBox(const void *typeMetadata, const void **witnessTable) {
     trill_assert(typeMetadata != nullptr);
     trill_assert(witnessTable != nullptr);
     auto metadata = (TypeMetadata *)typeMetadata;
