@@ -755,7 +755,9 @@
 				DC8EBA5B1E5FCEF800AE577C /* Products */,
 				DC8EBBBA1E5FD12600AE577C /* Frameworks */,
 			);
+			indentWidth = 2;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		DC8EBA5B1E5FCEF800AE577C /* Products */ = {
 			isa = PBXGroup;
