@@ -10,4 +10,5 @@ matrix:
     - brew update
     - brew install llvm
     script:
-      - xcodebuild -scheme Trill
+      - xcodebuild -scheme Trill -IDECustomDerivedDataLocation=build/DerivedData
+      - swift utils/run-examples.swift
