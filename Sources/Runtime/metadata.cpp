@@ -11,8 +11,6 @@
 #include <iostream>
 #include <string>
 
-#define TYPE_PUN(ptr, ty) *((ty *)(ptr))
-
 namespace trill {
 
 const char *trill_getTypeName(const void *typeMeta) {
@@ -109,7 +107,8 @@ void *trill_getAnyFieldValuePtr(TRILL_ANY any_, uint64_t fieldNum) {
     origPtr = *reinterpret_cast<void **>(origPtr);
     trill_assert(origPtr != nullptr);
   }
-  return (void *)((intptr_t)origPtr + fieldMeta->offset);
+  return reinterpret_cast<void *>(
+          reinterpret_cast<intptr_t>(origPtr) + fieldMeta->offset);
 }
 
 TRILL_ANY trill_extractAnyField(TRILL_ANY any_, uint64_t fieldNum) {
@@ -141,7 +140,8 @@ void trill_updateAny(TRILL_ANY any_, uint64_t fieldNum, TRILL_ANY newAny_) {
 }
 
 void *_Nonnull trill_getAnyValuePtr(TRILL_ANY anyValue) {
-  return reinterpret_cast<void *>((intptr_t)anyValue._any + sizeof(AnyBox));
+  return reinterpret_cast<void *>(
+           reinterpret_cast<intptr_t>(anyValue._any) + sizeof(AnyBox));
 }
 
 const void *_Nonnull trill_getAnyTypeMetadata(TRILL_ANY anyValue) {
@@ -185,7 +185,7 @@ void trill_debugPrintAny(TRILL_ANY ptr_) {
     std::cout << "<null>" << std::endl;
     return;
   }
-  AnyBox *ptr = (AnyBox *)ptr_._any;
+  auto ptr = ptr_.any();
   std::cout << "AnyBox {" << std::endl;
   std::cout << "  void *typeMetadata = ";
   trill_debugPrintTypeMetadata(ptr->typeMetadata, "  ");
@@ -194,9 +194,11 @@ void trill_debugPrintAny(TRILL_ANY ptr_) {
     auto meta = ptr->typeMetadata;
     std::string typeName = meta->name;
     if (typeName == "Int") {
-      std::cout << "  int64_t value = " << TYPE_PUN(value, int64_t) << std::endl;
+      std::cout << "  int64_t value = " <<
+        *reinterpret_cast<int64_t *>(value) << std::endl;
     } else if (typeName == "Bool") {
-      std::cout << "  bool value = " << (TYPE_PUN(value, bool) ? "true" : "false") << std::endl;
+      std::cout << "  bool value = " <<
+        (*reinterpret_cast<bool *>(value) ? "true" : "false") << std::endl;
     } else if (strncmp(meta->name, "*", 1) == 0) {
       std::cout << value << std::endl;
     }
