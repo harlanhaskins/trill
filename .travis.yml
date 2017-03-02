@@ -10,4 +10,4 @@ matrix:
     - brew update
     - brew install llvm
     script:
-      - xcodebuild -scheme trill
+      - xcodebuild -scheme Trill
