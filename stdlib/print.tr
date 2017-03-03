@@ -32,13 +32,9 @@ func print(_ value: Any) {
   }
 }
 
-func putchar(_ value: Int8) {
-  putchar(value as Int32)
-}
-
 func println(_ value: Any) {
   print(value)
-  putchar('\n')
+  putchar('\n' as Int32)
 }
 
 func print(_ string: String) {
