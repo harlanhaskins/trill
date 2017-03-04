@@ -789,14 +789,14 @@ class Sema: ASTTransformer, Pass {
     guard var lhsType = expr.lhs.type else { return }
     guard var rhsType = expr.rhs.type else { return }
     
-    let canLhs = context.canonicalType(lhsType)
-    let canRhs = context.canonicalType(rhsType)
-    
     if context.propagateContextualType(rhsType, to: expr.lhs) {
       lhsType = rhsType
     } else if context.propagateContextualType(lhsType, to: expr.rhs) {
       rhsType = lhsType
     }
+    
+    let canLhs = context.canonicalType(lhsType)
+    let canRhs = context.canonicalType(rhsType)
     
     if expr.op.isAssign {
       expr.type = .void
