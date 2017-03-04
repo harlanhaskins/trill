@@ -245,31 +245,6 @@ class Sema: ASTTransformer, Pass {
     return true
   }
   
-  func candidate(forArgs args: [Argument], candidates: [FuncDecl]) -> FuncDecl? {
-    search: for candidate in candidates {
-      var candArgs = candidate.args
-      if let first = candArgs.first, first.isImplicitSelf {
-        candArgs.remove(at: 0)
-      }
-      if !candidate.hasVarArgs && candArgs.count != args.count { continue }
-      for (candArg, exprArg) in zip(candArgs, args) {
-        if let externalName = candArg.externalName,
-           exprArg.label != externalName { continue search }
-        guard var valType = exprArg.val.type else { continue search }
-        let type = context.canonicalType(candArg.type)
-        // automatically coerce number literals.
-        if context.propagateContextualType(type, to: exprArg.val) {
-          valType = type
-        }
-        if !matches(type, .any) && !matches(type, valType) {
-          continue search
-        }
-      }
-      return candidate
-    }
-    return nil
-  }
-  
   override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     _ = visitPropertyRefExpr(expr, callArgs: nil)
   }
