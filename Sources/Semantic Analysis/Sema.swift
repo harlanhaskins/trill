@@ -921,6 +921,15 @@ class Sema: ASTTransformer, Pass {
     expr.type = expr.trueCase.type
   }
   
+  override func visitStringExpr(_ expr: StringExpr) {
+    super.visitStringExpr(expr)
+    if context.isValidType(.string) {
+      expr.type = .string
+    } else {
+      expr.type = .pointer(type: .int8)
+    }
+  }
+  
   override func visitPoundFunctionExpr(_ expr: PoundFunctionExpr) -> Result {
     super.visitPoundFunctionExpr(expr)
     guard let funcDecl = currentFunction else {

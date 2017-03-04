@@ -233,8 +233,8 @@ public class ASTContext {
     }
     return bestCandidate?.candidate
   }
-  
-  
+
+
   func candidate(forArgs args: [Argument], candidates: [FuncDecl]) -> FuncDecl? {
     var bestCandidate: CandidateResult<FuncDecl>?
     search: for candidate in candidates {
@@ -261,7 +261,7 @@ public class ASTContext {
         if propagateContextualType(candType, to: exprArg.val) {
           valType = candType
         }
-        
+
         // Even though they 'match', we don't want to demote an any to a specific
         // type without being asked.
         if candType != .any && valType == .any {
@@ -335,6 +335,15 @@ public class ASTContext {
       return changed
     case let expr as TernaryExpr:
       if case .any = canTy {
+        expr.type = contextualType
+        return true
+      }
+    case let expr as StringExpr:
+      if case .pointer(type: DataType.int8) = canTy {
+        expr.type = contextualType
+        return true
+      }
+      if case DataType.string = canTy {
         expr.type = contextualType
         return true
       }

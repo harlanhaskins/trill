@@ -154,16 +154,16 @@ extension IRGenerator {
   
   func visitStringExpr(_ expr: StringExpr) -> Result {
     let globalString = codegenGlobalStringPtr(expr.value)
-    let zero = IntType.int64.zero()
-    let indices = [zero, zero]
-    let ptr = globalString.ptr.constGEP(indices: indices)
+    if let type = expr.type, case .pointer(type: DataType.int8) = type {
+      return globalString.ptr
+    }
     guard let stringTypeDecl = context.type(named: "String") else { fatalError("use of string literal without stdlib String") }
     guard let inititalizer = stringTypeDecl.initializers.first(where: { initializer in
       initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
     }) else { fatalError("use of string literal without stdlib String global initializer") }
 
     let function = codegenFunctionPrototype(inititalizer)
-    return builder.buildCall(function, args: [ptr, globalString.length], name: "string-init")
+    return builder.buildCall(function, args: [globalString.ptr, globalString.length], name: "string-init")
   }
   
   func visitSubscriptExpr(_ expr: SubscriptExpr) -> Result {
