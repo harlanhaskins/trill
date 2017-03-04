@@ -915,6 +915,7 @@ class Sema: ASTTransformer, Pass {
         ])
       return
     }
+    visitStringExpr(expr)
     expr.value = funcDecl.formattedName
   }
   
