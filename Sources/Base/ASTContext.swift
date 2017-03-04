@@ -511,6 +511,7 @@ public class ASTContext {
     if !base && matchRank(typeDecl.type, type) != nil { return true }
     for property in typeDecl.properties {
       if case .pointer = property.type { continue }
+      if property.isComputed { continue }
       if let decl = decl(for: property.type),
         !decl.isIndirect,
         containsInLayout(type: type, typeDecl: decl) {

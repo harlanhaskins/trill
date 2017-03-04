@@ -169,6 +169,7 @@ extension IRGenerator {
       let function = codegenFunctionPrototype(decl)
       return builder.buildCall(function, args: [lhs, rhs], name: "optmp")
     }
+    let type = context.canonicalType(type)
     let signed: Bool
     let overflowBehavior: OverflowBehavior
     if case .int(_, let _signed) = type {

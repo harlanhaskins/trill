@@ -18,7 +18,9 @@ extension IRGenerator {
     }
     let structure = builder.createStruct(name: expr.name.name)
     typeIRBindings[expr.type] = structure
-    let fieldTypes = expr.properties.map { resolveLLVMType($0.type) }
+    let fieldTypes = expr.properties
+                         .filter { !$0.isComputed }
+                         .map { resolveLLVMType($0.type) }
     structure.setBody(fieldTypes)
     
     for method in expr.methods + expr.staticMethods {
@@ -186,10 +188,12 @@ extension IRGenerator {
   @discardableResult
   func visitTypeDecl(_ expr: TypeDecl) -> Result {
     codegenTypePrototype(expr)
-    
+
+    // Visit the synthesized initializers of a type
+    _ = expr.initializers.map(visitFuncDecl)
+
     if expr.has(attribute: .foreign) { return nil }
     
-    _ = expr.initializers.map(visitFuncDecl)
     _ = expr.methods.map(visitFuncDecl)
     _ = expr.deinitializer.map(visitFuncDecl)
     _ = expr.subscripts.map(visitFuncDecl)
