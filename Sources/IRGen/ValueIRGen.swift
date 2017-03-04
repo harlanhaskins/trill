@@ -196,11 +196,15 @@ extension IRGenerator {
         return builder.buildFCmp(lhs, rhs, .orderedEqual)
       } else if case .int = type {
         return builder.buildICmp(lhs, rhs, .equal)
+      } else if case .bool = type {
+        return builder.buildICmp(lhs, rhs, .equal)
       }
     case .notEqualTo:
       if case .floating = type {
         return builder.buildFCmp(lhs, rhs, .orderedNotEqual)
       } else if case .int = type {
+        return builder.buildICmp(lhs, rhs, .notEqual)
+      } else if case .bool = type {
         return builder.buildICmp(lhs, rhs, .notEqual)
       }
     case .lessThan:

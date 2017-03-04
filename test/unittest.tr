@@ -47,8 +47,8 @@ indirect type TestHandler {
     self.results.append(result)
   }
 
-  mutating func expect(_ b: Bool, message: String) {
-    if b {
+  mutating func expect(_ message: String, _ result: Bool) {
+    if result {
       self.addPass(message)
     } else {
       self.addFail(message)
@@ -84,10 +84,12 @@ func printResultType(_ result: TestResultType) {
 
 func main() {
   var handler = TestHandler()
-  handler.expect(true, message: String(cString: "true is true, yo"))
-  handler.expect(false, message: String(cString: "false is false, yo"))
+  handler.expect(String(cString: "true is true"), true == true)
+  handler.expect(String(cString: "false is true"), false == true)
+
   handler.expectingFailure = true
-  handler.expect(4 == 5, message: String(cString: "4 != 5, yo"))
+  handler.expect(String(cString: "4 == 5"), 4 == 5)
   handler.expectingFailure = false
+
   handler.dumpResults()
 }
