@@ -303,6 +303,10 @@ class TypeDecl: Decl {
       propertyDict[property.name.name] = property.type
     }
   }
+
+  var storedProperties: [PropertyDecl] {
+    return properties.filter { !$0.isComputed }
+  }
   
   var isIndirect: Bool {
     return has(attribute: .indirect)

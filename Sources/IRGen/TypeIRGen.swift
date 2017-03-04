@@ -18,8 +18,7 @@ extension IRGenerator {
     }
     let structure = builder.createStruct(name: expr.name.name)
     typeIRBindings[expr.type] = structure
-    let fieldTypes = expr.properties
-                         .filter { !$0.isComputed }
+    let fieldTypes = expr.storedProperties
                          .map { resolveLLVMType($0.type) }
     structure.setBody(fieldTypes)
     
@@ -107,9 +106,7 @@ extension IRGenerator {
       guard let decl = context.decl(for: type) else {
         fatalError("no decl?")
       }
-      properties = decl.properties
-                       .lazy
-                       .filter { !$0.isComputed }
+      properties = decl.storedProperties
                        .map { ($0.name.name, $0.type) }
     case .tuple(let types):
       properties = types.enumerated().map { (".\($0.offset)", $0.element) }
