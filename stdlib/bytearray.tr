@@ -15,7 +15,7 @@ indirect type ByteArray {
   }
   init(_ string: *Int8) {
     let length = strlen(string)
-    self.capacity = (length as Double) * 1.5 as Int
+    self.capacity = (length as Double * 1.5) as Int
     self.bytes = calloc(self.capacity, sizeof(Int8)) as *Int8
     self.length = length as Int
     strncpy(self.bytes, string, length as UInt)
@@ -26,7 +26,7 @@ indirect type ByteArray {
     self.bytes = bytes
   }
   init(_ string: *Int8, length: Int) {
-    self.capacity = (length as Double) * 1.5 as Int
+    self.capacity = (length as Double * 1.5) as Int
     self.bytes = calloc(self.capacity, sizeof(Int8)) as *Int8
     self.length = length
     strncpy(self.bytes, string, length as UInt)
