@@ -286,6 +286,8 @@ public class ASTContext {
   func propagateContextualType(_ contextualType: DataType, to expr: Expr) -> Bool {
     let canTy = canonicalType(contextualType)
     switch expr {
+    case let expr as ParenExpr:
+      return propagateContextualType(canTy, to: expr.value)
     case let expr as NumExpr:
       if case .int = canTy {
         expr.type = contextualType
@@ -630,15 +632,13 @@ public class ASTContext {
   }
 
   func mutability(of expr: Expr) -> Mutability {
-    switch expr {
+    switch expr.semanticsProvidingExpr {
     case let expr as VarExpr:
       return mutability(of: expr)
     case let expr as PropertyRefExpr:
       return mutability(of: expr)
     case let expr as SubscriptExpr:
       return mutability(of: expr.lhs)
-    case let expr as ParenExpr:
-      return mutability(of: expr.value)
     case let expr as PrefixOperatorExpr:
       return mutability(of: expr.rhs)
     case let expr as TupleFieldLookupExpr:
@@ -717,6 +717,7 @@ public class ASTContext {
   }
   
   func isGlobalConstant(_ expr: Expr) -> Bool {
+    let expr = expr.semanticsProvidingExpr
     if expr is ConstantExpr { return true }
     if let expr = expr as? VarExpr,
        let assign = expr.decl as? VarAssignDecl,

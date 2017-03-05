@@ -243,7 +243,7 @@ extension IRGenerator {
       self.builder.buildStore(value, to: alloca.ref)
       return alloca.ref
     }
-    switch expr {
+    switch expr.semanticsProvidingExpr {
     case let expr as PropertyRefExpr:
       // If we need to indirect through a property getter, then apply the
       // getter and store the result in a temporary mutable variable
