@@ -303,6 +303,12 @@ class TypeDecl: Decl {
       propertyDict[property.name.name] = property.type
     }
   }
+
+  /// Finds all properties that are not computed and actually contribute
+  /// to the size of this type.
+  var storedProperties: [PropertyDecl] {
+    return properties.filter { !$0.isComputed }
+  }
   
   var isIndirect: Bool {
     return has(attribute: .indirect)
