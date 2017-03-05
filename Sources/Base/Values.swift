@@ -120,19 +120,16 @@ class FloatExpr: ConstantExpr {
     get { return .double } set { }
   }
   let value: Double
-  let raw: String
-  init(value: Double, raw: String, sourceRange: SourceRange? = nil) {
+  init(value: Double, sourceRange: SourceRange? = nil) {
     self.value = value
-    self.raw = raw
     super.init(sourceRange: sourceRange)
   }
   override var text: String {
-    return raw
+    return "\(value)"
   }
   override func attributes() -> [String : Any] {
     var superAttrs = super.attributes()
     superAttrs["value"] = value
-    superAttrs["raw"] = raw
     return superAttrs
   }
 }
