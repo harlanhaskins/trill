@@ -12,6 +12,13 @@ enum Promotion {
 class Expr: ASTNode {
   var type: DataType? = nil
   var promotion: Promotion? = nil
+
+  /// Looks through syntactic sugar expressions like `ParenExpr` to find the
+  /// underlying expression that informs the semantics of this expression.
+  var semanticsProvidingExpr: Expr {
+    return self
+  }
+
   override func attributes() -> [String : Any] {
     var attrs = super.attributes()
     if let type = type {
@@ -71,12 +78,9 @@ class ParenExpr: Expr {
     self.value = value
     super.init(sourceRange: sourceRange)
   }
-  
-  var rootExpr: Expr {
-    if let paren = value as? ParenExpr {
-      return paren.rootExpr
-    }
-    return value
+
+  override var semanticsProvidingExpr: Expr {
+    return value.semanticsProvidingExpr
   }
 }
 
