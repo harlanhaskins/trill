@@ -113,6 +113,8 @@ class ClangImporter: Pass {
     "sys/time.h",
     "sys/resource.h",
     "sched.h",
+    "dlfcn.h",
+    "execinfo.h",
   ]
   #if os(macOS)
   static func loadSDKPath() -> String? {
@@ -559,8 +561,6 @@ class ClangImporter: Pass {
     context.add(makeAlias(name: "__builtin_va_list",
                           type: .pointer(type: .void)))
     context.add(makeAlias(name: "__va_list_tag",
-                          type: .pointer(type: .void)))
-    context.add(makeAlias(name: "__darwin_pthread_handler_rec",
                           type: .pointer(type: .void)))
   }
   
