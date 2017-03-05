@@ -285,9 +285,7 @@ public class ASTContext {
   @discardableResult
   func propagateContextualType(_ contextualType: DataType, to expr: Expr) -> Bool {
     let canTy = canonicalType(contextualType)
-    switch expr {
-    case let expr as ParenExpr:
-      return propagateContextualType(canTy, to: expr.value)
+    switch expr.semanticsProvidingExpr {
     case let expr as NumExpr:
       if case .int = canTy {
         expr.type = contextualType
