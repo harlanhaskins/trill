@@ -63,12 +63,11 @@ extension IRGenerator {
     return builder.buildBr(target)
   }
 
-  func synthesizeIntializer(_ decl: FuncDecl, function: Function) -> IRValue {
-    guard decl is InitializerDecl,
-        let body = decl.body,
-        body.stmts.isEmpty,
-      let type = decl.returnType.type,
-        let typeDecl = context.decl(for: type) else {
+  func synthesizeIntializer(_ decl: InitializerDecl, function: Function) -> IRValue {
+    guard let body = decl.body,
+          body.stmts.isEmpty,
+          let type = decl.returnType.type,
+          let typeDecl = context.decl(for: type) else {
       fatalError("must synthesize an empty initializer")
     }
     let entryBB = function.appendBasicBlock(named: "entry")
