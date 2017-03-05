@@ -148,7 +148,7 @@ class BoolExpr: ConstantExpr {
     super.init(sourceRange: sourceRange)
   }
   override var text: String {
-    return "\(value)"
+    return value.description
   }
   override func attributes() -> [String : Any] {
     var superAttrs = super.attributes()
@@ -199,7 +199,7 @@ class CharExpr: ConstantExpr {
     super.init(sourceRange: sourceRange)
   }
   override var text: String {
-    return "\(value)"
+    return value.description
   }
   override func attributes() -> [String : Any] {
     var superAttrs = super.attributes()
