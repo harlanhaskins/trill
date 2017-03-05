@@ -3,7 +3,6 @@ type String {
     init(cString: *Int8) {
         self._storage = ByteArray(cString)
         self._storage.append(0)
-        println(self._storage)
     }
     init(_owning cString: *Int8, length: Int) {
         self._storage = ByteArray(_owning: cString, length: length)
