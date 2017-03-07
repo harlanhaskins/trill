@@ -97,7 +97,7 @@ func populate(driver: Driver, options: Options,
   case .jit:
     driver.add("Executing the JIT") { context in
       var args = options.jitArgs
-      args.insert("\(options.filenames.first!)", at: 0)
+      args.insert("\(options.filenames.first ?? "<>")", at: 0)
       let ret = try gen!.execute(args)
       if ret != 0 {
         context.diag.error("program exited with non-zero exit code \(ret)")
