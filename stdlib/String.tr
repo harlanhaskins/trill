@@ -129,6 +129,6 @@ func +(lhs: *Int8, rhs: *Int8) -> String {
   return str
 }
 
-func trill_fatalError(_ message: String) {
-  trill_fatalError(message.cString())
+func fatalError(_ message: String) {
+  trill_fatalError(message.cString)
 }

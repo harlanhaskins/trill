@@ -1,8 +1,9 @@
 func assert(_ condition: Bool, _ message: String) {
   if !condition {
-    trill_fatalError(message)
+    fatalError(message)
   }
 }
+
 indirect type ByteArray {
   var bytes: *Int8
   var length: Int
@@ -50,7 +51,7 @@ indirect type ByteArray {
   }
   func _boundsCheck(_ index: Int) {
     if index > self.length {
-      trill_fatalError("index out of bounds".cString())
+      fatalError("index out of bounds")
     }
   }
   mutating func append(_ element: Int8) {
@@ -110,7 +111,7 @@ indirect type ByteArray {
     printf("capacity: %d, length: %d (load %f)\n", self.capacity, self.length, self._load)
     putchar('[' as Int32)
       for var i = 0; i < self.length; i += 1 {
-        printf("0x%x".cString(), self.bytes[i] as Int)
+        printf("0x%x", self.bytes[i] as Int)
         if i != self.length - 1 {
           print(", ")
         }

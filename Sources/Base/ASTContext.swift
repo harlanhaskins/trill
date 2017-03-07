@@ -94,6 +94,7 @@ public class ASTContext {
   var diagnostics = [PoundDiagnosticStmt]()
   var globals = [VarAssignDecl]()
   var typeAliases = [TypeAliasDecl]()
+  var stdlib: StdLibASTContext?
   
   private var funcDeclMap = [String: [FuncDecl]]()
   private var protocolDeclMap = [String: ProtocolDecl]()
@@ -793,6 +794,10 @@ public class ASTContext {
                     modifiers: [.implicit],
                     isPlaceholder: true)
   }
+}
+
+public class StdLibASTContext: ASTContext {
+  
 }
 
 fileprivate func makeHomogenousOps(_ op: BuiltinOperator, _ types: [DataType]) -> [OperatorDecl] {

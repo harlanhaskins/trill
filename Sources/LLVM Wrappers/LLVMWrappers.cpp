@@ -92,6 +92,8 @@ RawOptions ParseArguments(int argc, char **argv) {
   cl::opt<bool> jit("run", cl::desc("JIT the specified files"));
   cl::opt<bool> parseOnly("parse-only", cl::desc("Only parse, do not run semantic analysis"));
   cl::opt<bool> showImports("show-imports", cl::desc("Show imported items in the AST dump"));
+  cl::opt<bool> stdlib("stdlib", cl::desc("Include the trill standard library"));
+  stdlib = true;
   cl::opt<bool> jsonDiagnostics("json-diagnostics", cl::desc("Emit diagnostics as JSON"));
   cl::opt<bool> printTiming("debug-print-timing", cl::desc("Emit pass times (for performance debugging)"));
   cl::opt<bool> onlyDiagnostics("diagnostics-only", cl::desc("Only emit diagnostics"));
@@ -144,6 +146,7 @@ RawOptions ParseArguments(int argc, char **argv) {
     isStdin,
     jsonDiagnostics,
     showImports,
+    static_cast<bool>(stdlib),
     mode,
     outputFormat,
     targetMachine,
