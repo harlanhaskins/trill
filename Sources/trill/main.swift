@@ -35,7 +35,7 @@ func populate(driver: Driver, options: Options,
   }
   
   if options.includeStdlib {
-    driver.add("Lexing and Parsing the trill standard library") { context in
+    driver.add("Parsing Standard Library") { context in
       let stdlibContext = StdLibASTContext(diagnosticEngine: context.diag)
       guard let stdlibPath = runtimeFramework?.path(forResource: "stdlib", ofType: nil), FileManager.default.fileExists(atPath: stdlibPath) else {
         context.diag.error("Unable to find the stdlib in the trill runtime")

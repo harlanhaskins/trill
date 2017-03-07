@@ -340,11 +340,7 @@ public class ASTContext {
         return true
       }
     case let expr as StringExpr:
-      if case .pointer(type: DataType.int8) = canTy {
-        expr.type = contextualType
-        return true
-      }
-      if case DataType.string = canTy {
+      if [.string, .pointer(type: DataType.int8)].contains(canTy) {
         expr.type = contextualType
         return true
       }

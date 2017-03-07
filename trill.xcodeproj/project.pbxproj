@@ -1879,7 +1879,7 @@
 					"$(OTHER_CFLAGS)",
 					"-Wold-style-cast",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.harlanhaskins.trillRuntime;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.trill-lang.trillRuntime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -1910,7 +1910,7 @@
 					"$(OTHER_CFLAGS)",
 					"-Wold-style-cast",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.harlanhaskins.trillRuntime;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.trill-lang.trillRuntime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				VERSIONING_SYSTEM = "apple-generic";

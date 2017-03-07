@@ -149,7 +149,7 @@ RawOptions ParseArguments(int argc, char **argv) {
     isStdin,
     jsonDiagnostics,
     showImports,
-    static_cast<bool>(stdlib),
+    stdlib,
     mode,
     outputFormat,
     targetMachine,

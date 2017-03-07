@@ -73,7 +73,7 @@ let ansiEscapeSupportedOnStdErr: Bool = {
     return true
 }()
 
-let runtimeFramework: Bundle? = Bundle(identifier: "com.harlanhaskins.trillRuntime")
+let runtimeFramework: Bundle? = Bundle(identifier: "com.trill-lang.trillRuntime")
 
 extension FileManager {
   func recursiveChildren(of path: String) -> [String]? {
