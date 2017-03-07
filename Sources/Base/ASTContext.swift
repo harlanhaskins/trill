@@ -797,7 +797,15 @@ public class ASTContext {
 }
 
 public class StdLibASTContext: ASTContext {
+  var string: TypeDecl {
+    return type(named: "String")!
+  }
   
+  var staticStringInitializer: InitializerDecl {
+    return string.initializers.first { initializer in
+      initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
+    }!
+  }
 }
 
 fileprivate func makeHomogenousOps(_ op: BuiltinOperator, _ types: [DataType]) -> [OperatorDecl] {

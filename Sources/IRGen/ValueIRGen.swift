@@ -157,12 +157,12 @@ extension IRGenerator {
     if let type = expr.type, case .pointer(type: DataType.int8) = type {
       return globalString.ptr
     }
-    guard let stringTypeDecl = context.type(named: "String") else { fatalError("use of string literal without stdlib String") }
-    guard let inititalizer = stringTypeDecl.initializers.first(where: { initializer in
-      initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
-    }) else { fatalError("use of string literal without stdlib String global initializer") }
 
-    let function = codegenFunctionPrototype(inititalizer)
+    guard let stringInitializer = context.stdlib?.staticStringInitializer else {
+      fatalError("attempting to codegen String without stdlib")
+    }
+    let function = codegenFunctionPrototype(stringInitializer)
+
     return builder.buildCall(function, args: [globalString.ptr, globalString.length], name: "string-init")
   }
   
