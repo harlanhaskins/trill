@@ -799,6 +799,7 @@ public class StdLibASTContext: ASTContext {
   
   var staticStringInitializer: InitializerDecl {
     return string.initializers.first { initializer in
+      // TODO: find a way to do this that doesn't require string comparison
       initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
     }!
   }
