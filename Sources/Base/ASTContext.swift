@@ -289,16 +289,16 @@ public class ASTContext {
     switch expr.semanticsProvidingExpr {
     case let expr as NumExpr:
       if case .int = canTy {
-        expr.type = contextualType
+        expr.type = canTy
         return true
       }
       if case .floating = canTy {
-        expr.type = contextualType
+        expr.type = canTy
         return true
       }
     case let expr as ArrayExpr:
       guard case .array(_, let length)? = expr.type else { return false }
-      guard case .array(let ctx, _) = contextualType else {
+      guard case .array(let ctx, _) = canTy else {
         return false
       }
       var changed = false
@@ -312,12 +312,12 @@ public class ASTContext {
     case let expr as InfixOperatorExpr:
       if expr.lhs is NumExpr,
         expr.rhs is NumExpr {
-        var changed = propagateContextualType(contextualType, to: expr.lhs)
-        changed = changed || propagateContextualType(contextualType, to: expr.rhs)
+        var changed = propagateContextualType(canTy, to: expr.lhs)
+        changed = changed || propagateContextualType(canTy, to: expr.rhs)
         return changed
       }
     case let expr as NilExpr where canBeNil(canTy):
-      expr.type = contextualType
+      expr.type = canTy
       return true
     case let expr as TupleExpr:
       guard
@@ -331,12 +331,12 @@ public class ASTContext {
         }
       }
       if changed {
-        expr.type = contextualType
+        expr.type = canTy
       }
       return changed
     case let expr as TernaryExpr:
       if case .any = canTy {
-        expr.type = contextualType
+        expr.type = canTy
         return true
       } else if propagateContextualType(contextualType, to: expr.trueCase) && propagateContextualType(contextualType, to: expr.falseCase) {
         expr.type = contextualType
@@ -344,12 +344,12 @@ public class ASTContext {
       }
     case let expr as StringExpr:
       if [.string, .pointer(type: DataType.int8)].contains(canTy) {
-        expr.type = contextualType
+        expr.type = canTy
         return true
       }
     case let expr as ClosureExpr:
       if case let .function(_, retTy) = canTy {
-        expr.type = contextualType
+        expr.type = canTy
         expr.returnType = TypeRefExpr(type: retTy, name: Identifier(name: ""))
         return true
       }
