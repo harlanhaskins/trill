@@ -16,6 +16,8 @@ enum DataType: CustomStringConvertible, Hashable {
   case void
   case custom(name: String)
   case any
+  case typeVariable(name: String)
+
   indirect case function(args: [DataType], returnType: DataType)
   indirect case pointer(type: DataType)
   indirect case array(field: DataType, length: Int?)
@@ -36,7 +38,11 @@ enum DataType: CustomStringConvertible, Hashable {
     return .array(field: field, length: nil)
   }
   static let string = DataType.custom(name: "String")
-  
+  static var freshTypeVariable : DataType {
+    defer { DataType.typeVariablePool += 1 }
+    return .typeVariable(name: "T\(DataType.typeVariablePool)")
+  }
+
   init(name: String) {
     switch name {
     case "Int8": self = .int8
@@ -100,6 +106,7 @@ enum DataType: CustomStringConvertible, Hashable {
       let args = args.map { $0.description }.joined(separator: ", ")
       return "(\(args)) -> \(ret)"
     case .any: return "Any"
+    case .typeVariable(let name): return "$\(name)"
     }
   }
   
@@ -129,6 +136,8 @@ enum DataType: CustomStringConvertible, Hashable {
     default: return false
     }
   }
+
+  static private var typeVariablePool : Int = 0
 }
 
 func ==(lhs: DataType, rhs: DataType) -> Bool {
@@ -150,6 +159,8 @@ func ==(lhs: DataType, rhs: DataType) -> Bool {
     return args == args2 && ret == ret2
   case (.tuple(let fields), .tuple(let fields2)):
     return fields == fields2
+  case (.typeVariable(let name1), .typeVariable(let name2)):
+    return name1 == name2
   default: return false
   }
 }
