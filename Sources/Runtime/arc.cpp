@@ -189,16 +189,19 @@ void *_Nonnull trill_allocateIndirectType(size_t size,
 }
 
 void trill_retain(void *_Nonnull instance) {
+  if (instance == nullptr) { return instance; }
   auto refCounted = RefCounted(instance);
   refCounted.retain();
 }
 
 void trill_release(void *_Nonnull instance) {
+  if (instance == nullptr) { return instance; }
   auto refCounted = RefCounted(instance);
   refCounted.release();
 }
 
 uint8_t trill_isUniquelyReferenced(void *_Nonnull instance) {
+  if (instance == nullptr) { return 1; }
   auto refCounted = RefCounted(instance);
   return refCounted.isUniquelyReferenced() ? 1 : 0;
 }
