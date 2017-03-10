@@ -20,7 +20,7 @@
 #ifdef DEBUG_ARC
 #define DEBUG_ARC_LOG(x) do { \
    std::cout << x << " (" << value \
-             << ") -- retain count is now " << box->retainCount << std::endl; \
+             << ") -- retain count is now " << lockedRetainCount() << std::endl; \
 } while (false)
 #else
 #define DEBUG_ARC_LOG(x) ({})
@@ -97,17 +97,19 @@ public:
    */
   RefCounted(void *_Nonnull boxedValue) {
     value = boxedValue;
-    box = reinterpret_cast<RefCountBox *>(
-            reinterpret_cast<uintptr_t>(value) - sizeof(RefCountBox));;
+    if (boxedValue == nullptr) {
+      box = nullptr;
+    } else {
+      box = reinterpret_cast<RefCountBox *>(
+              reinterpret_cast<uintptr_t>(value) - sizeof(RefCountBox));;
+    }
   }
 
   /**
    Determines if this object's reference count is exactly one.
    */
   bool isUniquelyReferenced() {
-    CHECK_VALID_BOX();
-    std::lock_guard<std::mutex> guard(box->mutex);
-    return box->retainCount == 1;
+    return retainCount() == 1;
   }
 
   /**
@@ -117,7 +119,7 @@ public:
     CHECK_VALID_BOX();
     std::lock_guard<std::mutex> guard(box->mutex);
     DEBUG_ARC_LOG("getting retain count");
-    return box->retainCount;
+    return lockedRetainCount();
   }
 
   /**
@@ -129,7 +131,7 @@ public:
     if (box->retainCount == std::numeric_limits<decltype(box->retainCount)>::max()) {
       trill_fatalError("retain count overflow");
     }
-    box->retainCount++;
+    box->retainCount += 2;
     DEBUG_ARC_LOG("retaining object");
   }
 
@@ -140,15 +142,15 @@ public:
   void release() {
     CHECK_VALID_BOX();
     box->mutex.lock();
-    if (box->retainCount == 0) {
+    if (lockedRetainCount() == 0) {
       trill_fatalError("attempting to release object with retain count 0");
     }
 
-    box->retainCount--;
+    box->retainCount -= 2;
 
     DEBUG_ARC_LOG("releasing object");
 
-    if (box->retainCount == 0) {
+    if (lockedRetainCount() == 0) {
       dealloc(); // mutex will be unlocked and invalidated
     } else {
       box->mutex.unlock(); // otherwise manually unlock
@@ -157,11 +159,35 @@ public:
 
 private:
   /**
+   Returns whether the value inside the \c RefCountBox is in the
+   process of being deallocated
+   @note This function *must* be called with a locked \c mutex.
+   */
+  bool isDeallocating() {
+    return box->retainCount & 0x1;
+  }
+  
+  /**
+   Returns the actual retain count of the \c RefCountBox
+   @note This function *must* be called with a locked \c mutex.
+   */
+  bool lockedRetainCount() {
+    return ((box->retainCount & ~ 0x1)) >> 1;
+  }
+  
+  /**
    Deallocates the value inside a \c RefCountBox.
    @note This function *must* be called with a locked \c mutex.
    */
   void dealloc() {
     CHECK_VALID_BOX();
+#ifdef DEBUG_ARC
+    if (box->deallocated) {
+      DEBUG_ARC_LOG("dealloc on an already deallocated object");
+      box->mutex.unlock();
+      return;
+    }
+#endif
     if (box->retainCount > 0) {
       trill_fatalError("object deallocated with retain count > 0");
     }
@@ -169,9 +195,15 @@ private:
     DEBUG_ARC_LOG("deallocating");
 
     if (box->deinit != nullptr) {
+      box->retainCount = 1;
       box->deinit(value);
+      if (box->retainCount != 1) {
+        trill_fatalError("attempted to resurrect zombie during deinit... this is an apocalypse-safe language");
+      }
     }
 
+    box->retainCount = 0; // clear the deallocating flag
+    
     // Explicitly unlock the mutex before deleting the box
     box->mutex.unlock();
 

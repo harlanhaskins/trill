@@ -202,18 +202,6 @@ extension IRGenerator {
         let value = allocaForRelease.read()
         self.codegenRelease(value)
       })
-    } else {
-      for property in decl.storedProperties {
-        let canPropTy = context.canonicalType(property.type)
-        if !context.isTriviallyCopyable(canPropTy) {
-          let ref = PropertyRefExpr(lhs: expr, name: property.name)
-          ref.type = property.type
-          ref.decl = property
-          ref.typeDecl = decl
-          let val = visitPropertyRefExpr(ref)!
-          codegenImplicitCopy(val, expr: ref, destType: property.type)
-        }
-      }
     }
 
     return value
