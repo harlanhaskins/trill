@@ -21,7 +21,8 @@ enum TypeCheckError: Error, CustomStringConvertible {
   case overflow(raw: String, type: DataType)
   case underflow(raw: String, type: DataType)
   case shiftPastBitWidth(type: DataType, shiftWidth: IntMax)
-  
+  case ambiguousExpressionType
+
   var description: String {
     switch self {
     case .arityMismatch(let name, let gotCount, let expectedCount):
@@ -55,6 +56,8 @@ enum TypeCheckError: Error, CustomStringConvertible {
       return "cannot downcast from Any to type '\(type)'"
     case .addExplicitCast(let toType):
       return "add explicit cast (as \(toType)) to fix"
+    case .ambiguousExpressionType:
+      return "type of expression is ambiguous without more context"
     }
   }
 }
@@ -222,17 +225,51 @@ class TypeChecker: ASTTransformer, Pass {
     super.visitParamDecl(decl)
   }
   
-  override func visitReturnStmt(_ expr: ReturnStmt) -> Result {
-    guard let returnType = currentClosure?.returnType.type ?? currentFunction?.returnType.type else { return }
-    guard let valType = expr.value.type else { return }
+  override func visitReturnStmt(_ stmt: ReturnStmt) -> Result {
+    guard var returnType = currentClosure?.returnType.type ?? currentFunction?.returnType.type else { return }
+    guard var valType = stmt.value.type else { return }
+    if case .typeVariable(_) = returnType {
+      // Try to solve for the closure's return type with the return statement's
+      // return type.
+      if case .typeVariable(_) = valType {
+        error(TypeCheckError.ambiguousExpressionType,
+              loc: stmt.startLoc,
+              highlights: [
+                stmt.sourceRange
+          ])
+        return
+      }
+
+      // FIXME: Type variable propagation restricted to closure expressions.
+      let curClosure = currentClosure!
+      for a in curClosure.args {
+        if case .typeVariable(_) = a.type {
+          error(TypeCheckError.ambiguousExpressionType,
+                loc: stmt.startLoc,
+                highlights: [
+                  stmt.sourceRange
+            ])
+          return
+        }
+      }
+      // Recast an empty argument list as Void
+      // FIXME: Do this earlier (Parse) with a special kind of identifier?
+      let argTy = curClosure.args.isEmpty ? [DataType.void] : curClosure.args.map { $0.type }
+      context.propagateContextualType(DataType.function(args: argTy, returnType: valType), to: curClosure)
+      returnType = valType
+    } else if case .typeVariable(_) = valType {
+      // Try to solve the return statement's type with the closure's return type.
+      context.propagateContextualType(returnType, to: stmt.value)
+      valType = returnType
+    }
     if !matches(valType, returnType) {
       error(TypeCheckError.typeMismatch(expected: returnType, got: valType),
-            loc: expr.startLoc,
+            loc: stmt.startLoc,
             highlights: [
-              expr.sourceRange
+              stmt.sourceRange
         ])
     }
-    super.visitReturnStmt(expr)
+    super.visitReturnStmt(stmt)
   }
   
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
