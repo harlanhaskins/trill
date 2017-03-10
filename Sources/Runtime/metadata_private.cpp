@@ -122,6 +122,8 @@ void AnyBox::debugPrint(std::string indent) {
     } else if (strncmp(typeMetadata->name, "*", 1) == 0) {
       std::cout << value << std::endl;
     }
+  } else {
+    std::cout << "<nil>" << std::endl;
   }
   std::cout << "}" << std::endl;
 }
