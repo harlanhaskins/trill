@@ -178,7 +178,7 @@ private:
 #ifdef DEBUG_ARC
     box->deallocated = true;
 #else
-    free(box);
+    delete box;
 #endif
   }
 };
