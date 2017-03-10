@@ -227,7 +227,7 @@ class ParamDecl: VarAssignDecl {
 
 class ClosureExpr: Expr {
   let args: [ParamDecl]
-  let returnType: TypeRefExpr
+  var returnType: TypeRefExpr
   let body: CompoundStmt
   
   private(set) var captures = Set<ASTNode>()

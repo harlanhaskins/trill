@@ -75,6 +75,15 @@ class VarAssignDecl: Decl {
     superAttrs["mutable"] = mutable
     return superAttrs
   }
+
+  override var type: DataType {
+    set {
+      super.type = newValue
+    }
+    get {
+      return self.rhs?.type ?? super.type
+    }
+  }
 }
 
 class CompoundStmt: Stmt {

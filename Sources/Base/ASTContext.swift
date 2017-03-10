@@ -347,6 +347,12 @@ public class ASTContext {
         expr.type = contextualType
         return true
       }
+    case let expr as ClosureExpr:
+      if case let .function(_, retTy) = canTy {
+        expr.type = contextualType
+        expr.returnType = TypeRefExpr(type: retTy, name: Identifier(name: ""))
+        return true
+      }
     default:
       break
     }
