@@ -338,6 +338,9 @@ public class ASTContext {
       if case .any = canTy {
         expr.type = contextualType
         return true
+      } else if propagateContextualType(contextualType, to: expr.trueCase) && propagateContextualType(contextualType, to: expr.falseCase) {
+        expr.type = contextualType
+        return true
       }
     case let expr as StringExpr:
       if [.string, .pointer(type: DataType.int8)].contains(canTy) {
