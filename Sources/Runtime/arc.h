@@ -41,7 +41,7 @@ void *_Nonnull trill_allocateIndirectType(size_t size,
 
  @param instance A pointer to an indirect type.
  */
-void trill_retain(void *_Nonnull instance);
+void * _Nonnull trill_retain(void *_Nonnull instance);
 
 /**
  Performs a thread-safe release operation that decreases the retain count of an
@@ -52,7 +52,7 @@ void trill_retain(void *_Nonnull instance);
        indirect type will be deallocated, its deinitializer will be called,
        and this instance will be invalidated.
  */
-void trill_release(void *_Nonnull instance);
+void * _Nonnull trill_release(void *_Nonnull instance);
 
 /**
  Determines if an indirect type instance is uniquely referenced. This is used
