@@ -481,7 +481,7 @@ class IRGenerator: ASTVisitor, Pass {
                           let arg = self.builder.buildBitCast(meta, type: PointerType(pointee: IntType.int8))
                           return self.builder.buildCall(function, args: [arg])
                         },
-                        write: {_ in fatalError("Cannot reassign type")})
+                        write: { _ in fatalError("Cannot reassign type") })
     }
     fatalError("unknown var \(expr.name.name)")
   }

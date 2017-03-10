@@ -175,7 +175,7 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarExpr(_ expr: VarExpr) -> Result {
-    if expr.isTypeVar { return }
+    if expr.isTypeVar { return } // since the decl purposefully doesn't match the type
     guard let decl = expr.decl else { return }
     guard let type = expr.type else { return }
     if !matches(decl.type, type) {
