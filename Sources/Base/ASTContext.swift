@@ -806,6 +806,17 @@ public class StdLibASTContext: ASTContext {
       initializer.formattedParameterList == "(_global cString: *Int8, length: Int)"
     }!
   }
+  
+  var mirror: TypeDecl {
+    return type(named: "Mirror")!
+  }
+  
+  var mirrorReflectingTypeMetadataInitializer: InitializerDecl {
+    return mirror.initializers.first { initializer in
+      // TODO: find a way to do this that doesn't require string comparison
+      initializer.formattedParameterList == "(reflectingType typeMeta: *Void)"
+    }!
+  }
 }
 
 fileprivate func makeHomogenousOps(_ op: BuiltinOperator, _ types: [DataType]) -> [OperatorDecl] {
