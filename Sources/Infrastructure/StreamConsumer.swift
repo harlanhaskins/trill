@@ -69,8 +69,8 @@ class StreamConsumer<StreamType: ColoredStream>: DiagnosticConsumer {
             let lineStr = "\(loc.line)"
             let indentation = "\(indent(lineStr.characters.count))"
             stream.write(" \(indentation)|\n", with: [.cyan])
-            if let prior = file?.lines[loc.line - 2] {
-              stream.write(" \(indentation)|", with: [.cyan])
+            if let prior = file?.lines[safe: loc.line - 2] {
+              stream.write(" \(indentation)| ", with: [.cyan])
               stream.write("\(prior)\n")
             }
             stream.write(" \(lineStr)| ", with: [.cyan])
@@ -79,8 +79,8 @@ class StreamConsumer<StreamType: ColoredStream>: DiagnosticConsumer {
             stream.write(highlightString(forDiag: diagnostic),
                          with: [.bold, .green])
             stream.write("\n")
-            if let next = file?.lines[loc.line] {
-              stream.write(" \(indentation)|", with: [.cyan])
+            if let next = file?.lines[safe: loc.line] {
+              stream.write(" \(indentation)| ", with: [.cyan])
               stream.write("\(next)\n")
             }
             stream.write("\n")
