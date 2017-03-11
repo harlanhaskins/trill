@@ -54,6 +54,12 @@ struct TypeMetadata {
   const FieldMetadata *fields;
 
   /**
+   A pointer to this type's deinitializer function, or \c nullptr if the type
+   doesn't have a deinitializer.
+   */
+  void (*deinit)(void *);
+
+  /**
    Whether this type is a reference type (spelled as \c indirect \c type).
    */
   uint8_t isReferenceType;
@@ -178,8 +184,8 @@ void trill_reportCastError(const TypeMetadata *anyMetadata,
                            const TypeMetadata *typeMetadata);
 
 struct GenericBox {
-    const TypeMetadata *typeMetadata;
-    const void **witnessTable;
+  const TypeMetadata *typeMetadata;
+  const void **witnessTable;
 };
 
 }

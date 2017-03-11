@@ -27,6 +27,18 @@ extension IRGenerator {
                                  args: [token, function])
     return (token: token, call: call)
   }
+
+  @discardableResult
+  func codegenRetain(_ value: IRValue) -> IRValue {
+    let cast = builder.buildBitCast(value, type: PointerType.toVoid)
+    return builder.buildCall(codegenIntrinsic(named: "trill_retain"), args: [cast])
+  }
+
+  @discardableResult
+  func codegenRelease(_ value: IRValue) -> IRValue {
+    let cast = builder.buildBitCast(value, type: PointerType.toVoid)
+    return builder.buildCall(codegenIntrinsic(named: "trill_release"), args: [cast])
+  }
   
   func codegenPromoteToAny(value: IRValue, type: DataType) -> IRValue {
     if case .any = type {
@@ -95,30 +107,34 @@ extension IRGenerator {
     return builder.buildLoad(castResult, name: "cast-load")
   }
   
-  /// Allocates a heap box in the garbage collector, and registers a finalizer
-  /// specified by that type's deinit.
-  func codegenAlloc(type: DataType) -> VarBinding {
+  /// Allocates a reference-counted heap box and registers the type's
+  /// deinitializer to be called when the object is deallocated.
+  func codegenAllocateIndirect(type: DataType) -> VarBinding {
     let irType = resolveLLVMType(type)
-    let alloc = codegenIntrinsic(named: "trill_alloc")
-    let register = codegenIntrinsic(named: "trill_registerDeinitializer")
-    guard let typeDecl = context.decl(for: type, canonicalized: true) else {
+    let alloc = codegenIntrinsic(named: "trill_allocateIndirectType")
+    guard let typeDecl = context.decl(for: type) else {
       fatalError("no decl?")
     }
+
+    let deinitializerTy = FunctionType(argTypes: [PointerType.toVoid],
+                                       returnType: VoidType())
+
     let size = byteSize(of: type)
-    let ptr = builder.buildCall(alloc, args: [size], name: "ptr")
-    var res = ptr
-    if type != .pointer(type: .int8) {
-      res = builder.buildBitCast(res, type: irType, name: "alloc-cast")
-    }
+    var args = [size]
     
     if let deinitializer = typeDecl.deinitializer {
-      let deinitializerTy = FunctionType(argTypes: [PointerType.toVoid],
-                                         returnType: VoidType())
       let deinitializer = codegenFunctionPrototype(deinitializer)
       let deinitializerCast = builder.buildBitCast(deinitializer,
                                                    type: PointerType(pointee: deinitializerTy),
                                                    name: "deinitializer-cast")
-      _ = builder.buildCall(register, args: [ptr, deinitializerCast])
+      args.append(deinitializerCast)
+    } else {
+      args.append(PointerType(pointee: deinitializerTy).null())
+    }
+    let ptr = builder.buildCall(alloc, args: args, name: "ptr")
+    var res = ptr
+    if type != .pointer(type: .int8) {
+      res = builder.buildBitCast(res, type: irType, name: "alloc-cast")
     }
     return VarBinding(ref: res,
                       storage: .reference,

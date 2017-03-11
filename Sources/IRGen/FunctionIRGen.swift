@@ -86,7 +86,7 @@ extension IRGenerator {
                                          name: "init-insert")
     }
     if typeDecl.isIndirect {
-      let result = codegenAlloc(type: type).ref
+      let result = codegenAllocateIndirect(type: type).ref
       builder.buildStore(initial, to: result)
       builder.buildRet(result)
     } else {
@@ -123,7 +123,7 @@ extension IRGenerator {
       builder.positionAtEnd(of: entrybb)
       if decl.returnType != .void {
         if isReferenceInitializer {
-          res = codegenAlloc(type: returnType)
+          res = codegenAllocateIndirect(type: returnType)
         } else {
           res = createEntryBlockAlloca(function, type: type,
                                        name: "res", storage: storageKind)
@@ -266,8 +266,8 @@ extension IRGenerator {
         type = .pointer(type: field)
         val = builder.buildBitCast(alloca.ref, type: PointerType(pointee: resolveLLVMType(field)))
       }
-      if let declArg = decl.args[safe: idx], declArg.type == .any {
-        val = codegenPromoteToAny(value: val, type: type)
+      if let declArg = decl.args[safe: idx] {
+        val = codegenImplicitCopy(val, expr: arg.val, destType: declArg.type)
       }
       argVals.append(val)
     }
@@ -290,11 +290,9 @@ extension IRGenerator {
     }
     var store: IRValue? = nil
     if !(expr.value is VoidExpr) {
-      var val = visit(expr.value)!
-      if let type = expr.value.type,
-         case .any = context.canonicalType(currentDecl.returnType.type!) {
-        val = codegenPromoteToAny(value: val, type: type)
-      }
+      let val = codegenImplicitCopy(visit(expr.value)!,
+                                    expr: expr.value,
+                                    destType: currentDecl.returnType.type!)
       if !(currentDecl is InitializerDecl) {
         store = builder.buildStore(val, to: currentFunction.resultAlloca!)
       }

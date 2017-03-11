@@ -1,0 +1,47 @@
+var cInitializedCount = 0
+var cDeinitializedCount = 0
+
+type A {
+  var b: B
+  var c: C
+
+  init() {
+    self.b = B()
+    self.c = C()
+  }
+}
+
+type B {
+  let i: Int
+  init() {
+    i = 5
+  }
+}
+
+indirect type C {
+  var c: C
+  var b: B
+
+  init() {
+    cInitializedCount += 1
+    self.b = B()
+    self.c = nil
+  }
+
+  deinit {
+      cDeinitializedCount += 1
+  }
+}
+
+func makeObjects() {
+  let a = A()
+  let b = B()
+  let c = C()
+}
+
+func main() {
+  makeObjects()
+
+  printf("c: allocated %d, deallocated %d\n", cInitializedCount, cDeinitializedCount);
+  exit(cInitializedCount - cDeinitializedCount)
+}
