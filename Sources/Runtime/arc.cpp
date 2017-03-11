@@ -210,7 +210,8 @@ private:
 #ifdef DEBUG_ARC
     box->deallocated = true;
 #else
-    delete box;
+    box->~RefCountBox();
+    free(box);
 #endif
   }
 };
