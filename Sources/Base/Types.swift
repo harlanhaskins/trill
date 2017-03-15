@@ -17,7 +17,8 @@ enum DataType: CustomStringConvertible, Hashable {
   case custom(name: String)
   case any
   case typeVariable(name: String)
-
+  case metaVariable(name: String)
+  
   indirect case function(args: [DataType], returnType: DataType)
   indirect case pointer(type: DataType)
   indirect case array(field: DataType, length: Int?)
@@ -41,6 +42,10 @@ enum DataType: CustomStringConvertible, Hashable {
   static var freshTypeVariable : DataType {
     defer { DataType.typeVariablePool += 1 }
     return .typeVariable(name: "T\(DataType.typeVariablePool)")
+  }
+  static var freshMetaVariable : DataType {
+    defer { DataType.typeVariablePool += 1 }
+    return .metaVariable(name: "T\(DataType.typeVariablePool)")
   }
 
   init(name: String) {
@@ -73,7 +78,28 @@ enum DataType: CustomStringConvertible, Hashable {
       return self
     }
   }
-  
+
+  // Occurs
+  func contains(_ x : String) -> Bool {
+    switch self {
+    case let .function(args, returnType):
+      return args.reduce(false, { (acc, t) in acc || t.contains(x) })
+          || returnType.contains(x)
+    case let .tuple(fields):
+      return fields.reduce(false, { (acc, t) in acc || t.contains(x) })
+    case let .pointer(pointee):
+      return pointee.contains(x)
+    case let .array(field, _):
+      return field.contains(x)
+    case let .typeVariable(name):
+      return name == x
+    case let .metaVariable(name):
+      return name == x
+    default:
+      return false
+    }
+  }
+
   var description: String {
     switch self {
     case .int(width: 64, let signed):
@@ -107,6 +133,7 @@ enum DataType: CustomStringConvertible, Hashable {
       return "(\(args)) -> \(ret)"
     case .any: return "Any"
     case .typeVariable(let name): return "$\(name)"
+    case .metaVariable(let name): return "%\(name)"
     }
   }
   
@@ -137,6 +164,87 @@ enum DataType: CustomStringConvertible, Hashable {
     }
   }
 
+  var freeTypeVariables : [String] {
+    switch self {
+    case let .array(fields, _):
+      return fields.freeTypeVariables
+    case let .function(args, returnType):
+      return args.flatMap({ $0.freeTypeVariables }) + returnType.freeTypeVariables
+    case let .pointer(type):
+      return type.freeTypeVariables
+    case let .tuple(fields):
+      return fields.flatMap({ $0.freeTypeVariables })
+    case let .typeVariable(name):
+      return [name]
+    default:
+      return []
+    }
+  }
+
+  var freeMetaVariables : [String] {
+    switch self {
+    case let .array(fields, _):
+      return fields.freeTypeVariables
+    case let .function(args, returnType):
+      return args.flatMap({ $0.freeTypeVariables }) + returnType.freeTypeVariables
+    case let .pointer(type):
+      return type.freeTypeVariables
+    case let .tuple(fields):
+      return fields.flatMap({ $0.freeTypeVariables })
+    case let .metaVariable(name):
+      return [name]
+    default:
+      return []
+    }
+  }
+
+  func substitute(_ s : [String:DataType]) -> DataType {
+    switch self {
+    case let .array(fields, l):
+      return .array(field: fields.substitute(s), length: l)
+    case let .function(args, returnType):
+      return .function(args: args.map { $0.substitute(s) }, returnType: returnType.substitute(s))
+    case let .pointer(type):
+      return .pointer(type: type.substitute(s))
+    case let .tuple(fields):
+      return .tuple(fields: fields.map { $0.substitute(s) })
+    case let .typeVariable(n), let .metaVariable(n):
+      // If it's a type variable, look it up in the substitution map to
+      // find a replacement.
+      if let t = s[n] {
+        // If we get replaced with ourself we've reached the desired fixpoint.
+        if t == self {
+          return t
+        }
+        // Otherwise keep substituting.
+        return t.substitute(s)
+      }
+      return self
+    default:
+      return self
+    }
+  }
+
+  func substitute(_ name : String, for type: DataType) -> DataType {
+    switch self {
+    case let .array(fields, l):
+      return .array(field: fields.substitute(name, for: type), length: l)
+    case let .function(args, returnType):
+      return .function(args: args.map { $0.substitute(name, for: type) }, returnType: returnType.substitute(name, for: type))
+    case let .pointer(type):
+      return .pointer(type: type.substitute(name, for: type))
+    case let .tuple(fields):
+      return .tuple(fields: fields.map { $0.substitute(name, for: type) })
+    case let .typeVariable(tvn), let .metaVariable(tvn):
+      if tvn == name {
+        return type
+      }
+      return self
+    default:
+      fatalError()
+    }
+  }
+
   static private var typeVariablePool : Int = 0
 }
 
@@ -161,17 +269,19 @@ func ==(lhs: DataType, rhs: DataType) -> Bool {
     return fields == fields2
   case (.typeVariable(let name1), .typeVariable(let name2)):
     return name1 == name2
+  case (.metaVariable(let name1), .metaVariable(let name2)):
+    return name1 == name2
   default: return false
   }
 }
 
 class Decl: ASTNode {
-  var type: DataType
+  var type: DataType?
   let modifiers: Set<DeclModifier>
   func has(attribute: DeclModifier) -> Bool {
     return modifiers.contains(attribute)
   }
-  init(type: DataType, modifiers: [DeclModifier], sourceRange: SourceRange?) {
+  init(type: DataType?, modifiers: [DeclModifier], sourceRange: SourceRange?) {
     self.modifiers = Set(modifiers)
     self.type = type
     super.init(sourceRange: sourceRange)
@@ -179,7 +289,7 @@ class Decl: ASTNode {
   
   override func attributes() -> [String : Any] {
     var attrs = super.attributes()
-    attrs["type"] = "\(type)"
+    attrs["type"] = "\(type!)"
     if !modifiers.isEmpty {
       attrs["modifiers"] = modifiers.map { "\($0)" }.sorted().joined(separator: ", ")
     }
@@ -255,7 +365,7 @@ class TypeDecl: Decl {
   }
   
   func createRef() -> TypeRefExpr {
-    return TypeRefExpr(type: self.type, name: self.name)
+    return TypeRefExpr(type: self.type!, name: self.name)
   }
 
   func methodsSatisfyingRequirements(of proto: ProtocolDecl) -> [MethodDecl] {

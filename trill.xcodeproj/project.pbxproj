@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		82D6E13A1E78E6CA00C791DE /* Solver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D6E1391E78E6CA00C791DE /* Solver.swift */; };
 		C019190A1E6E2B6800FDFB87 /* AnyArray.tr in CopyFiles */ = {isa = PBXBuildFile; fileRef = C01918FA1E6E2AD700FDFB87 /* AnyArray.tr */; };
 		C019190B1E6E2B6800FDFB87 /* AnyDictionary.tr in CopyFiles */ = {isa = PBXBuildFile; fileRef = C01918FB1E6E2AD700FDFB87 /* AnyDictionary.tr */; };
 		C019190C1E6E2B6800FDFB87 /* bytearray.tr in CopyFiles */ = {isa = PBXBuildFile; fileRef = C01918FC1E6E2AD700FDFB87 /* bytearray.tr */; };
@@ -418,6 +419,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		82D6E1391E78E6CA00C791DE /* Solver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Solver.swift; sourceTree = "<group>"; };
 		C01918FA1E6E2AD700FDFB87 /* AnyArray.tr */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = AnyArray.tr; sourceTree = "<group>"; };
 		C01918FB1E6E2AD700FDFB87 /* AnyDictionary.tr */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = AnyDictionary.tr; sourceTree = "<group>"; };
 		C01918FC1E6E2AD700FDFB87 /* bytearray.tr */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = bytearray.tr; sourceTree = "<group>"; };
@@ -1156,6 +1158,7 @@
 				DC8EBB371E5FCFD500AE577C /* Sema.swift */,
 				DC8EBB381E5FCFD500AE577C /* SemaError.swift */,
 				DC8EBB391E5FCFD500AE577C /* TypeChecker.swift */,
+				82D6E1391E78E6CA00C791DE /* Solver.swift */,
 			);
 			name = "Semantic Analysis";
 			path = "Sources/Semantic Analysis";
@@ -1700,6 +1703,7 @@
 				DC8EBB3A1E5FCFD500AE577C /* Mangler.swift in Sources */,
 				DC8EBB401E5FCFD500AE577C /* TypeChecker.swift in Sources */,
 				DC8EBAFE1E5FCFB200AE577C /* RuntimeIRGen.swift in Sources */,
+				82D6E13A1E78E6CA00C791DE /* Solver.swift in Sources */,
 				DC8EBB971E5FD06C00AE577C /* BasicBlock.swift in Sources */,
 				DC8EBBB61E5FD06C00AE577C /* Use.swift in Sources */,
 				DC8EBBA61E5FD06C00AE577C /* JIT.swift in Sources */,

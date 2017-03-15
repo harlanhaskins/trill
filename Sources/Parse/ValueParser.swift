@@ -147,33 +147,25 @@ extension Parser {
         // - { x, y, z, ... in <stmts> }
         let exprs = try parseStatements(terminators: [.rightBrace])
         consumeToken()
-        let tv = DataType.freshTypeVariable
-        guard case let .typeVariable(tyName) = tv else {
-          fatalError("Fresh type variable is not a type variable?")
-        }
         valExpr = ClosureExpr(args: args,
-                              returnType: TypeRefExpr(type: tv, name: Identifier(name: tyName)),
+                              returnType: nil,
                               body: CompoundStmt(stmts: exprs),
                               sourceRange: range(start: startLoc))
-      } else if let (args, ret, _) = try? parseFuncSignature() {
+      } else if let (args, retTy, _) = try? parseFuncSignature() {
         // - { (x : T, y : U, ...) in <stmts> }
         try consume(.in)
         let exprs = try parseStatements(terminators: [.rightBrace])
         consumeToken()
         valExpr = ClosureExpr(args: args,
-                              returnType: ret,
+                              returnType: retTy,
                               body: CompoundStmt(stmts: exprs),
                               sourceRange: range(start: startLoc))
       } else {
         // - { <stmts> }
-        let tv = DataType.freshTypeVariable
-        guard case let .typeVariable(tyName) = tv else {
-          fatalError("Fresh type variable is not a type variable?")
-        }
         let exprs = try parseStatements(terminators: [.rightBrace])
         consumeToken()
         valExpr = ClosureExpr(args: [],
-                              returnType: TypeRefExpr(type: tv, name: Identifier(name: tyName)),
+                              returnType: nil,
                               body: CompoundStmt(stmts: exprs),
                               sourceRange: range(start: startLoc))
       }
