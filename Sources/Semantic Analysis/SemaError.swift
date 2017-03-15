@@ -64,7 +64,7 @@ enum SemaError: Error, CustomStringConvertible {
     case .unknownVariableName(let name):
       return "unknown variable '\(name)'"
     case .unknownProperty(let typeDecl, let expr):
-      return "unknown property '\(expr.name)' in type '\(typeDecl.type)'"
+      return "unknown property '\(expr.name)' in type '\(typeDecl.type!)'"
     case .invalidOperands(let op, let invalid):
       return "invalid argument for operator '\(op)' (got '\(invalid)')"
     case .cannotSubscript(let type):

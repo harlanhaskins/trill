@@ -38,8 +38,8 @@ extension IRGenerator {
     }
     var argTys = [IRType]()
     for arg in expr.args {
-      var type = resolveLLVMType(arg.type)
-      if arg.isImplicitSelf && storage(for: arg.type) != .reference {
+      var type = resolveLLVMType(arg.type!)
+      if arg.isImplicitSelf && storage(for: arg.type!) != .reference {
         type = PointerType(pointee: type)
       }
       argTys.append(type)
@@ -136,8 +136,8 @@ extension IRGenerator {
         var param = function.parameter(at: idx)!
         param.name = arg.name.name
         let type = arg.type
-        let argType = resolveLLVMType(type)
-        let storageKind = storage(for: type)
+        let argType = resolveLLVMType(type!)
+        let storageKind = storage(for: type!)
         let read: () -> IRValue
         if arg.isImplicitSelf && storageKind == .reference {
           read = { param }

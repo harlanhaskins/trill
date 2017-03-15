@@ -23,8 +23,8 @@ class Sema: ASTTransformer, Pass {
   
   func registerTopLevelDecls(in context: ASTContext) {
     for expr in context.extensions {
-      guard let typeDecl = context.decl(for: expr.type) else {
-        error(SemaError.unknownType(type: expr.type),
+      guard let typeDecl = context.decl(for: expr.type!) else {
+        error(SemaError.unknownType(type: expr.type!),
               loc: expr.startLoc,
               highlights: [ expr.sourceRange ])
         continue
@@ -44,7 +44,7 @@ class Sema: ASTTransformer, Pass {
         property.kind = .property(expr)
         if propertyNames.contains(property.name.name) {
           error(SemaError.duplicateField(name: property.name,
-                                         type: expr.type),
+                                         type: expr.type!),
                 loc: property.startLoc,
                 highlights: [ expr.name.range ])
           continue
@@ -56,7 +56,7 @@ class Sema: ASTTransformer, Pass {
         let mangled = Mangler.mangle(method)
         if methodNames.contains(mangled) {
           error(SemaError.duplicateMethod(name: method.name,
-                                          type: expr.type),
+                                          type: expr.type!),
                 loc: method.startLoc,
                 highlights: [ expr.name.range ])
           continue
@@ -147,7 +147,7 @@ class Sema: ASTTransformer, Pass {
       return
     }
     guard !decl.has(attribute: .foreign) else { return }
-    if let rhs = decl.rhs { context.propagateContextualType(decl.type, to: rhs) }
+    if let rhs = decl.rhs { context.propagateContextualType(decl.type!, to: rhs) }
     if let type = decl.typeRef?.type {
       if !context.isValidType(type) {
         error(SemaError.unknownType(type: type),
@@ -215,8 +215,8 @@ class Sema: ASTTransformer, Pass {
   
   override func visitParamDecl(_ decl: ParamDecl) -> Result {
     super.visitParamDecl(decl)
-    guard context.isValidType(decl.type) else {
-      error(SemaError.unknownType(type: decl.type),
+    guard context.isValidType(decl.type!) else {
+      error(SemaError.unknownType(type: decl.type!),
             loc: decl.typeRef?.startLoc,
             highlights: [
               decl.typeRef?.sourceRange
@@ -224,7 +224,7 @@ class Sema: ASTTransformer, Pass {
       return
     }
     decl.kind = .local(currentFunction!)
-    let canTy = context.canonicalType(decl.type)
+    let canTy = context.canonicalType(decl.type!)
     if
       case .custom = canTy,
       let typeDecl = context.decl(for: canTy),
@@ -299,7 +299,7 @@ class Sema: ASTTransformer, Pass {
     if let callArgs = callArgs,
        let index = typeDecl.indexOfProperty(named: expr.name) {
       let property = typeDecl.properties[index]
-      if case .function(let args, _) = property.type {
+      if case .function(let args, _) = property.type! {
         let types = callArgs.flatMap { $0.val.type }
         if types.count == callArgs.count && args == types {
           expr.decl = property
@@ -317,7 +317,7 @@ class Sema: ASTTransformer, Pass {
          let funcDecl = context.candidate(forArgs: args, candidates: candidateMethods) {
         expr.decl = funcDecl
         let types = funcDecl.args.map { $0.type }
-        expr.type = .function(args: types, returnType: funcDecl.returnType.type!)
+        expr.type = .function(args: types as! [DataType], returnType: funcDecl.returnType.type!)
         return .method
       } else {
         error(SemaError.ambiguousReference(name: expr.name),
@@ -430,8 +430,8 @@ class Sema: ASTTransformer, Pass {
   }
   
   override func visitExtensionDecl(_ expr: ExtensionDecl) -> Result {
-    guard let decl = context.decl(for: expr.type) else {
-      error(SemaError.unknownType(type: expr.type),
+    guard let decl = context.decl(for: expr.type!) else {
+      error(SemaError.unknownType(type: expr.type!),
             loc: expr.startLoc,
             highlights: [ expr.typeRef.name.range ])
       return
@@ -563,7 +563,7 @@ class Sema: ASTTransformer, Pass {
         }
       }
       if !missing.isEmpty {
-        error(SemaError.typeDoesNotConform(decl.type, protocol: proto.type),
+        error(SemaError.typeDoesNotConform(decl.type!, protocol: proto.type!),
               loc: decl.startLoc,
               highlights: [
                 conformance.name.range
@@ -612,7 +612,7 @@ class Sema: ASTTransformer, Pass {
       case .property:
         if case .function(var args, let ret)? = lhs.type {
           candidates.append(context.implicitDecl(args: args, ret: ret))
-          args.insert(typeDecl.type, at: 0)
+          args.insert(typeDecl.type!, at: 0)
           lhs.type = .function(args: args, returnType: ret)
         }
       case .staticMethod:
@@ -629,7 +629,7 @@ class Sema: ASTTransformer, Pass {
       } else if let varDecl = varBindings[lhs.name.name] {
         setLHSDecl = { _ in } // override the decl if this is a function variable
         lhs.decl = varDecl
-        let type = context.canonicalType(varDecl.type)
+        let type = context.canonicalType(varDecl.type!)
         if case .function(let args, let ret) = type {
           candidates.append(context.implicitDecl(args: args, ret: ret))
         } else {
@@ -736,9 +736,9 @@ class Sema: ASTTransformer, Pass {
     super.visitClosureExpr(expr)
     var argTys = [DataType]()
     for arg in expr.args {
-      argTys.append(arg.type)
+      argTys.append(arg.type!)
     }
-    expr.type = .function(args: argTys, returnType: expr.returnType.type!)
+    expr.type = .function(args: argTys, returnType: expr.returnType!.type!)
   }
   
   override func visitSwitchStmt(_ stmt: SwitchStmt) {
@@ -928,7 +928,7 @@ class Sema: ASTTransformer, Pass {
   }
   
   override func visitReturnStmt(_ stmt: ReturnStmt) {
-    guard let returnType = currentClosure?.returnType.type ?? currentFunction?.returnType.type else { return }
+    guard let returnType = currentClosure?.returnType!.type ?? currentFunction?.returnType.type else { return }
     context.propagateContextualType(returnType, to: stmt.value)
     super.visitReturnStmt(stmt)
   }

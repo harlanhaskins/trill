@@ -65,7 +65,14 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
     self.returnType = returnType
     self.hasVarArgs = hasVarArgs
     self.isPlaceholder = isPlaceholder
-    super.init(type: .function(args: args.map { $0.type }, returnType: returnType.type!),
+    var allValid = true
+    for arg in args {
+      if arg.type == nil {
+        allValid = false
+        break
+      }
+    }
+    super.init(type: .function(args: allValid ? args.map { $0.type! } : [], returnType: returnType.type!),
                modifiers: modifiers,
                sourceRange: sourceRange)
   }
@@ -82,7 +89,7 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
         names.append(arg.name.name)
       }
       s += names.joined(separator: " ")
-      s += ": \(arg.type)"
+      s += ": \(arg.type!)"
       if idx != args.count - 1 || hasVarArgs {
         s += ", "
       }
@@ -216,7 +223,7 @@ class ParamDecl: VarAssignDecl {
   var isImplicitSelf = false
   let externalName: Identifier?
   init(name: Identifier,
-       type: TypeRefExpr,
+       type: TypeRefExpr?,
        externalName: Identifier? = nil,
        rhs: Expr? = nil,
        sourceRange: SourceRange? = nil) {
@@ -227,13 +234,13 @@ class ParamDecl: VarAssignDecl {
 
 class ClosureExpr: Expr {
   let args: [ParamDecl]
-  var returnType: TypeRefExpr
+  var returnType: TypeRefExpr?
   let body: CompoundStmt
   
   private(set) var captures = Set<ASTNode>()
 
   init(args: [ParamDecl],
-       returnType: TypeRefExpr,
+       returnType: TypeRefExpr?,
        body: CompoundStmt,
        sourceRange: SourceRange? = nil) {
     self.args = args

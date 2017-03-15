@@ -17,9 +17,9 @@ extension IRGenerator {
       return existing
     }
     let structure = builder.createStruct(name: expr.name.name)
-    typeIRBindings[expr.type] = structure
+    typeIRBindings[expr.type!] = structure
     let fieldTypes = expr.storedProperties
-                         .map { resolveLLVMType($0.type) }
+                         .map { resolveLLVMType($0.type!) }
     structure.setBody(fieldTypes)
     
     for method in expr.methods + expr.staticMethods {
@@ -107,7 +107,7 @@ extension IRGenerator {
         fatalError("no decl?")
       }
       properties = decl.storedProperties
-                       .map { ($0.name.name, $0.type) }
+                       .map { ($0.name.name, $0.type!) }
     case .tuple(let types):
       properties = types.enumerated().map { (".\($0.offset)", $0.element) }
     default:

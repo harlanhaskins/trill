@@ -63,6 +63,13 @@ enum TypeCheckError: Error, CustomStringConvertible {
 }
 
 class TypeChecker: ASTTransformer, Pass {
+  let csGen : Solver.Generator
+
+  required init(context: ASTContext) {
+    self.csGen = Solver.Generator(context: context)
+    super.init(context: context)
+  }
+
   var title: String {
     return "Type Checking"
   }
@@ -105,7 +112,7 @@ class TypeChecker: ASTTransformer, Pass {
         error(TypeCheckError.extraArgumentLabel(got: label),
               loc: val.val.startLoc)
       }
-      var argType = arg.type
+      var argType = arg.type!
       guard let type = val.val.type else {
         fatalError("unable to resolve val type")
       }
@@ -178,26 +185,17 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarExpr(_ expr: VarExpr) -> Result {
-    if expr.isTypeVar { return } // since the decl purposefully doesn't match the type
-    guard let decl = expr.decl else { return }
-    guard let type = expr.type else { return }
-    if !matches(decl.type, type) {
-      error(TypeCheckError.typeMismatch(expected: decl.type, got: type),
-            loc: expr.startLoc, highlights: [expr.sourceRange])
-    }
-    super.visitVarExpr(expr)
+    self.csGen.reset()
+    self.csGen.visit(expr)
+    let soln = Solver.solveSystem(csGen.constraints)
+    expr.type = csGen.goal!.substitute(soln)
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
-    if let rhs = decl.rhs {
-      guard let rhsType = rhs.type else { return }
-      if !matches(decl.type, rhsType) {
-        error(TypeCheckError.typeMismatch(expected: decl.type, got: rhsType),
-              loc: decl.startLoc)
-        return
-      }
-    }
-    super.visitVarAssignDecl(decl)
+    self.csGen.reset()
+    self.csGen.visit(decl)
+    let soln = Solver.solveSystem(csGen.constraints)
+    decl.type = csGen.goal!.substitute(soln)
   }
   
   override func visitIfStmt(_ stmt: IfStmt) {
@@ -216,7 +214,7 @@ class TypeChecker: ASTTransformer, Pass {
   
   override func visitParamDecl(_ decl: ParamDecl) -> Result {
     if let rhsType = decl.rhs?.type, matchRank(decl.type, rhsType) == nil {
-      error(TypeCheckError.typeMismatch(expected: decl.type, got: rhsType),
+      error(TypeCheckError.typeMismatch(expected: decl.type!, got: rhsType),
             loc: decl.startLoc,
             highlights: [
               decl.sourceRange
@@ -226,7 +224,7 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitReturnStmt(_ stmt: ReturnStmt) -> Result {
-    guard var returnType = currentClosure?.returnType.type ?? currentFunction?.returnType.type else { return }
+    guard var returnType = currentClosure?.returnType!.type ?? currentFunction?.returnType.type else { return }
     guard var valType = stmt.value.type else { return }
     if case .typeVariable(_) = returnType {
       // Try to solve for the closure's return type with the return statement's
@@ -243,18 +241,18 @@ class TypeChecker: ASTTransformer, Pass {
       // FIXME: Type variable propagation restricted to closure expressions.
       let curClosure = currentClosure!
       for a in curClosure.args {
-        if case .typeVariable(_) = a.type {
+        if case .typeVariable(_) = a.type! {
           error(TypeCheckError.ambiguousExpressionType,
                 loc: stmt.startLoc,
                 highlights: [
                   stmt.sourceRange
-            ])
+                ])
           return
         }
       }
       // Recast an empty argument list as Void
       // FIXME: Do this earlier (Parse) with a special kind of identifier?
-      let argTy = curClosure.args.isEmpty ? [DataType.void] : curClosure.args.map { $0.type }
+      let argTy = curClosure.args.isEmpty ? [DataType.void] : curClosure.args.map { $0.type! }
       context.propagateContextualType(DataType.function(args: argTy, returnType: valType), to: curClosure)
       returnType = valType
     } else if case .typeVariable(_) = valType {
@@ -271,11 +269,14 @@ class TypeChecker: ASTTransformer, Pass {
     }
     super.visitReturnStmt(stmt)
   }
-  
+
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
     guard let decl = expr.decl else { return }
+    self.csGen.reset()
+    self.csGen.visit(expr)
+    let soln = Solver.solveSystem(csGen.constraints)
+    decl.type = csGen.goal!.substitute(soln)
     ensureTypesAndLabelsMatch(expr, decl: decl)
-    super.visitFuncCallExpr(expr)
   }
   
   override func visitTernaryExpr(_ expr: TernaryExpr) -> Result {
@@ -357,7 +358,6 @@ class TypeChecker: ASTTransformer, Pass {
         ])
       return
     }
-    super.visitInfixOperatorExpr(expr)
   }
   
   override func visitSubscriptExpr(_ expr: SubscriptExpr) -> Result {

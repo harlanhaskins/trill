@@ -155,7 +155,7 @@ public class ASTContext {
         ])
       return
     }
-    guard case .function(let args, let ret) = main.type else { fatalError() }
+    guard case .function(let args, let ret) = main.type! else { fatalError() }
     var flags = MainFuncFlags()
     if ret == .int64 {
       _ = flags.insert(.exitCode)
@@ -169,7 +169,7 @@ public class ASTContext {
     let hasInvalidArgs = !args.isEmpty && !flags.contains(.args)
     let hasInvalidRet = ret != .void && !flags.contains(.exitCode)
     if hasInvalidRet || hasInvalidArgs {
-      error(ASTError.invalidMain(got: main.type),
+      error(ASTError.invalidMain(got: main.type!),
             loc: main.startLoc,
             highlights: [
               main.name.range
@@ -257,7 +257,7 @@ public class ASTContext {
           continue search
         }
         var valType = canonicalType(valSugaredType)
-        let candType = canonicalType(candArg.type)
+        let candType = canonicalType(candArg.type!)
         // automatically coerce number literals.
         if propagateContextualType(candType, to: exprArg.val) {
           valType = candType
@@ -396,14 +396,14 @@ public class ASTContext {
   
   @discardableResult
   func add(_ typeDecl: TypeDecl) -> Bool {
-    guard decl(for: typeDecl.type) == nil else {
+    guard decl(for: typeDecl.type!) == nil else {
       error(ASTError.duplicateType(name: typeDecl.name),
             loc: typeDecl.startLoc,
             highlights: [ typeDecl.name.range ])
       return false
     }
     types.append(typeDecl)
-    typeDeclMap[typeDecl.type] = typeDecl
+    typeDeclMap[typeDecl.type!] = typeDecl
     return true
   }
   
@@ -525,9 +525,9 @@ public class ASTContext {
   func containsInLayout(type: DataType, typeDecl: TypeDecl, base: Bool = false) -> Bool {
     if !base && matchRank(typeDecl.type, type) != nil { return true }
     for property in typeDecl.properties {
-      if case .pointer = property.type { continue }
+      if case .pointer = property.type! { continue }
       if property.isComputed { continue }
-      if let decl = decl(for: property.type),
+      if let decl = decl(for: property.type!),
         !decl.isIndirect,
         containsInLayout(type: type, typeDecl: decl) {
         return true
@@ -537,7 +537,7 @@ public class ASTContext {
   }
   
   func isCircularType(_ typeDecl: TypeDecl) -> Bool {
-    return containsInLayout(type: typeDecl.type, typeDecl: typeDecl, base: true)
+    return containsInLayout(type: typeDecl.type!, typeDecl: typeDecl, base: true)
   }
   
   func matchRank(_ type1: DataType?, _ type2: DataType?) -> TypeRank? {

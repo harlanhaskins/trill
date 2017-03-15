@@ -154,13 +154,8 @@ extension Parser {
     while true {
       let startLoc = sourceLoc
       let name = try parseIdentifier()
-
-      let tv = DataType.freshTypeVariable
-      guard case let .typeVariable(tyName) = tv else {
-        fatalError("Fresh type variable is not a type variable?")
-      }
       let arg = ParamDecl(name: name,
-                          type: TypeRefExpr(type: tv, name: Identifier(name: tyName)),
+                          type: nil,
                           sourceRange: range(start: startLoc))
 
       args.append(arg)
