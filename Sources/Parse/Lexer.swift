@@ -13,11 +13,13 @@ enum TokenKind: Equatable {
   case char(UInt8)
   case `operator`(BuiltinOperator)
   case stringLiteral(String)
+  case stringInterpolationLiteral([[Token]])
   case semicolon
   case newline
   case leftParen
   case rightParen
   case leftBrace
+  case slashLeftParen
   case rightBrace
   case leftBracket
   case rightBracket
@@ -82,6 +84,7 @@ enum TokenKind: Equatable {
     case "[": self = .leftBracket
     case "]": self = .rightBracket
     case "": self = .eof
+    case "\\(": self = .slashLeftParen
     default: self = .unknown(op)
     }
   }
@@ -132,12 +135,14 @@ enum TokenKind: Equatable {
     case .identifier(let value): return value
     case .unknown(let char): return char
     case .char(let value): return String(UnicodeScalar(value))
+    case .stringInterpolationLiteral(_): return "literal w/ interp"
     case .operator(let op): return "\(op)"
     case .stringLiteral(let value): return value.escaped()
     case .semicolon: return ";"
     case .newline: return "\\n"
     case .leftParen: return "("
     case .rightParen: return ")"
+    case .slashLeftParen: return "\\("
     case .leftBrace: return "{"
     case .rightBrace: return "}"
     case .comma: return ","
@@ -521,12 +526,28 @@ struct Lexer {
     }
     if c == "\"" {
       advance()
+      var interpolations = [[Token]]()
       var str = ""
-      while currentChar() != "\"" {
-        str.append(String(try readCharacter()))
+      while let char = currentChar(), char != "\"" {
+        if currentSubstring(2) == "\\(" {
+          interpolations.append([Token(kind: .stringLiteral(str), range: range(start: startLoc))])
+          advance(2)
+          str = ""
+          var interpolation = [Token]()
+          while currentChar() != ")" {
+            interpolation.append(try advanceToNextToken())
+          }
+          advance()
+          interpolations.append(interpolation)
+        } else {
+          str.append(String(try readCharacter()))
+        }
       }
       advance()
-      return Token(kind: .stringLiteral(str), range: range(start: startLoc))
+      if interpolations.isEmpty {
+        return Token(kind: .stringLiteral(str), range: range(start: startLoc))
+      }
+      return Token(kind: .stringInterpolationLiteral(interpolations), range: range(start: startLoc))
     }
     if c.isIdentifier {
       let id = collectWhile { $0.isIdentifier }
@@ -548,14 +569,6 @@ struct Lexer {
     if currentSubstring(3) == "..." {
       advance(3)
       return Token(kind: .ellipsis, range: range(start: startLoc))
-    }
-    if c == "[" {
-      advance()
-      return Token(kind: .leftBracket, range: range(start: startLoc))
-    }
-    if c == "]" {
-      advance()
-      return Token(kind: .rightBracket, range: range(start: startLoc))
     }
     if c == "#" {
       advance()
