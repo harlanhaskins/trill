@@ -107,8 +107,8 @@ type Mirror {
       return "nil"
     }
     if self.pointerLevel > 0 {
-      //*(trill_getAnyValuePtr(self.value) as **Void)
-      return "\(nil) as \(self.typeName)"
+      let punnedPointer = *(trill_getAnyValuePtr(self.value) as **Void)
+      return "\(punnedPointer) as \(self.typeName)"
     }
     var s = "\(self.typeName)("
     for var i = 0; i < self.fieldCount; i += 1 {
