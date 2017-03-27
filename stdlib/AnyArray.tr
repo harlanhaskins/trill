@@ -3,7 +3,7 @@ type AnyArray {
   var count: Int
   var capacity: Int
   init(capacity: Int) {
-    // assert(capacity > 0, "Cannot initialize an array with 0 capacity")
+    assert(capacity > 0, "Cannot initialize an array with 0 capacity")
     self.elements = calloc(capacity, sizeof(Any)) as *Any
     self.capacity = capacity
     self.count = 0
@@ -53,6 +53,7 @@ type AnyArray {
     }
   }
   mutating func append(_ element: Any) {
+    assert(self.count < self.capacity, "cannot append when at capacity")
     self.elements[self.count] = element
     self.count += 1
     self._growIfNeeded()
