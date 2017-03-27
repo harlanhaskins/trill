@@ -166,11 +166,9 @@ type String {
         fatalError("unimplemented")
       } else if value is Bool {
         if value as Bool {
-          self._storage = ByteArray("true" as *Int8)
-          self._storage.append(0)
+          self = "true"
         } else {
-          self._storage = ByteArray("false" as *Int8)
-          self._storage.append(0)
+          self = "false"
         }
       } else if value is *Void {
         let capacity = snprintf(nil, 0, "%p" as *Int8, value as *Void) as Int + 1
@@ -180,11 +178,11 @@ type String {
       } else if value is String {
         self._storage = (value as String)._storage.copy()
       } else if value is AnyDictionary {
-        self._storage = (value as AnyDictionary).description._storage.copy()
+        self = (value as AnyDictionary).description
       } else if value is AnyArray {
-        self._storage = (value as AnyArray).description._storage.copy()
+        self = (value as AnyArray).description
       } else {
-        self._storage = Mirror(reflecting: value).describe()._storage.copy()
+        self = Mirror(reflecting: value).describe()
       }
     }
 }
