@@ -19,7 +19,6 @@ enum TokenKind: Equatable {
   case leftParen
   case rightParen
   case leftBrace
-  case slashLeftParen
   case rightBrace
   case leftBracket
   case rightBracket
@@ -84,7 +83,6 @@ enum TokenKind: Equatable {
     case "[": self = .leftBracket
     case "]": self = .rightBracket
     case "": self = .eof
-    case "\\(": self = .slashLeftParen
     default: self = .unknown(op)
     }
   }
@@ -142,7 +140,6 @@ enum TokenKind: Equatable {
     case .newline: return "\\n"
     case .leftParen: return "("
     case .rightParen: return ")"
-    case .slashLeftParen: return "\\("
     case .leftBrace: return "{"
     case .rightBrace: return "}"
     case .comma: return ","
