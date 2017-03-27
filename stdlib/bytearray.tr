@@ -48,9 +48,8 @@ indirect type ByteArray {
     self.bytes = realloc(self.bytes as *Void, self.capacity * sizeof(Int8)) as *Int8
   }
   func _boundsCheck(_ index: Int) {
-    if index > self.length {
-      fatalError("index out of bounds")
-    }
+    if index <= self.length && index >= 0 { return }
+    fatalError("index \(index) out of bounds 0..\(self.length)")
   }
   mutating func append(_ element: Int8) {
     let index = self.length

@@ -33,7 +33,7 @@ type AnyArray {
   }
   func _boundsCheck(_ index: Int) {
     if index < 0 || index > self.count {
-      trill_fatalError("index out of bounds")
+      fatalError("index \(index) out of bounds \(0)..\(self.count)")
     }
   }
 
