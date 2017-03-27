@@ -1,0 +1,15 @@
+type CustomType {
+  var x: String
+  var y: Int
+}
+
+func main() {
+  assert("1 + 2 = \(1+2)" == "1 + 2 = 3", "")
+
+  var dict = AnyDictionary()
+  dict["foo"] = "bar"
+  dict["baz"] = 1234567
+  println("\("this is a dictionary") => \(dict)!")
+
+  println("CustomType => \(CustomType(x: "s", y: 2017))")
+}
