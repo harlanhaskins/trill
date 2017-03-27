@@ -534,8 +534,15 @@ struct Lexer {
           advance(2)
           str = ""
           var interpolation = [Token]()
-          while currentChar() != ")" {
-            interpolation.append(try advanceToNextToken())
+          var parenLevel = 0
+          while currentChar() != ")" || parenLevel > 0 {
+            let tok = try advanceToNextToken()
+            if tok.kind == .leftParen {
+              parenLevel += 1
+            } else if tok.kind == .rightParen {
+              parenLevel -= 1
+            }
+            interpolation.append(tok)
           }
           advance()
           interpolations.append(interpolation)
