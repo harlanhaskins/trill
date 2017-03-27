@@ -91,6 +91,20 @@ type AnyArray {
     putchar(']' as Int32)
   }
 
+  var description: String {
+    var s = ""
+    s.append('[' as Int8)
+    for var i = 0; i < self.count; i += 1 {
+      let elem = self.elements[i]
+      s.append(String(describing: elem))
+      if i != self.count - 1 {
+        s.append(", ")
+      }
+    }
+    s.append(']' as Int8)
+    return s
+  }
+
   func isEmpty() -> Bool {
     return self.count == 0
   }
