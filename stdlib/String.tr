@@ -125,6 +125,59 @@ type String {
     var isEmpty: Bool {
         return self.length == 0
     }
+
+
+
+    // TODO: Rewrite once we have generics -- the snprintf stuff is super
+    // repetitive
+    init(describing value: Any) {
+      if value is *Int8 {
+        let capacity = snprintf(nil, 0, "%s", value as *Int8) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%s" as *Int8, value as *Int8)
+        self._storage.length = capacity
+      } else if value is Int {
+        let capacity = snprintf(nil, 0, "%d" as *Int8, value as Int) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%d" as *Int8, value as Int)
+        self._storage.length = capacity
+      } else if value is Int8 {
+        fatalError("unimplemented")
+      } else if value is Int16 {
+        fatalError("unimplemented")
+      } else if value is Int32 {
+        fatalError("unimplemented")
+      } else if value is UInt {
+        fatalError("unimplemented")
+      } else if value is UInt8 {
+        fatalError("unimplemented")
+      } else if value is UInt16 {
+        fatalError("unimplemented")
+      } else if value is UInt32 {
+        fatalError("unimplemented")
+      } else if value is Bool {
+        if value as Bool {
+          self._storage = ByteArray("true" as *Int8)
+          self._storage.append(0)
+        } else {
+          self._storage = ByteArray("false" as *Int8)
+          self._storage.append(0)
+        }
+      } else if value is *Void {
+        let capacity = snprintf(nil, 0, "%p" as *Int8, value as *Void) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%p" as *Int8, value as *Void)
+        self._storage.length = capacity
+      } else if value is String {
+        self._storage = (value as String)._storage.copy()
+      } else if value is AnyDictionary {
+        self._storage = (value as AnyDictionary).description._storage.copy()
+      } else if value is AnyArray {
+        self._storage = (value as AnyArray).description._storage.copy()
+      } else {
+        self._storage = Mirror(reflecting: value).describe()._storage.copy()
+      }
+    }
 }
 
 func ==(lhs: String, rhs: String) -> Bool {
