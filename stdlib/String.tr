@@ -151,19 +151,50 @@ type String {
         snprintf(self._storage.bytes, capacity as UInt, "%d" as *Int8, value as Int)
         self._storage.length = capacity
       } else if value is Int8 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%c" as *Int8, value as Int8) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%c" as *Int8, value as Int8)
+        self._storage.length = capacity
       } else if value is Int16 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%d" as *Int8, value as Int16) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%d" as *Int8, value as Int16)
+        self._storage.length = capacity
       } else if value is Int32 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%d" as *Int8, value as Int32) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%d" as *Int8, value as Int32)
+        self._storage.length = capacity
       } else if value is UInt {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%u" as *Int8, value as UInt) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%u" as *Int8, value as UInt)
+        self._storage.length = capacity
       } else if value is UInt8 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%u" as *Int8, value as UInt8) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%u" as *Int8, value as UInt8)
+        self._storage.length = capacity
       } else if value is UInt16 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%u" as *Int8, value as UInt16) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%u" as *Int8, value as UInt16)
+        self._storage.length = capacity
       } else if value is UInt32 {
-        fatalError("unimplemented")
+        let capacity = snprintf(nil, 0, "%u" as *Int8, value as UInt16) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%u" as *Int8, value as UInt16)
+        self._storage.length = capacity
+      } else if value is Float {
+        let capacity = snprintf(nil, 0, "%f" as *Int8, value as Float) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%f" as *Int8, value as Float)
+        self._storage.length = capacity
+      } else if value is Double {
+        let capacity = snprintf(nil, 0, "%f" as *Int8, value as Double) as Int + 1
+        self._storage = ByteArray(capacity: capacity)
+        snprintf(self._storage.bytes, capacity as UInt, "%f" as *Int8, value as Double)
+        self._storage.length = capacity
       } else if value is Bool {
         if value as Bool {
           self = "true"
