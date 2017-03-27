@@ -176,7 +176,7 @@ extension IRGenerator {
       fatalError()
     }
     let paramInitializer = codegenFunctionPrototype(arrayInitializer)
-    let segmentsParam = builder.buildCall(paramInitializer, args: [expr.segments.count], name: "string-interpolation-segments-init")
+    let segmentsParam = builder.buildCall(paramInitializer, args: [expr.segments.count + 1], name: "string-interpolation-segments-init")
     guard let arrayAppend = context.stdlib?.anyArrayAppendElement else {
       fatalError()
     }
