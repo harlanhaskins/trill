@@ -525,12 +525,9 @@ struct Lexer {
       advance()
       var interpolations = [[Token]]()
       var str = ""
-      func literalTok() -> Token {
-        return Token(kind: .stringLiteral(str), range: self.range(start: startLoc))
-      }
       while let char = currentChar(), char != "\"" {
         if currentSubstring(2) == "\\(" {
-          if !str.isEmpty { interpolations.append([literalTok()]) }
+          if !str.isEmpty { interpolations.append([Token(kind: .stringLiteral(str), range: self.range(start: startLoc))]) }
           advance(2)
           str = ""
           var interpolation = [Token]()
@@ -552,9 +549,9 @@ struct Lexer {
       }
       advance()
       if interpolations.isEmpty {
-        return literalTok()
+        return Token(kind: .stringLiteral(str), range: self.range(start: startLoc))
       }
-      if !str.isEmpty { interpolations.append([literalTok()]) }
+      if !str.isEmpty { interpolations.append([Token(kind: .stringLiteral(str), range: self.range(start: startLoc))]) }
       return Token(kind: .stringInterpolationLiteral(interpolations), range: range(start: startLoc))
     }
     if c.isIdentifier {
