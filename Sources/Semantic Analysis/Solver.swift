@@ -70,9 +70,9 @@ final class Solver {
     var env: [Identifier:DataType] = [:]
     var constraints: [Constraint] = []
 
-    func reset() {
+    func reset(with env: [Identifier:DataType]) {
       self.goal = nil
-      self.env = [:]
+      self.env = env
       self.constraints = []
     }
 
@@ -169,8 +169,11 @@ final class Solver {
       visit(expr.lhs)
       let lhsGoal = self.goal!
       var goals : [DataType] = []
-      expr.args.forEach {
-        visit($0.val)
+      if let pre = expr.lhs as? PropertyRefExpr {
+        goals.append(pre.lhs.type!)
+      }
+      expr.args.forEach { a in
+        visit(a.val)
         goals.append(self.goal!)
       }
       let tau = DataType.freshMetaVariable
@@ -179,7 +182,7 @@ final class Solver {
     }
 
     override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
-      let lhsGoal = expr.type!
+      let lhsGoal = expr.decl!.type!
       var goals : [DataType] = []
       [ expr.lhs, expr.rhs ].forEach { e in
         visit(e)
@@ -187,6 +190,18 @@ final class Solver {
       }
       let tau = DataType.freshMetaVariable
       self.constraints.append(.Eq(lhsGoal, .function(args: goals, returnType: tau)))
+      self.goal = tau
+    }
+
+    override func visitSubscriptExpr(_ expr: SubscriptExpr) {
+      visit(expr.lhs)
+      var goals : [DataType] = [ self.goal! ]
+      expr.args.forEach { a in
+        visit(a.val)
+        goals.append(self.goal!)
+      }
+      let tau = DataType.freshMetaVariable
+      self.constraints.append(.Eq(expr.decl!.type!, .function(args: goals, returnType: tau)))
       self.goal = tau
     }
 

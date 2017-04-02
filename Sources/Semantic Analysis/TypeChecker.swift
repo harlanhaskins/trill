@@ -64,8 +64,21 @@ enum TypeCheckError: Error, CustomStringConvertible {
 
 class TypeChecker: ASTTransformer, Pass {
   let csGen : Solver.Generator
+  var env : [Identifier:DataType]
+
+  func withDefinition(_ i: Identifier, _ t: DataType, _ f: () -> Void) {
+    return self.withDefinitions([i:t], f)
+  }
+
+  func withDefinitions(_ ds: [Identifier:DataType], _ f: () -> Void) {
+    let oldTarget = self.env
+    env.unionInPlace(ds)
+    f()
+    self.env = oldTarget
+  }
 
   required init(context: ASTContext) {
+    self.env = [:]
     self.csGen = Solver.Generator(context: context)
     super.init(context: context)
   }
@@ -185,17 +198,18 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarExpr(_ expr: VarExpr) -> Result {
-    self.csGen.reset()
+    self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
     let soln = Solver.solveSystem(csGen.constraints)
     expr.type = csGen.goal!.substitute(soln)
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
-    self.csGen.reset()
+    self.csGen.reset(with: self.env)
     self.csGen.visit(decl)
     let soln = Solver.solveSystem(csGen.constraints)
     decl.type = csGen.goal!.substitute(soln)
+    self.env[decl.name] = decl.type!
   }
   
   override func visitIfStmt(_ stmt: IfStmt) {
@@ -270,9 +284,20 @@ class TypeChecker: ASTTransformer, Pass {
     super.visitReturnStmt(stmt)
   }
 
+  override func visitFuncDecl(_ decl: FuncDecl) {
+    var funcEnv : [Identifier:DataType] = [:]
+    funcEnv[decl.name] = decl.type!
+    for pd in decl.args {
+      funcEnv[pd.name] = pd.type!
+    }
+    self.withDefinitions(funcEnv) {
+      super.visitFuncDecl(decl)
+    }
+  }
+
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
     guard let decl = expr.decl else { return }
-    self.csGen.reset()
+    self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
     let soln = Solver.solveSystem(csGen.constraints)
     decl.type = csGen.goal!.substitute(soln)
