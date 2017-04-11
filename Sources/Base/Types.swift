@@ -83,7 +83,7 @@ enum DataType: CustomStringConvertible, Hashable {
   }
 
   // Occurs
-  func contains(_ x : String) -> Bool {
+  func contains(_ x: String) -> Bool {
     switch self {
     case let .function(args, returnType, _):
       return args.reduce(false, { (acc, t) in acc || t.contains(x) })

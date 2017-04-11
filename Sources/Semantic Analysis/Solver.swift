@@ -10,6 +10,12 @@ final class Solver {
   typealias ConstraintSystem = [Constraint]
   typealias Solution = [String: DataType]
 
+  let context: ASTContext
+
+  init(context: ASTContext) {
+    self.context = context
+  }
+
   enum ConstraintKind {
     case equal(DataType, DataType)
   }
@@ -24,18 +30,17 @@ final class Solver {
     }
   }
 
-  static func solveSystem(_ cs: ConstraintSystem) -> Solution {
+  func solveSystem(_ cs: ConstraintSystem) -> Solution? {
     var sub: Solution = [:]
     for c in cs {
-      let soln = self.solveSingle(c)
-
+      guard let soln = self.solveSingle(c) else { return nil }
       sub.unionInPlace(soln)
     }
     return sub
   }
 
   // Unify
-  static func solveSingle(_ c: Constraint) -> Solution {
+  func solveSingle(_ c: Constraint) -> Solution? {
     switch c.kind {
     case let .equal(t1, t2):
       // If the two types are already equal there's nothing to be done.
@@ -81,7 +86,8 @@ final class Solver {
         break
       }
       let rangeText = c.node?.sourceRange.map { " \($0.start)" } ?? ""
-      fatalError("[\(c.location)]:\(rangeText) could not unify \(t1) with \(t2)")
+      context.diag.error("[\(c.location)]:\(rangeText) could not unify \(t1) with \(t2)")
+      return [:]
     }
   }
 
@@ -163,8 +169,11 @@ final class Solver {
         byBinding(expr.name, tau, {
           visit(e)
         })
-        let phi = Solver.solveSystem(self.constraints)
-        goalType = tau.substitute(phi)
+        if let phi = Solver(context: context).solveSystem(self.constraints) {
+          goalType = tau.substitute(phi)
+        } else {
+          goalType = tau
+        }
       } else {
         // let <ident>: <Type>
         // Take the type binding as fact and move on.

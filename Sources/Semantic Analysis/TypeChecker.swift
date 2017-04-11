@@ -70,7 +70,7 @@ class TypeChecker: ASTTransformer, Pass {
     return self.withDefinitions([i:t], f)
   }
 
-  func withDefinitions(_ ds: [Identifier:DataType], _ f: () -> Void) {
+  func withDefinitions(_ ds: [Identifier: DataType], _ f: () -> Void) {
     let oldTarget = self.env
     env.unionInPlace(ds)
     f()
@@ -199,15 +199,17 @@ class TypeChecker: ASTTransformer, Pass {
   override func visitVarExpr(_ expr: VarExpr) -> Result {
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
-    let soln = Solver.solveSystem(csGen.constraints)
-    expr.type = csGen.goal!.substitute(soln)
+    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
+      expr.type = csGen.goal!.substitute(soln)
+    }
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
     self.csGen.reset(with: self.env)
     self.csGen.visit(decl)
-    let soln = Solver.solveSystem(csGen.constraints)
-    decl.type = csGen.goal!.substitute(soln)
+    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
+      decl.type = csGen.goal!.substitute(soln)
+    }
     self.env[decl.name] = decl.type
   }
   
@@ -298,8 +300,9 @@ class TypeChecker: ASTTransformer, Pass {
     guard let decl = expr.decl else { return }
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
-    let soln = Solver.solveSystem(csGen.constraints)
-    expr.type = csGen.goal!.substitute(soln)
+    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
+      expr.type = csGen.goal!.substitute(soln)
+    }
     ensureTypesAndLabelsMatch(expr, decl: decl)
   }
   
