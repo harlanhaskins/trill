@@ -8,14 +8,24 @@
 
 final class Solver {
   typealias ConstraintSystem = [Constraint]
-  typealias Solution = [String:DataType]
+  typealias Solution = [String: DataType]
 
-  enum Constraint {
-    case Eq(DataType, DataType)
+  enum ConstraintKind {
+    case equal(DataType, DataType)
   }
 
-  static func solveSystem(_ cs : ConstraintSystem) -> Solution {
-    var sub : Solution = [:]
+  struct Constraint {
+    let kind: ConstraintKind
+    let location: StaticString
+    let node: ASTNode?
+
+    func withKind(_ kind: ConstraintKind) -> Constraint {
+      return Constraint(kind: kind, location: location, node: node)
+    }
+  }
+
+  static func solveSystem(_ cs: ConstraintSystem) -> Solution {
+    var sub: Solution = [:]
     for c in cs {
       let soln = self.solveSingle(c)
 
@@ -25,9 +35,9 @@ final class Solver {
   }
 
   // Unify
-  static func solveSingle(_ c : Constraint) -> Solution {
-    switch c {
-    case let .Eq(t1, t2):
+  static func solveSingle(_ c: Constraint) -> Solution {
+    switch c.kind {
+    case let .equal(t1, t2):
       // If the two types are already equal there's nothing to be done.
       if t1 == t2 {
         return [:]
@@ -40,16 +50,24 @@ final class Solver {
           fatalError("Infinite type")
         }
         // Unify the metavariable with the concrete type.
-        return [m:t]
+        return [m: t]
       case let (.typeVariable(m), t), let (t, .typeVariable(m)):
         // Perform the occurs check
         if t.contains(m) {
           fatalError("Infinite type")
         }
         // Unify the type variable with the concrete type.
-        return [m:t]
-      case let (.function(args1, returnType1), .function(args2, returnType2)):
-        return solveSystem([.Eq(returnType1, returnType2)] + zip(args1, args2).map(Constraint.Eq))
+        return [m: t]
+      case let (.function(args1, returnType1, hasVarArgs1), .function(args2, returnType2, hasVarArgs2)):
+
+        guard args1.count == args2.count || hasVarArgs1 || hasVarArgs2 else {
+          break
+        }
+
+        var system = zip(args1, args2).map(ConstraintKind.equal)
+        system.insert(.equal(returnType1, returnType2), at: 0)
+
+        return solveSystem(system.map(c.withKind))
       case (.pointer(_), .pointer(_)):
         // Pointers may unify with any other kind of pointer.
         return [:]
@@ -60,23 +78,25 @@ final class Solver {
         // Anything can unify to an existential
         return [:]
       default:
-        fatalError()
+        break
       }
+      let rangeText = c.node?.sourceRange.map { " \($0.start)" } ?? ""
+      fatalError("[\(c.location)]:\(rangeText) could not unify \(t1) with \(t2)")
     }
   }
 
   final class Generator: ASTTransformer {
     var goal: DataType? = nil
-    var env: [Identifier:DataType] = [:]
+    var env: [Identifier: DataType] = [:]
     var constraints: [Constraint] = []
 
-    func reset(with env: [Identifier:DataType]) {
+    func reset(with env: [Identifier: DataType]) {
       self.goal = nil
       self.env = env
       self.constraints = []
     }
 
-    func byBinding(_ n : Identifier, _ t : DataType, _ f : () -> ()) {
+    func byBinding(_ n: Identifier, _ t: DataType, _ f: () -> ()) {
       let oldEnv = self.env
       self.env[n] = t
       f()
@@ -96,37 +116,45 @@ final class Solver {
         return
       }
       
-      let functions = self.context.functions(named: expr.name)
-      guard !functions.isEmpty else {
-        fatalError()
-      }
-
-      // If we can avoid overload resolution, avoid it
-      if functions.count == 1 {
-        self.goal = functions[0].type!
-      } else {
-        self.goal = DataType.function(args: [ DataType.freshTypeVariable ], returnType: DataType.freshTypeVariable)
-      }
+//      let functions = self.context.functions(named: expr.name)
+//      guard !functions.isEmpty else {
+//        fatalError()
+//      }
+//
+//      // If we can avoid overload resolution, avoid it
+//      if functions.count == 1 {
+//        self.goal = functions[0].type!
+//      } else {
+//        self.goal = DataType.function(args: [ DataType.freshTypeVariable ], returnType: DataType.freshTypeVariable, hasVarArgs: false)
+//      }
+      self.goal = expr.decl!.type
     }
 
     override func visitSizeofExpr(_ expr: SizeofExpr) {
-      self.goal = expr.type!
+      self.goal = expr.type
     }
 
     override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
-      self.goal = expr.type!
+      visit(expr.lhs)
+      let lhsGoal = self.goal!
+      constrainEqual(expr.typeDecl!, lhsGoal)
+
+      let tau = DataType.freshMetaVariable
+      constrainEqual(expr.decl!, tau)
+
+      self.goal = tau
     }
 
     override func visitVarAssignDecl(_ expr: VarAssignDecl) {
       let goalType: DataType
-      // let <ident> : <Type> = <expr>
-      if let e = expr.rhs, let t = expr.type {
-        goalType = t
+      // let <ident>: <Type> = <expr>
+      if let e = expr.rhs {
+        goalType = e.type
         byBinding(expr.name, goalType, {
           visit(e)
         })
         // Bind the given type to the goal type the initializer generated.
-        self.constraints.append(.Eq(goalType, self.goal!))
+        constrainEqual(goalType, self.goal!, node: e)
       }
       // let <ident> = <expr>
       else if let e = expr.rhs {
@@ -137,15 +165,11 @@ final class Solver {
         })
         let phi = Solver.solveSystem(self.constraints)
         goalType = tau.substitute(phi)
-      }
-      // let <ident> : <Type>
-      else if let t = expr.type {
+      } else {
+        // let <ident>: <Type>
         // Take the type binding as fact and move on.
-        goalType = t
+        goalType = expr.type
         self.env[expr.name] = goalType
-      }
-      else {
-        fatalError()
       }
 
       self.goal = goalType
@@ -156,79 +180,194 @@ final class Solver {
         let oldEnv = self.env
         for p in expr.args {
           // Bind the type of the parameters.
-          self.env[p.name] = p.type!
+          self.env[p.name] = p.type
         }
         // Walk into the function body
         self.visit(body)
         self.env = oldEnv
       }
-      self.goal = expr.type!
+      self.goal = expr.type
     }
 
     override func visitFuncCallExpr(_ expr: FuncCallExpr) {
       visit(expr.lhs)
       let lhsGoal = self.goal!
-      var goals : [DataType] = []
+      var goals = [DataType]()
       if let pre = expr.lhs as? PropertyRefExpr {
-        goals.append(pre.lhs.type!)
+        goals.append(pre.lhs.type)
       }
-      expr.args.forEach { a in
-        visit(a.val)
+      for arg in expr.args {
+        visit(arg.val)
         goals.append(self.goal!)
       }
       let tau = DataType.freshMetaVariable
-      self.constraints.append(.Eq(lhsGoal, .function(args: goals, returnType: tau)))
+      constrainEqual(lhsGoal,
+                     .function(args: goals, returnType: tau, hasVarArgs: false),
+                     node: expr.lhs)
+      self.goal = tau
+    }
+
+    override func visitIsExpr(_ expr: IsExpr) {
+      let tau = DataType.freshMetaVariable
+      constrainEqual(expr, .bool)
+      constrainEqual(expr.rhs, tau)
+      self.goal = tau
+    }
+
+    override func visitCoercionExpr(_ expr: CoercionExpr) {
+      let tau = DataType.freshMetaVariable
+      constrainEqual(expr, tau)
+      constrainEqual(expr.rhs, tau)
       self.goal = tau
     }
 
     override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
-      let lhsGoal = expr.decl!.type!
-      var goals : [DataType] = []
+      let tau = DataType.freshMetaVariable
+      let lhsGoal = expr.decl!.type
+      var goals: [DataType] = []
       [ expr.lhs, expr.rhs ].forEach { e in
         visit(e)
         goals.append(self.goal!)
       }
-      let tau = DataType.freshMetaVariable
-      self.constraints.append(.Eq(lhsGoal, .function(args: goals, returnType: tau)))
+      constrainEqual(lhsGoal,
+                     .function(args: goals, returnType: tau, hasVarArgs: false),
+                     node: expr.lhs)
       self.goal = tau
     }
 
     override func visitSubscriptExpr(_ expr: SubscriptExpr) {
       visit(expr.lhs)
-      var goals : [DataType] = [ self.goal! ]
+      var goals: [DataType] = [ self.goal! ]
       expr.args.forEach { a in
         visit(a.val)
         goals.append(self.goal!)
       }
       let tau = DataType.freshMetaVariable
-      self.constraints.append(.Eq(expr.decl!.type!, .function(args: goals, returnType: tau)))
+      if let decl = expr.decl {
+        constrainEqual(decl, .function(args: goals, returnType: tau, hasVarArgs: false))
+      }
       self.goal = tau
+    }
+
+    override func visitArrayExpr(_ expr: ArrayExpr) {
+      guard case .array(_, let length) = expr.type else {
+        fatalError("invalid array type")
+      }
+      let tau = DataType.freshMetaVariable
+      for value in expr.values {
+        visit(value)
+        constrainGoal(tau, node: value)
+      }
+      let goal = DataType.array(field: tau, length: length)
+      constrainEqual(expr, goal)
+      self.goal = goal
+    }
+
+    override func visitTupleExpr(_ expr: TupleExpr) {
+      var goals = [DataType]()
+      for element in expr.values {
+        visit(element)
+        goals.append(self.goal!)
+      }
+      constrainEqual(expr, .tuple(fields: goals))
+      self.goal = expr.type
+    }
+
+    override func visitTernaryExpr(_ expr: TernaryExpr) {
+      let tau = DataType.freshMetaVariable
+
+      visit(expr.condition)
+      constrainEqual(expr.condition, .bool)
+
+      visit(expr.trueCase)
+      constrainEqual(expr.trueCase, tau)
+
+      visit(expr.falseCase)
+      constrainEqual(expr.falseCase, tau)
+
+      constrainEqual(expr, tau)
+      self.goal = tau
+    }
+
+    override func visitPrefixOperatorExpr(_ expr: PrefixOperatorExpr) {
+      visit(expr.rhs)
+      let rhsGoal = self.goal!
+      switch expr.op {
+      case .ampersand:
+        constrainEqual(expr, .pointer(type: rhsGoal))
+      case .bitwiseNot:
+        constrainEqual(expr, rhsGoal)
+      case .minus:
+        constrainEqual(expr, rhsGoal)
+      case .not:
+        constrainEqual(expr, .bool)
+        constrainEqual(rhsGoal, .bool, node: expr.rhs)
+      case .star:
+        guard case .pointer(let element) = expr.rhs.type else {
+          fatalError("invalid dereference?")
+        }
+        constrainEqual(expr, element)
+      default:
+        fatalError("invalid prefix operator: \(expr.op)")
+      }
+    }
+
+    override func visitTupleFieldLookupExpr(_ expr: TupleFieldLookupExpr) {
+      visit(expr.lhs)
+      let lhsGoal = self.goal!
+
+      constrainEqual(expr.decl!, lhsGoal)
+      let tau = DataType.freshMetaVariable
+
+      constrainEqual(expr, tau)
+      self.goal = tau
+    }
+
+    override func visitParenExpr(_ expr: ParenExpr) {
+      visit(expr.value)
+      self.goal = expr.type
+    }
+
+    func constrainEqual(_ d: Decl, _ t: DataType, caller: StaticString = #function) {
+      constraints.append(Constraint(kind: .equal(d.type, t), location: caller, node: d))
+    }
+
+    func constrainEqual(_ e: Expr, _ t: DataType, caller: StaticString = #function) {
+      constraints.append(Constraint(kind: .equal(e.type, t), location: caller, node: e))
+    }
+
+    func constrainEqual(_ t1: DataType, _ t2: DataType, node: ASTNode? = nil, caller: StaticString = #function) {
+      constraints.append(Constraint(kind: .equal(t1, t2), location: caller, node: node))
+    }
+
+    func constrainGoal(_ t: DataType, node: ASTNode? = nil, caller: StaticString = #function) {
+      constraints.append(Constraint(kind: .equal(goal!, t), location: caller, node: node))
     }
 
     // MARK: Literals
 
-    override func visitNumExpr(_ expr: NumExpr) { self.goal = expr.type! }
-    override func visitCharExpr(_ expr: CharExpr) { self.goal = expr.type! }
-    override func visitFloatExpr(_ expr: FloatExpr) { self.goal = expr.type! }
-    override func visitBoolExpr(_ expr: BoolExpr) { self.goal = expr.type! }
-    override func visitVoidExpr(_ expr: VoidExpr) { self.goal = expr.type! }
-    override func visitNilExpr(_ expr: NilExpr) { self.goal = expr.type! }
-    override func visitStringExpr(_ expr: StringExpr) { self.goal = expr.type! }
+    override func visitNumExpr(_ expr: NumExpr) { self.goal = expr.type }
+    override func visitCharExpr(_ expr: CharExpr) { self.goal = expr.type }
+    override func visitFloatExpr(_ expr: FloatExpr) { self.goal = expr.type }
+    override func visitBoolExpr(_ expr: BoolExpr) { self.goal = expr.type }
+    override func visitVoidExpr(_ expr: VoidExpr) { self.goal = expr.type }
+    override func visitNilExpr(_ expr: NilExpr) { self.goal = expr.type }
+    override func visitStringExpr(_ expr: StringExpr) { self.goal = expr.type }
   }
 }
 
 extension Dictionary {
-  mutating func unionInPlace(_ with : Dictionary) {
+  mutating func unionInPlace(_ with: Dictionary) {
     with.forEach { self.updateValue($1, forKey: $0) }
   }
 
-  func union(_ other : Dictionary) -> Dictionary {
+  func union(_ other: Dictionary) -> Dictionary {
     var dictionary = other
     dictionary.unionInPlace(self)
     return dictionary
   }
 
-  init<S : Sequence>(_ pairs : S) where S.Iterator.Element == (Key, Value) {
+  init<S: Sequence>(_ pairs: S) where S.Iterator.Element == (Key, Value) {
     self.init()
     var g = pairs.makeIterator()
     while let (k, v): (Key, Value) = g.next() {

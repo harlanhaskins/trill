@@ -23,8 +23,8 @@ class Sema: ASTTransformer, Pass {
   
   func registerTopLevelDecls(in context: ASTContext) {
     for expr in context.extensions {
-      guard let typeDecl = context.decl(for: expr.type!) else {
-        error(SemaError.unknownType(type: expr.type!),
+      guard let typeDecl = context.decl(for: expr.type) else {
+        error(SemaError.unknownType(type: expr.type),
               loc: expr.startLoc,
               highlights: [ expr.sourceRange ])
         continue
@@ -44,7 +44,7 @@ class Sema: ASTTransformer, Pass {
         property.kind = .property(expr)
         if propertyNames.contains(property.name.name) {
           error(SemaError.duplicateField(name: property.name,
-                                         type: expr.type!),
+                                         type: expr.type),
                 loc: property.startLoc,
                 highlights: [ expr.name.range ])
           continue
@@ -56,7 +56,7 @@ class Sema: ASTTransformer, Pass {
         let mangled = Mangler.mangle(method)
         if methodNames.contains(mangled) {
           error(SemaError.duplicateMethod(name: method.name,
-                                          type: expr.type!),
+                                          type: expr.type),
                 loc: method.startLoc,
                 highlights: [ expr.name.range ])
           continue
@@ -103,7 +103,7 @@ class Sema: ASTTransformer, Pass {
         return
       }
     }
-    let returnType = decl.returnType.type!
+    let returnType = decl.returnType.type
     if !context.isValidType(returnType) {
       error(SemaError.unknownType(type: returnType),
             loc: decl.returnType.startLoc,
@@ -117,7 +117,7 @@ class Sema: ASTTransformer, Pass {
         returnType != .void,
         !decl.has(attribute: .implicit),
         !(decl is InitializerDecl) {
-      error(SemaError.notAllPathsReturn(type: decl.returnType.type!),
+      error(SemaError.notAllPathsReturn(type: decl.returnType.type),
             loc: decl.sourceRange?.start,
             highlights: [
               decl.name.range,
@@ -147,7 +147,7 @@ class Sema: ASTTransformer, Pass {
       return
     }
     guard !decl.has(attribute: .foreign) else { return }
-    if let rhs = decl.rhs { context.propagateContextualType(decl.type!, to: rhs) }
+    if let rhs = decl.rhs { context.propagateContextualType(decl.type, to: rhs) }
     if let type = decl.typeRef?.type {
       if !context.isValidType(type) {
         error(SemaError.unknownType(type: type),
@@ -173,7 +173,8 @@ class Sema: ASTTransformer, Pass {
     }
     
     if let rhs = decl.rhs, decl.typeRef == nil {
-      guard let type = rhs.type else { return }
+      let type = rhs.type
+      guard rhs.type != .error else { return }
       let canRhs = context.canonicalType(type)
       if case .void = canRhs {
         error(SemaError.incompleteTypeAccess(type: type, operation: "assign value from"),
@@ -215,8 +216,8 @@ class Sema: ASTTransformer, Pass {
   
   override func visitParamDecl(_ decl: ParamDecl) -> Result {
     super.visitParamDecl(decl)
-    guard context.isValidType(decl.type!) else {
-      error(SemaError.unknownType(type: decl.type!),
+    guard context.isValidType(decl.type) else {
+      error(SemaError.unknownType(type: decl.type),
             loc: decl.typeRef?.startLoc,
             highlights: [
               decl.typeRef?.sourceRange
@@ -224,7 +225,7 @@ class Sema: ASTTransformer, Pass {
       return
     }
     decl.kind = .local(currentFunction!)
-    let canTy = context.canonicalType(decl.type!)
+    let canTy = context.canonicalType(decl.type)
     if
       case .custom = canTy,
       let typeDecl = context.decl(for: canTy),
@@ -253,7 +254,8 @@ class Sema: ASTTransformer, Pass {
   ///            instead of a method
   func visitPropertyRefExpr(_ expr: PropertyRefExpr, callArgs: [Argument]?) -> FieldKind {
     super.visitPropertyRefExpr(expr)
-    guard let type = expr.lhs.type else {
+    let type = expr.lhs.type
+    guard type != .error else {
       // An error will already have been thrown from here
       return .property
     }
@@ -299,7 +301,7 @@ class Sema: ASTTransformer, Pass {
     if let callArgs = callArgs,
        let index = typeDecl.indexOfProperty(named: expr.name) {
       let property = typeDecl.properties[index]
-      if case .function(let args, _) = property.type! {
+      if case .function(let args, _, _) = property.type {
         let types = callArgs.flatMap { $0.val.type }
         if types.count == callArgs.count && args == types {
           expr.decl = property
@@ -317,7 +319,9 @@ class Sema: ASTTransformer, Pass {
          let funcDecl = context.candidate(forArgs: args, candidates: candidateMethods) {
         expr.decl = funcDecl
         let types = funcDecl.args.map { $0.type }
-        expr.type = .function(args: types as! [DataType], returnType: funcDecl.returnType.type!)
+        expr.type = .function(args: types,
+                              returnType: funcDecl.returnType.type,
+                              hasVarArgs: funcDecl.hasVarArgs)
         return .method
       } else {
         error(SemaError.ambiguousReference(name: expr.name),
@@ -346,7 +350,8 @@ class Sema: ASTTransformer, Pass {
       return
     }
     for value in expr.values {
-      guard let type = value.type else { return }
+      let type = value.type
+      guard type != .error else { return }
       guard matches(type, first) else {
         error(SemaError.nonMatchingArrayType(first, type),
               loc: value.startLoc,
@@ -363,16 +368,14 @@ class Sema: ASTTransformer, Pass {
     super.visitTupleExpr(expr)
     var types = [DataType]()
     for expr in expr.values {
-      guard let t = expr.type else { return }
-      types.append(t)
+      types.append(expr.type)
     }
     expr.type = .tuple(fields: types)
   }
   
   override func visitTupleFieldLookupExpr(_ expr: TupleFieldLookupExpr) -> Result {
     super.visitTupleFieldLookupExpr(expr)
-    guard let lhsTy = expr.lhs.type else { return }
-    let lhsCanTy = context.canonicalType(lhsTy)
+    let lhsCanTy = context.canonicalType(expr.lhs.type)
     guard case .tuple(let fields) = lhsCanTy else {
       error(SemaError.indexIntoNonTuple,
             loc: expr.startLoc,
@@ -394,7 +397,8 @@ class Sema: ASTTransformer, Pass {
   
   override func visitSubscriptExpr(_ expr: SubscriptExpr) -> Result {
     super.visitSubscriptExpr(expr)
-    guard let type = expr.lhs.type else { return }
+    let type = expr.lhs.type
+    guard type != .error else { return }
     let diagnose: () -> Void = {
       self.error(SemaError.cannotSubscript(type: type),
                  loc: expr.startLoc,
@@ -415,7 +419,7 @@ class Sema: ASTTransformer, Pass {
         diagnose()
         return
       }
-      elementType = candidate.returnType.type!
+      elementType = candidate.returnType.type
       expr.decl = candidate
     }
     guard elementType != .void else {
@@ -430,8 +434,8 @@ class Sema: ASTTransformer, Pass {
   }
   
   override func visitExtensionDecl(_ expr: ExtensionDecl) -> Result {
-    guard let decl = context.decl(for: expr.type!) else {
-      error(SemaError.unknownType(type: expr.type!),
+    guard let decl = context.decl(for: expr.type) else {
+      error(SemaError.unknownType(type: expr.type),
             loc: expr.startLoc,
             highlights: [ expr.typeRef.name.range ])
       return
@@ -450,7 +454,7 @@ class Sema: ASTTransformer, Pass {
       expr.name == "self" {
       expr.decl = VarAssignDecl(name: "self", typeRef: fn.returnType, kind: .implicitSelf(fn, currentType!))
       expr.isSelf = true
-      expr.type = fn.returnType.type!
+      expr.type = fn.returnType.type
       return
     }
     let candidates = context.functions(named: expr.name)
@@ -563,7 +567,7 @@ class Sema: ASTTransformer, Pass {
         }
       }
       if !missing.isEmpty {
-        error(SemaError.typeDoesNotConform(decl.type!, protocol: proto.type!),
+        error(SemaError.typeDoesNotConform(decl.type, protocol: proto.type),
               loc: decl.startLoc,
               highlights: [
                 conformance.name.range
@@ -577,7 +581,8 @@ class Sema: ASTTransformer, Pass {
   }
   
   override func visitTypeAliasDecl(_ decl: TypeAliasDecl) -> Result {
-    guard let bound = decl.bound.type else { return }
+    let bound = decl.bound.type
+    guard bound != .error else { return }
     guard context.isValidType(bound) else {
       error(SemaError.unknownType(type: bound),
             loc: decl.bound.startLoc,
@@ -594,7 +599,7 @@ class Sema: ASTTransformer, Pass {
     }
     
     for arg in expr.args {
-      guard arg.val.type != nil else { return }
+      guard arg.val.type != .error else { return }
     }
     var candidates = [FuncDecl]()
     var name: Identifier? = nil
@@ -610,10 +615,10 @@ class Sema: ASTTransformer, Pass {
       }
       switch propertyKind {
       case .property:
-        if case .function(var args, let ret)? = lhs.type {
-          candidates.append(context.implicitDecl(args: args, ret: ret))
-          args.insert(typeDecl.type!, at: 0)
-          lhs.type = .function(args: args, returnType: ret)
+        if case .function(var args, let ret, let hasVarArgs) = lhs.type {
+          candidates.append(context.implicitDecl(args: args, ret: ret, hasVarArgs: hasVarArgs))
+          args.insert(typeDecl.type, at: 0)
+          lhs.type = .function(args: args, returnType: ret, hasVarArgs: hasVarArgs)
         }
       case .staticMethod:
         candidates += typeDecl.staticMethods(named: lhs.name.name) as [FuncDecl]
@@ -629,9 +634,10 @@ class Sema: ASTTransformer, Pass {
       } else if let varDecl = varBindings[lhs.name.name] {
         setLHSDecl = { _ in } // override the decl if this is a function variable
         lhs.decl = varDecl
-        let type = context.canonicalType(varDecl.type!)
-        if case .function(let args, let ret) = type {
-          candidates.append(context.implicitDecl(args: args, ret: ret))
+        let type = context.canonicalType(varDecl.type)
+        if case .function(let args, let ret, let hasVarArgs) = type {
+          candidates.append(context.implicitDecl(args: args, ret: ret,
+                                                 hasVarArgs: hasVarArgs))
         } else {
           error(SemaError.callNonFunction(type: type),
                 loc: lhs.startLoc,
@@ -645,10 +651,11 @@ class Sema: ASTTransformer, Pass {
       }
     default:
       visit(expr.lhs)
-      if case .function(let args, let ret)? = expr.lhs.type {
-        candidates += [context.implicitDecl(args: args, ret: ret)]
+      if case .function(let args, let ret, let hasVarArgs) = expr.lhs.type {
+        candidates += [context.implicitDecl(args: args, ret: ret,
+                                            hasVarArgs: hasVarArgs)]
       } else {
-        error(SemaError.callNonFunction(type: expr.lhs.type ?? .void),
+        error(SemaError.callNonFunction(type: expr.lhs.type ),
               loc: expr.lhs.startLoc,
               highlights: [
                 expr.lhs.sourceRange
@@ -736,14 +743,16 @@ class Sema: ASTTransformer, Pass {
     super.visitClosureExpr(expr)
     var argTys = [DataType]()
     for arg in expr.args {
-      argTys.append(arg.type!)
+      argTys.append(arg.type)
     }
-    expr.type = .function(args: argTys, returnType: expr.returnType!.type!)
+    expr.type = .function(args: argTys, returnType: expr.returnType!.type,
+                          hasVarArgs: false)
   }
   
   override func visitSwitchStmt(_ stmt: SwitchStmt) {
     super.visitSwitchStmt(stmt)
-    guard let valueType = stmt.value.type else { return }
+    let valueType = stmt.value.type
+    guard valueType != .error else { return }
     for c in stmt.cases {
       guard context.isGlobalConstant(c.constant) else {
         error(SemaError.caseMustBeConstant,
@@ -754,7 +763,7 @@ class Sema: ASTTransformer, Pass {
       guard let decl = context.infixOperatorCandidate(.equalTo,
                                                       lhs: stmt.value,
                                                       rhs: c.constant),
-               !decl.returnType.type!.isPointer else {
+               !decl.returnType.type.isPointer else {
         error(SemaError.cannotSwitch(type: valueType),
               loc: stmt.value.startLoc,
               highlights: [ stmt.value.sourceRange ])
@@ -787,8 +796,9 @@ class Sema: ASTTransformer, Pass {
   override func visitCoercionExpr(_ expr: CoercionExpr) {
     super.visitCoercionExpr(expr)
 
-    guard var lhsType = expr.lhs.type else { return }
-    guard let rhsType = expr.rhs.type else { return }
+    var lhsType = expr.lhs.type
+    let rhsType = expr.rhs.type
+    guard lhsType != .error, rhsType != .error else { return }
 
     if context.propagateContextualType(rhsType, to: expr.lhs) {
       lhsType = rhsType
@@ -817,8 +827,10 @@ class Sema: ASTTransformer, Pass {
 
   override func visitIsExpr(_ expr: IsExpr)  {
     super.visitIsExpr(expr)
-    guard let lhsType = expr.lhs.type else { return }
-    guard let rhsType = expr.rhs.type else { return }
+
+    let lhsType = expr.lhs.type
+    let rhsType = expr.rhs.type
+    guard lhsType != .error, rhsType != .error else { return }
 
     guard context.isValidType(rhsType) else {
       error(SemaError.unknownType(type: rhsType),
@@ -827,7 +839,7 @@ class Sema: ASTTransformer, Pass {
       return
     }
 
-    guard case .any? = expr.lhs.type else {
+    guard case .any = expr.lhs.type else {
       let matched = !matches(lhsType, rhsType)
       error(SemaError.isCheckAlways(fails: matched),
             loc: expr.isRange?.start,
@@ -844,8 +856,9 @@ class Sema: ASTTransformer, Pass {
 
   override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
     super.visitInfixOperatorExpr(expr)
-    guard var lhsType = expr.lhs.type else { return }
-    guard var rhsType = expr.rhs.type else { return }
+    var lhsType = expr.lhs.type
+    var rhsType = expr.rhs.type
+    guard lhsType != .error, rhsType != .error else { return }
     
     if context.propagateContextualType(rhsType, to: expr.lhs) {
       lhsType = rhsType
@@ -875,7 +888,8 @@ class Sema: ASTTransformer, Pass {
           return
         }
       }
-      if expr.rhs is NilExpr, let lhsType = expr.lhs.type {
+      let lhsType = expr.lhs.type
+      if expr.rhs is NilExpr, lhsType != .error {
         guard context.canBeNil(lhsType) else {
           error(SemaError.nonPointerNil(type: lhsType),
                 loc: expr.lhs.startLoc,
@@ -890,7 +904,7 @@ class Sema: ASTTransformer, Pass {
         return
       }
     }
-
+    
     let lookupOp = expr.op.associatedOp ?? expr.op
     if let decl = context.infixOperatorCandidate(lookupOp,
                                                  lhs: expr.lhs,
@@ -964,7 +978,8 @@ class Sema: ASTTransformer, Pass {
   
   override func visitPrefixOperatorExpr(_ expr: PrefixOperatorExpr) {
     super.visitPrefixOperatorExpr(expr)
-    guard let rhsType = expr.rhs.type else { return }
+    let rhsType = expr.rhs.type
+    guard rhsType != .error else { return }
     guard let exprType = expr.type(forArgType: context.canonicalType(rhsType)) else {
       error(SemaError.invalidOperands(op: expr.op, invalid: rhsType),
             loc: expr.opRange?.start,

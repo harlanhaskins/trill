@@ -490,7 +490,7 @@ class ClangImporter: Pass {
       guard let expr = try simpleParseCToken(tok, range: range) else { return nil }
 
       return VarAssignDecl(name: Identifier(name: name),
-                           typeRef: expr.type?.ref(),
+                           typeRef: expr.type.ref(),
                            rhs: expr,
                            modifiers: [.implicit],
                            mutable: false,
@@ -674,7 +674,7 @@ class ClangImporter: Pass {
     case CXType_FunctionNoProto:
       let ret = clang_getResultType(type)
       guard let trillRet = convertToTrillType(ret) else { return nil }
-      return .function(args: [], returnType: trillRet)
+      return .function(args: [], returnType: trillRet, hasVarArgs: false)
     case CXType_Typedef:
       let typeDecl = clang_getTypeDeclaration(type)
       let typeName = clang_getCursorSpelling(typeDecl).asSwift()
@@ -713,6 +713,7 @@ class ClangImporter: Pass {
     let ret = clang_getResultType(type)
     let trillRet = convertToTrillType(ret) ?? .void
     let numArgs = clang_getNumArgTypes(type)
+    let isVarArg = clang_isFunctionTypeVariadic(type) != 0
     
     guard numArgs != -1 else { return nil }
     
@@ -722,6 +723,6 @@ class ClangImporter: Pass {
       guard let trillArgTy = convertToTrillType(type) else { return nil }
       args.append(trillArgTy)
     }
-    return .function(args: args, returnType: trillRet)
+    return .function(args: args, returnType: trillRet, hasVarArgs: isVarArg)
   }
 }

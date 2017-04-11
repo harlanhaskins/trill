@@ -67,15 +67,18 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
     self.isPlaceholder = isPlaceholder
     var allValid = true
     for arg in args {
-      if arg.type == nil {
+      if case .error = arg.type {
         allValid = false
         break
       }
     }
-    super.init(type: .function(args: allValid ? args.map { $0.type! } : [], returnType: returnType.type!),
+    super.init(type: .function(args: allValid ? args.map { $0.type } : [],
+                               returnType: returnType.type,
+                               hasVarArgs: hasVarArgs),
                modifiers: modifiers,
                sourceRange: sourceRange)
   }
+  
   var formattedParameterList: String {
     var s = "("
     for (idx, arg) in args.enumerated() where !arg.isImplicitSelf {
@@ -89,7 +92,7 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
         names.append(arg.name.name)
       }
       s += names.joined(separator: " ")
-      s += ": \(arg.type!)"
+      s += ": \(arg.type)"
       if idx != args.count - 1 || hasVarArgs {
         s += ", "
       }
@@ -105,7 +108,7 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
     s += formattedParameterList
     if returnType != .void {
       s += " -> "
-      s += "\(returnType.type!)"
+      s += "\(returnType.type)"
     }
     return s
   }
