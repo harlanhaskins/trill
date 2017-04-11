@@ -63,7 +63,7 @@ enum TypeCheckError: Error, CustomStringConvertible {
 }
 
 class TypeChecker: ASTTransformer, Pass {
-  let csGen : Solver.Generator
+  let csGen : ConstraintGenerator
   var env : [Identifier:DataType]
 
   func withDefinition(_ i: Identifier, _ t: DataType, _ f: () -> Void) {
@@ -79,7 +79,7 @@ class TypeChecker: ASTTransformer, Pass {
 
   required init(context: ASTContext) {
     self.env = [:]
-    self.csGen = Solver.Generator(context: context)
+    self.csGen = ConstraintGenerator(context: context)
     super.init(context: context)
   }
 
@@ -199,16 +199,18 @@ class TypeChecker: ASTTransformer, Pass {
   override func visitVarExpr(_ expr: VarExpr) -> Result {
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
-    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      expr.type = csGen.goal.substitute(soln)
+    if let solution = ConstraintSolver(context: context)
+                        .solveSystem(csGen.constraints) {
+      expr.type = csGen.goal.substitute(solution)
     }
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
     self.csGen.reset(with: self.env)
     self.csGen.visit(decl)
-    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      decl.type = csGen.goal.substitute(soln)
+    if let solution = ConstraintSolver(context: context)
+                        .solveSystem(csGen.constraints) {
+      decl.type = csGen.goal.substitute(solution)
     }
     self.env[decl.name] = decl.type
   }
@@ -300,8 +302,9 @@ class TypeChecker: ASTTransformer, Pass {
     guard let decl = expr.decl else { return }
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
-    if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      expr.type = csGen.goal.substitute(soln)
+    if let solution = ConstraintSolver(context: context)
+                        .solveSystem(csGen.constraints) {
+      expr.type = csGen.goal.substitute(solution)
     }
     ensureTypesAndLabelsMatch(expr, decl: decl)
   }
