@@ -9,7 +9,7 @@ extension IRGenerator {
   @discardableResult
   func codegenGlobalPrototype(_ decl: VarAssignDecl) -> VarBinding {
     if let binding = globalVarIRBindings[decl.name] { return binding }
-    let type = resolveLLVMType(decl.type!)
+    let type = resolveLLVMType(decl.type)
     var global = builder.addGlobal(decl.name.name, type: type)
     global.alignment = 8
     let binding = VarBinding(ref: global,
@@ -39,7 +39,7 @@ extension IRGenerator {
       global.isExternallyInitialized = true
       return binding
     }
-    let irType = resolveLLVMType(decl.type!)
+    let irType = resolveLLVMType(decl.type)
     guard let rhs = decl.rhs else {
       global.initializer = irType.null()
       global.isGlobalConstant = !decl.mutable
@@ -84,15 +84,15 @@ extension IRGenerator {
   
   func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
     let function = currentFunction!.functionRef!
-    let type = decl.type!
+    let type = decl.type
     let irType = resolveLLVMType(type)
     var value: IRValue
     if let rhs = decl.rhs, let val = visit(rhs) {
       value = val
       if case .any = type {
-        value = codegenPromoteToAny(value: value, type: rhs.type!)
-      } else if rhs.type! != type {
-        value = coerce(value, from: rhs.type!, to: type)!
+        value = codegenPromoteToAny(value: value, type: rhs.type)
+      } else if rhs.type != type {
+        value = coerce(value, from: rhs.type, to: type)!
       }
     } else {
       value = irType.null()

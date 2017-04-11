@@ -17,9 +17,9 @@ extension IRGenerator {
       return existing
     }
     let structure = builder.createStruct(name: expr.name.name)
-    typeIRBindings[expr.type!] = structure
+    typeIRBindings[expr.type] = structure
     let fieldTypes = expr.storedProperties
-                         .map { resolveLLVMType($0.type!) }
+                         .map { resolveLLVMType($0.type) }
     structure.setBody(fieldTypes)
     
     for method in expr.methods + expr.staticMethods {
@@ -107,7 +107,7 @@ extension IRGenerator {
         fatalError("no decl?")
       }
       properties = decl.storedProperties
-                       .map { ($0.name.name, $0.type!) }
+                       .map { ($0.name.name, $0.type) }
     case .tuple(let types):
       properties = types.enumerated().map { (".\($0.offset)", $0.element) }
     default:
@@ -231,7 +231,8 @@ extension IRGenerator {
   ///                it doesn't necessarily have a stack variable.
   func resolvePtr(_ expr: Expr) -> IRValue {
     let createTmpPointer: (Expr) -> IRValue = { expr in
-      guard let type = expr.type else { fatalError("unknown type") }
+      let type = expr.type
+      guard type != .error else { fatalError("error type in resolvePtr") }
       let value = self.visit(expr)!
       if case .any = self.context.canonicalType(type) {
         return self.codegenAnyValuePtr(value, type: .pointer(type: .int8))
@@ -262,13 +263,13 @@ extension IRGenerator {
       let lhs = resolvePtr(expr.lhs)
       return builder.buildStructGEP(lhs, index: expr.field, name: "tuple-ptr")
     case let expr as InfixOperatorExpr where expr.op == .as:
-      if let type = expr.type, case .any = context.canonicalType(type) {
-        return codegenAnyValuePtr(visit(expr)!, type: expr.rhs.type!)
+      if case .any = context.canonicalType(expr.type) {
+        return codegenAnyValuePtr(visit(expr)!, type: expr.rhs.type)
       }
       return createTmpPointer(expr)
     case let expr as SubscriptExpr:
       let lhs = visit(expr.lhs)!
-      switch expr.lhs.type! {
+      switch expr.lhs.type {
       case .pointer, .array:
         return builder.buildGEP(lhs, indices: [visit(expr.args[0].val)!],
                                 name: "gep")
@@ -289,7 +290,7 @@ extension IRGenerator {
     }
     var ptr = resolvePtr(expr.lhs)
     let isImplicitSelf = (expr.lhs as? VarExpr)?.isSelf ?? false
-    if case .reference = storage(for: expr.lhs.type!),
+    if case .reference = storage(for: expr.lhs.type),
       !isImplicitSelf {
       ptr = builder.buildLoad(ptr, name: "\(expr.name)-load")
     }
