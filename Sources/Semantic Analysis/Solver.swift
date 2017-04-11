@@ -42,27 +42,46 @@ final class Solver {
   // Unify
   func solveSingle(_ c: Constraint) -> Solution? {
     switch c.kind {
-    case let .equal(t1, t2):
+    case let .equal(_t1, _t2):
+
+      // Canonicalize types before checking.
+      let t1 = context.canonicalType(_t1)
+      let t2 = context.canonicalType(_t2)
+
       // If the two types are already equal there's nothing to be done.
       if t1 == t2 {
         return [:]
       }
 
       switch (t1, t2) {
-      case let (.metaVariable(m), t), let (t, .metaVariable(m)):
+      case let (t, .metaVariable(m)):
         // Perform the occurs check
         if t.contains(m) {
           fatalError("Infinite type")
         }
         // Unify the metavariable with the concrete type.
-        return [m: t]
-      case let (.typeVariable(m), t), let (t, .typeVariable(m)):
+        return [m: _t1]
+      case let (.metaVariable(m), t):
+        // Perform the occurs check
+        if t.contains(m) {
+          fatalError("Infinite type")
+        }
+        // Unify the metavariable with the concrete type.
+        return [m: _t2]
+      case let (t, .typeVariable(m)):
         // Perform the occurs check
         if t.contains(m) {
           fatalError("Infinite type")
         }
         // Unify the type variable with the concrete type.
-        return [m: t]
+        return [m: _t1]
+      case let (.typeVariable(m), t):
+        // Perform the occurs check
+        if t.contains(m) {
+          fatalError("Infinite type")
+        }
+        // Unify the type variable with the concrete type.
+        return [m: _t2]
       case let (.function(args1, returnType1, hasVarArgs1), .function(args2, returnType2, hasVarArgs2)):
 
         guard args1.count == args2.count || hasVarArgs1 || hasVarArgs2 else {
@@ -95,12 +114,12 @@ final class Solver {
   }
 
   final class Generator: ASTTransformer {
-    var goal: DataType? = nil
+    var goal: DataType = .error
     var env: [Identifier: DataType] = [:]
     var constraints: [Constraint] = []
 
     func reset(with env: [Identifier: DataType]) {
-      self.goal = nil
+      self.goal = .error
       self.env = env
       self.constraints = []
     }
@@ -145,7 +164,7 @@ final class Solver {
 
     override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
       visit(expr.lhs)
-      let lhsGoal = self.goal!
+      let lhsGoal = self.goal
       constrainEqual(expr.typeDecl!, lhsGoal)
 
       let tau = DataType.freshMetaVariable
@@ -163,7 +182,7 @@ final class Solver {
           visit(e)
         })
         // Bind the given type to the goal type the initializer generated.
-        constrainEqual(goalType, self.goal!, node: e)
+        constrainEqual(goalType, self.goal, node: e)
       }
       // let <ident> = <expr>
       else if let e = expr.rhs {
@@ -203,14 +222,14 @@ final class Solver {
 
     override func visitFuncCallExpr(_ expr: FuncCallExpr) {
       visit(expr.lhs)
-      let lhsGoal = self.goal!
+      let lhsGoal = self.goal
       var goals = [DataType]()
       if let pre = expr.lhs as? PropertyRefExpr {
         goals.append(pre.lhs.type)
       }
       for arg in expr.args {
         visit(arg.val)
-        goals.append(self.goal!)
+        goals.append(self.goal)
       }
       let tau = DataType.freshMetaVariable
       constrainEqual(lhsGoal,
@@ -239,7 +258,7 @@ final class Solver {
       var goals: [DataType] = []
       [ expr.lhs, expr.rhs ].forEach { e in
         visit(e)
-        goals.append(self.goal!)
+        goals.append(self.goal)
       }
       constrainEqual(lhsGoal,
                      .function(args: goals, returnType: tau, hasVarArgs: false),
@@ -249,10 +268,10 @@ final class Solver {
 
     override func visitSubscriptExpr(_ expr: SubscriptExpr) {
       visit(expr.lhs)
-      var goals: [DataType] = [ self.goal! ]
+      var goals: [DataType] = [ self.goal ]
       expr.args.forEach { a in
         visit(a.val)
-        goals.append(self.goal!)
+        goals.append(self.goal)
       }
       let tau = DataType.freshMetaVariable
       if let decl = expr.decl {
@@ -279,7 +298,7 @@ final class Solver {
       var goals = [DataType]()
       for element in expr.values {
         visit(element)
-        goals.append(self.goal!)
+        goals.append(self.goal)
       }
       constrainEqual(expr, .tuple(fields: goals))
       self.goal = expr.type
@@ -303,7 +322,7 @@ final class Solver {
 
     override func visitPrefixOperatorExpr(_ expr: PrefixOperatorExpr) {
       visit(expr.rhs)
-      let rhsGoal = self.goal!
+      let rhsGoal = self.goal
       switch expr.op {
       case .ampersand:
         constrainEqual(expr, .pointer(type: rhsGoal))
@@ -326,7 +345,7 @@ final class Solver {
 
     override func visitTupleFieldLookupExpr(_ expr: TupleFieldLookupExpr) {
       visit(expr.lhs)
-      let lhsGoal = self.goal!
+      let lhsGoal = self.goal
 
       constrainEqual(expr.decl!, lhsGoal)
       let tau = DataType.freshMetaVariable
@@ -338,6 +357,18 @@ final class Solver {
     override func visitParenExpr(_ expr: ParenExpr) {
       visit(expr.value)
       self.goal = expr.type
+    }
+
+    override func visitTypeRefExpr(_ expr: TypeRefExpr) {
+      self.goal = expr.type
+    }
+
+    override func visitPoundFunctionExpr(_ expr: PoundFunctionExpr) {
+      visitStringExpr(expr)
+    }
+
+    override func visitClosureExpr(_ expr: ClosureExpr) {
+      // TODO: Implement this
     }
 
     func constrainEqual(_ d: Decl, _ t: DataType, caller: StaticString = #function) {
@@ -353,7 +384,7 @@ final class Solver {
     }
 
     func constrainGoal(_ t: DataType, node: ASTNode? = nil, caller: StaticString = #function) {
-      constraints.append(Constraint(kind: .equal(goal!, t), location: caller, node: node))
+      constraints.append(Constraint(kind: .equal(goal, t), location: caller, node: node))
     }
 
     // MARK: Literals
