@@ -39,18 +39,22 @@ final class ConstraintGenerator: ASTTransformer {
       return
     }
 
-    //      let functions = self.context.functions(named: expr.name)
-    //      guard !functions.isEmpty else {
-    //        fatalError()
-    //      }
-    //
-    //      // If we can avoid overload resolution, avoid it
-    //      if functions.count == 1 {
-    //        self.goal = functions[0].type!
-    //      } else {
-    //        self.goal = DataType.function(args: [ DataType.freshTypeVariable ], returnType: DataType.freshTypeVariable, hasVarArgs: false)
-    //      }
-    self.goal = expr.decl!.type
+    var functions = self.context.functions(named: expr.name)
+    if functions.isEmpty {
+      guard let decl = expr.decl as? FuncDecl else {
+        fatalError("no decl?")
+      }
+      functions = [decl]
+    }
+
+    // If we can avoid overload resolution, avoid it
+    if functions.count == 1 {
+      self.goal = functions[0].type
+    } else {
+      self.goal = DataType.function(args: [ DataType.freshTypeVariable ],
+                                    returnType: DataType.freshTypeVariable,
+                                    hasVarArgs: false)
+    }
   }
 
   override func visitSizeofExpr(_ expr: SizeofExpr) {

@@ -6,16 +6,17 @@
 //  Copyright © 2017 Harlan. All rights reserved.
 //
 
-final class ConstraintSolver {
+struct ConstraintSolver {
   typealias ConstraintSystem = [Constraint]
   typealias Solution = [String: DataType]
 
   let context: ASTContext
 
-  init(context: ASTContext) {
-    self.context = context
-  }
-
+  /// Solves a full system of constraints, providing a full environment
+  /// of concrete type-variable mappings.
+  /// - parameter cs: The constraint system you're trying to solve.
+  /// - returns: A full environment of concrete types to fill in the type
+  ///            variables in the system.
   func solveSystem(_ cs: ConstraintSystem) -> Solution? {
     var sub: Solution = [:]
     for c in cs {
@@ -25,7 +26,11 @@ final class ConstraintSolver {
     return sub
   }
 
-  // Unify
+  /// Solves a single constraint based on the set of available
+  /// relationships between types in Trill.
+  /// - parameter c: The constraint to solve.
+  /// - returns: A `Solution`, essentially a set of bindings that concretize
+  ///            all type variables present in the constraint, if any.
   func solveSingle(_ c: Constraint) -> Solution? {
     switch c.kind {
     case let .conforms(_t1, _t2):

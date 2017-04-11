@@ -72,7 +72,7 @@ type Mirror {
     }
   }
 
-  func printToFile(_ file: *FILE) {
+  func print(to file: *FILE) {
     if trill_anyIsNil(self.value) != 0 {
       fprintf(file, "nil")
       return
