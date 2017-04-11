@@ -272,7 +272,7 @@ extension IRGenerator {
       }
       argVals.append(val)
     }
-    let name = expr.type == .void ? "" : "calltmp"
+    let name = decl.returnType.type == .void ? "" : "calltmp"
     let call = builder.buildCall(function!, args: argVals, name: name)
     if decl.has(attribute: .noreturn) {
       builder.buildUnreachable()
