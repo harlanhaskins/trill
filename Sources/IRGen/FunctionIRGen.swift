@@ -64,9 +64,10 @@ extension IRGenerator {
   }
 
   func synthesizeIntializer(_ decl: InitializerDecl, function: Function) -> IRValue {
+    let type = decl.returnType.type
     guard let body = decl.body,
           body.stmts.isEmpty,
-          let type = decl.returnType.type,
+          type != .error,
           let typeDecl = context.decl(for: type) else {
       fatalError("must synthesize an empty initializer")
     }
@@ -114,7 +115,7 @@ extension IRGenerator {
     
     let entrybb = function.appendBasicBlock(named: "entry", in: llvmContext)
     let retbb = function.appendBasicBlock(named: "return", in: llvmContext)
-    let returnType = decl.returnType.type!
+    let returnType = decl.returnType.type
     let type = resolveLLVMType(decl.returnType)
     var res: VarBinding? = nil
     let storageKind = storage(for: returnType)
@@ -256,7 +257,7 @@ extension IRGenerator {
     var argVals = [IRValue]()
     for (idx, arg) in args.enumerated() {
       var val = visit(arg.val)!
-      var type = arg.val.type!
+      var type = arg.val.type
       if case .array(let field, _) = type {
         let alloca = createEntryBlockAlloca(currentFunction!.functionRef!,
                                             type: val.type,
@@ -271,7 +272,7 @@ extension IRGenerator {
       }
       argVals.append(val)
     }
-    let name = expr.type == .void ? "" : "calltmp"
+    let name = decl.returnType.type == .void ? "" : "calltmp"
     let call = builder.buildCall(function!, args: argVals, name: name)
     if decl.has(attribute: .noreturn) {
       builder.buildUnreachable()
@@ -291,8 +292,9 @@ extension IRGenerator {
     var store: IRValue? = nil
     if !(expr.value is VoidExpr) {
       var val = visit(expr.value)!
-      if let type = expr.value.type,
-         case .any = context.canonicalType(currentDecl.returnType.type!) {
+      let type = expr.value.type
+      if type != .error,
+         case .any = context.canonicalType(currentDecl.returnType.type) {
         val = codegenPromoteToAny(value: val, type: type)
       }
       if !(currentDecl is InitializerDecl) {
