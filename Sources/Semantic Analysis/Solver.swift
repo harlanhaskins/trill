@@ -18,6 +18,7 @@ final class Solver {
 
   enum ConstraintKind {
     case equal(DataType, DataType)
+    case conforms(DataType, DataType)
   }
 
   struct Constraint {
@@ -42,6 +43,23 @@ final class Solver {
   // Unify
   func solveSingle(_ c: Constraint) -> Solution? {
     switch c.kind {
+    case let .conforms(_t1, _t2):
+      // Canonicalize types before checking.
+      let t1 = context.canonicalType(_t1)
+      let t2 = context.canonicalType(_t2)
+
+      guard
+        let typeDecl = context.decl(for: t1),
+        let protocolDecl = context.protocolDecl(for: t2) else {
+        return nil
+      }
+
+      guard context.conformsToProtocol(typeDecl, protocolDecl) else {
+        return nil
+      }
+
+      return solveSingle(c.withKind(.equal(t1, .any)))
+
     case let .equal(_t1, _t2):
 
       // Canonicalize types before checking.

@@ -235,17 +235,6 @@ class Sema: ASTTransformer, Pass {
     varBindings[decl.name.name] = decl
   }
   
-  func haveEqualSignatures(_ decl: FuncDecl, _ other: FuncDecl) -> Bool {
-    guard decl.args.count == other.args.count else { return false }
-    guard decl.hasVarArgs == other.hasVarArgs else { return false }
-    for (declArg, otherArg) in zip(decl.args, other.args) {
-      if declArg.isImplicitSelf && otherArg.isImplicitSelf { continue }
-      guard declArg.externalName == otherArg.externalName else { return false }
-      guard matches(declArg.type, otherArg.type) else { return false }
-    }
-    return true
-  }
-  
   override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     _ = visitPropertyRefExpr(expr, callArgs: nil)
   }
@@ -550,22 +539,7 @@ class Sema: ASTTransformer, Pass {
   func diagnoseConformances(_ decl: TypeDecl) {
     for conformance in decl.conformances {
       guard let proto = diagnoseConformanceIfMissing(conformance) else { continue }
-      guard let methods = context.requiredMethods(for: proto) else { continue }
-      var missing = [FuncDecl]()
-      for method in methods {
-        var impl: MethodDecl?
-        for candidate in decl.methods(named: method.name.name) {
-          if haveEqualSignatures(method, candidate) {
-            impl = candidate
-            break
-          }
-        }
-        if let impl = impl {
-          impl.satisfiedProtocols.insert(proto)
-        } else {
-          missing.append(method)
-        }
-      }
+      let missing = context.missingMethodsForConformance(decl, to: proto)
       if !missing.isEmpty {
         error(SemaError.typeDoesNotConform(decl.type, protocol: proto.type),
               loc: decl.startLoc,

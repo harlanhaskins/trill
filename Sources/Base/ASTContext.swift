@@ -282,7 +282,42 @@ public class ASTContext {
     }
     return bestCandidate?.candidate
   }
+
+  func conformsToProtocol(_ decl: TypeDecl, _ proto: ProtocolDecl) -> Bool {
+    return missingMethodsForConformance(decl, to: proto).isEmpty
+  }
+
+  func haveEqualSignatures(_ decl: FuncDecl, _ other: FuncDecl) -> Bool {
+    guard decl.args.count == other.args.count else { return false }
+    guard decl.hasVarArgs == other.hasVarArgs else { return false }
+    for (declArg, otherArg) in zip(decl.args, other.args) {
+      if declArg.isImplicitSelf && otherArg.isImplicitSelf { continue }
+      guard declArg.externalName == otherArg.externalName else { return false }
+      guard matches(declArg.type, otherArg.type) else { return false }
+    }
+    return true
+  }
   
+  func missingMethodsForConformance(_ decl: TypeDecl, to proto: ProtocolDecl) -> [MethodDecl] {
+    guard let methods = requiredMethods(for: proto) else { return [] }
+    var missing = [MethodDecl]()
+    for method in methods {
+      var impl: MethodDecl?
+      for candidate in decl.methods(named: method.name.name) {
+        if haveEqualSignatures(method, candidate) {
+          impl = candidate
+          break
+        }
+      }
+      if let impl = impl {
+        impl.satisfiedProtocols.insert(proto)
+      } else {
+        missing.append(method)
+      }
+    }
+    return missing
+  }
+
   /// - Returns: Whether the expression's type was changed
   @discardableResult
   func propagateContextualType(_ contextualType: DataType, to expr: Expr) -> Bool {
@@ -540,35 +575,39 @@ public class ASTContext {
   func isCircularType(_ typeDecl: TypeDecl) -> Bool {
     return containsInLayout(type: typeDecl.type, typeDecl: typeDecl, base: true)
   }
-  
-  func matchRank(_ type1: DataType?, _ type2: DataType?) -> TypeRank? {
-    switch (type1, type2) {
-    case (nil, nil): return .equal
-    case (_, nil): return .equal
-    case (nil, _): return .equal
-    case (.tuple(let fields1)?, .tuple(let fields2)?):
+
+  /// Determines the ranking of the match between these two types.
+  /// This can either be `.equal` or `.any`, depending on the kind of match.
+  /// - parameter type1: The first type you're trying to match
+  /// - parameter type2: The second type you're trying to match
+  /// - returns: The rank of the match between these two types.
+  func matchRank(_ type1: DataType, _ type2: DataType) -> TypeRank? {
+    let t1Can = canonicalType(type1)
+    let t2Can = canonicalType(type2)
+    switch (t1Can, t2Can) {
+    case (.tuple(let fields1), .tuple(let fields2)):
         if fields1.count != fields2.count { return nil }
         for (type1, type2) in zip(fields1, fields2) {
             if matchRank(type1, type2) == nil { return nil }
         }
         return .equal
-    case (let t1?, let t2?):
-      let t1Can = canonicalType(t1)
-      let t2Can = canonicalType(t2)
-      
-      if case .any = t1Can {
+    case (let t1, let t2):
+      if case .any = t1 {
         return .any
       }
-      if case .any = t2Can {
+      if case .any = t2 {
         return .any
       }
       
-      return t1Can == t2Can ? .equal : nil
-    default:
-      return nil
+      return t1 == t2 ? .equal : nil
     }
   }
 
+  /// Determines if two types can be considered 'matching'.
+  /// - returns: True if the match rank between these two types is not `nil`.
+  func matches(_ t1: DataType, _ t2: DataType) -> Bool {
+    return matchRank(t1, t2) != nil
+  }
 
   /// Returns all overloaded functions with the given name at top-level scope.
   ///
