@@ -200,7 +200,7 @@ class TypeChecker: ASTTransformer, Pass {
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
     if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      expr.type = csGen.goal!.substitute(soln)
+      expr.type = csGen.goal.substitute(soln)
     }
   }
   
@@ -208,7 +208,7 @@ class TypeChecker: ASTTransformer, Pass {
     self.csGen.reset(with: self.env)
     self.csGen.visit(decl)
     if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      decl.type = csGen.goal!.substitute(soln)
+      decl.type = csGen.goal.substitute(soln)
     }
     self.env[decl.name] = decl.type
   }
@@ -301,7 +301,7 @@ class TypeChecker: ASTTransformer, Pass {
     self.csGen.reset(with: self.env)
     self.csGen.visit(expr)
     if let soln = Solver(context: context).solveSystem(csGen.constraints) {
-      expr.type = csGen.goal!.substitute(soln)
+      expr.type = csGen.goal.substitute(soln)
     }
     ensureTypesAndLabelsMatch(expr, decl: decl)
   }
