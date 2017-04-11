@@ -79,14 +79,17 @@ final class Solver {
       case (.bool, .int):
         // Boolean values may coerce to integer values (but not vice-versa).
         return [:]
-      case (_, .any):
+      case (_, .any), (.any, _):
         // Anything can unify to an existential
         return [:]
       default:
         break
       }
-      let rangeText = c.node?.sourceRange.map { " \($0.start)" } ?? ""
-      context.diag.error("[\(c.location)]:\(rangeText) could not unify \(t1) with \(t2)")
+      context.diag.error("cannot convert value of type \(t1) to \(t2)",
+                         loc: c.node?.startLoc,
+                         highlights: [
+                           c.node?.sourceRange
+                         ])
       return [:]
     }
   }
