@@ -28,7 +28,7 @@ func print(_ value: Any) {
   } else if value is AnyArray {
     print(value as AnyArray)
   } else {
-    Mirror(reflecting: value).print(to: stdout)
+    Mirror(reflecting: value).printToFile(stdout)
   }
 }
 

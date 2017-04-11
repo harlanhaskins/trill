@@ -72,7 +72,7 @@ type Mirror {
     }
   }
 
-  func print(to file: *FILE) {
+  func printToFile(_ file: *FILE) {
     if trill_anyIsNil(self.value) != 0 {
       fprintf(file, "nil")
       return
@@ -95,9 +95,9 @@ type Mirror {
       }
       let child = self.child(i)
       var shouldQuote = child is *Int8 || child is String
-//      if shouldQuote { print("\"") }
-//      print(child)
-//      if shouldQuote { print("\"") }
+      if shouldQuote { print("\"") }
+      print(child)
+      if shouldQuote { print("\"") }
     }
     fprintf(file, ")", self.value)
   }
