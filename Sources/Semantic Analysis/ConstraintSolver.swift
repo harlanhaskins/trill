@@ -103,9 +103,6 @@ struct ConstraintSolver {
       case (.pointer(_), .pointer(_)):
         // Pointers may unify with any other kind of pointer.
         return [:]
-      case (.bool, .int):
-        // Boolean values may coerce to integer values (but not vice-versa).
-        return [:]
       case (_, .any), (.any, _):
         // Anything can unify to an existential
         return [:]

@@ -540,7 +540,11 @@ class TypeRefExpr: DeclRefExpr<TypeDecl> {
 
 extension DataType {
   func ref(range: SourceRange? = nil) -> TypeRefExpr {
-    return TypeRefExpr(type: self, name: Identifier(name: "\(self)", range: range), sourceRange: range)
+    let expr = TypeRefExpr(type: self,
+                           name: Identifier(name: "\(self)", range: range),
+                           sourceRange: range)
+    expr.type = self
+    return expr
   }
 }
 

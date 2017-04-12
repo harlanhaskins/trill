@@ -78,6 +78,8 @@ final class ConstraintGenerator: ASTTransformer {
 
   override func visitVarAssignDecl(_ expr: VarAssignDecl) {
     let goalType: DataType
+
+
     // let <ident>: <Type> = <expr>
     if let e = expr.rhs {
       goalType = e.type
@@ -86,6 +88,10 @@ final class ConstraintGenerator: ASTTransformer {
       })
       // Bind the given type to the goal type the initializer generated.
       constrainEqual(goalType, self.goal, node: e)
+
+      if let typeRef = expr.typeRef {
+        constrainEqual(e, typeRef.type)
+      }
     }
       // let <ident> = <expr>
     else if let e = expr.rhs {

@@ -465,21 +465,23 @@ class ClangImporter: Pass {
     return expr
   }
   
-    func simpleParseCToken(_ token: String, range: SourceRange) throws -> Expr? {
+  func simpleParseCToken(_ token: String, range: SourceRange) throws -> Expr? {
     var lexer = Lexer(filename: "", input: token)
     let toks = try lexer.lex()
     guard let first = toks.first?.kind else { return nil }
     switch first {
     case .char(let value):
-        return CharExpr(value: value, sourceRange: range)
+      return CharExpr(value: value, sourceRange: range)
     case .stringLiteral(let value):
-        return StringExpr(value: value, sourceRange: range)
+      let stringExpr = StringExpr(value: value, sourceRange: range)
+      stringExpr.type = .pointer(type: .int8)
+      return stringExpr
     case .number(let value, let raw):
-        return NumExpr(value: value, raw: raw, sourceRange: range)
+      return NumExpr(value: value, raw: raw, sourceRange: range)
     case .identifier(let name):
-        return try simpleParseIntegerLiteralToken(name) ?? VarExpr(name: Identifier(name: name, range: range), sourceRange: range)
+      return try simpleParseIntegerLiteralToken(name) ?? VarExpr(name: Identifier(name: name, range: range), sourceRange: range)
     default:
-        return nil
+      return nil
     }
   }
 
