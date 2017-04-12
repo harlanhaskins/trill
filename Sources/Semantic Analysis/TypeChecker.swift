@@ -63,17 +63,17 @@ enum TypeCheckError: Error, CustomStringConvertible {
 }
 
 class TypeChecker: ASTTransformer, Pass {
-  let csGen : ConstraintGenerator
-  var env : [Identifier:DataType]
+  let csGen: ConstraintGenerator
+  var env: [Identifier:DataType]
 
-  func withDefinition(_ i: Identifier, _ t: DataType, _ f: () -> Void) {
-    return self.withDefinitions([i:t], f)
+  func withDefinition(_ id: Identifier, _ type: DataType, _ function: () -> Void) {
+    return self.withDefinitions([id: type], function)
   }
 
-  func withDefinitions(_ ds: [Identifier: DataType], _ f: () -> Void) {
+  func withDefinitions(_ definitions: [Identifier: DataType], _ function: () -> Void) {
     let oldTarget = self.env
-    env.unionInPlace(ds)
-    f()
+    env.unionInPlace(definitions)
+    function()
     self.env = oldTarget
   }
 
@@ -289,7 +289,9 @@ class TypeChecker: ASTTransformer, Pass {
 
   override func visitFuncDecl(_ decl: FuncDecl) {
     var funcEnv : [Identifier:DataType] = [:]
-    funcEnv[decl.name] = decl.type
+    if !(decl is MethodDecl) {
+      funcEnv[decl.name] = decl.type
+    }
     for pd in decl.args {
       funcEnv[pd.name] = pd.type
     }

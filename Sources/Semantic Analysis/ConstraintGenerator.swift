@@ -19,11 +19,15 @@ final class ConstraintGenerator: ASTTransformer {
     self.constraints = []
   }
 
-  func byBinding(_ n: Identifier, _ t: DataType, _ f: () -> ()) {
-    let oldEnv = self.env
-    self.env[n] = t
+  func byBinding(_ name: Identifier, to type: DataType, _ f: () -> ()) {
+    let oldEnv = env
+    bind(name, to: type)
     f()
-    self.env = oldEnv
+    env = oldEnv
+  }
+
+  func bind(_ name: Identifier, to type: DataType) {
+    env[name] = type
   }
 
   // MARK: Monotypes
@@ -34,12 +38,12 @@ final class ConstraintGenerator: ASTTransformer {
       return
     }
 
-    if let t = self.env[expr.name] ?? self.context.global(named: expr.name)?.type {
+    if let t = env[expr.name] ?? context.global(named: expr.name)?.type {
       self.goal = t
       return
     }
 
-    var functions = self.context.functions(named: expr.name)
+    var functions = context.functions(named: expr.name)
     if functions.isEmpty {
       guard let decl = expr.decl as? FuncDecl else {
         fatalError("no decl?")
@@ -77,7 +81,7 @@ final class ConstraintGenerator: ASTTransformer {
     // let <ident>: <Type> = <expr>
     if let e = expr.rhs {
       goalType = e.type
-      byBinding(expr.name, goalType, {
+      byBinding(expr.name, to: goalType, {
         visit(e)
       })
       // Bind the given type to the goal type the initializer generated.
@@ -87,7 +91,7 @@ final class ConstraintGenerator: ASTTransformer {
     else if let e = expr.rhs {
       // Generate
       let tau = DataType.freshMetaVariable
-      byBinding(expr.name, tau, {
+      byBinding(expr.name, to: tau, {
         visit(e)
       })
       if let phi = ConstraintSolver(context: context)
@@ -100,7 +104,7 @@ final class ConstraintGenerator: ASTTransformer {
       // let <ident>: <Type>
       // Take the type binding as fact and move on.
       goalType = expr.type
-      self.env[expr.name] = goalType
+      bind(expr.name, to: goalType)
     }
 
     self.goal = goalType
@@ -111,7 +115,7 @@ final class ConstraintGenerator: ASTTransformer {
       let oldEnv = self.env
       for p in expr.args {
         // Bind the type of the parameters.
-        self.env[p.name] = p.type
+        bind(p.name, to: p.type)
       }
       // Walk into the function body
       self.visit(body)
