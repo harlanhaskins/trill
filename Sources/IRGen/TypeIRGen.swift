@@ -261,7 +261,7 @@ extension IRGenerator {
     case let expr as TupleFieldLookupExpr:
       let lhs = resolvePtr(expr.lhs)
       return builder.buildStructGEP(lhs, index: expr.field, name: "tuple-ptr")
-    case let expr as InfixOperatorExpr where expr.op == .as:
+    case let expr as CoercionExpr:
       if let type = expr.type, case .any = context.canonicalType(type) {
         return codegenAnyValuePtr(visit(expr)!, type: expr.rhs.type!)
       }
