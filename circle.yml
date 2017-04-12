@@ -5,9 +5,11 @@ machine:
     LC_CTYPE: en_US.UTF-8
 
 dependencies:
-  - brew update
-  - brew install llvm
-  - sudo gem install xcpretty
+  override:
+    - brew update
+    - brew install llvm
+    - sudo gem install xcpretty
+
 test:
   override:
     - xcodebuild -scheme Trill -IDECustomDerivedDataLocation=build/DerivedData | xcpretty
