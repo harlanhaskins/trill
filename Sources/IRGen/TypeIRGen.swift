@@ -92,8 +92,8 @@ extension IRGenerator {
   /// ```
   ///
   /// There is a unique metadata record for every type at compile time.
-  func codegenTypeMetadata(_ _type: DataType) -> Global {
-    let type = context.canonicalType(_type)
+  func codegenTypeMetadata(_ type: DataType) -> Global {
+    let type = context.canonicalType(type)
     if let cached = typeMetadataMap[type] { return cached }
     var pointerLevel = 0
     let fullName = type.description
