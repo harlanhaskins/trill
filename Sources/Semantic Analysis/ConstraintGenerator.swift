@@ -138,20 +138,22 @@ final class ConstraintGenerator: ASTTransformer {
     self.goal = tau
   }
 
+  override func visitIsExpr(_ expr: IsExpr) {
+    let tau = DataType.freshMetaVariable
+    constrainEqual(expr, .bool)
+    constrainEqual(expr.rhs, tau)
+    self.goal = tau
+  }
+
+  override func visitCoercionExpr(_ expr: CoercionExpr) {
+    let tau = DataType.freshMetaVariable
+    constrainEqual(expr, tau)
+    constrainEqual(expr.rhs, tau)
+    self.goal = tau
+  }
+
   override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
     let tau = DataType.freshMetaVariable
-    if case .as = expr.op {
-      constrainEqual(expr, tau)
-      constrainEqual(expr.rhs, tau)
-      self.goal = tau
-      return
-    }
-    if case .is = expr.op {
-      constrainEqual(expr, .bool)
-      constrainEqual(expr.rhs, tau)
-      self.goal = tau
-      return
-    }
     let lhsGoal = expr.decl!.type
     var goals: [DataType] = []
     [ expr.lhs, expr.rhs ].forEach { e in
