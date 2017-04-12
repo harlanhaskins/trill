@@ -288,10 +288,7 @@ class TypeChecker: ASTTransformer, Pass {
   }
 
   override func visitFuncDecl(_ decl: FuncDecl) {
-    var funcEnv : [Identifier:DataType] = [:]
-    if !(decl is MethodDecl) {
-      funcEnv[decl.name] = decl.type
-    }
+    var funcEnv: [Identifier: DataType] = [:]
     for pd in decl.args {
       funcEnv[pd.name] = pd.type
     }
