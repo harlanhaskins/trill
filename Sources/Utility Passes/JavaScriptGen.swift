@@ -137,7 +137,7 @@ class JavaScriptGen<StreamType: TextOutputStream>: ASTTransformer {
   }
 
   override func visitCoercionExpr(_ expr: CoercionExpr) {
-    visit(expr.rhs)
+    visit(expr.lhs)
   }
 
   override func visitIsExpr(_ expr: IsExpr) {
