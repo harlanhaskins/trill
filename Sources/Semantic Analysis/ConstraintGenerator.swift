@@ -176,14 +176,16 @@ final class ConstraintGenerator: ASTTransformer {
   }
 
   override func visitArrayExpr(_ expr: ArrayExpr) {
-    guard case .array(let field, _) = expr.type else {
+    guard case .array(let field, let length) = expr.type else {
       fatalError("invalid array type")
     }
+    let tau = env.freshTypeVariable()
     for value in expr.values {
       visit(value)
-      system.constrainEqual(goal, field, node: value)
+      system.constrainEqual(goal, tau, node: value)
     }
-    goal = expr.type
+    system.constrainEqual(field, tau)
+    goal = DataType.array(field: tau, length: length)
     system.constrainEqual(expr, goal)
   }
 
