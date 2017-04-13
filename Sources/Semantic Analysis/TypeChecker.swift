@@ -21,7 +21,6 @@ enum TypeCheckError: Error, CustomStringConvertible {
   case overflow(raw: String, type: DataType)
   case underflow(raw: String, type: DataType)
   case shiftPastBitWidth(type: DataType, shiftWidth: IntMax)
-  case ambiguousExpressionType
 
   var description: String {
     switch self {
@@ -56,8 +55,6 @@ enum TypeCheckError: Error, CustomStringConvertible {
       return "cannot downcast from Any to type '\(type)'"
     case .addExplicitCast(let toType):
       return "add explicit cast (as \(toType)) to fix"
-    case .ambiguousExpressionType:
-      return "type of expression is ambiguous without more context"
     }
   }
 }
@@ -230,7 +227,7 @@ class TypeChecker: ASTTransformer, Pass {
       // Try to solve for the closure's return type with the return statement's
       // return type.
       if case .typeVariable(_) = valType {
-        error(TypeCheckError.ambiguousExpressionType,
+        error(ConstraintError.ambiguousExpressionType,
               loc: stmt.startLoc,
               highlights: [
                 stmt.sourceRange
@@ -242,7 +239,7 @@ class TypeChecker: ASTTransformer, Pass {
       let curClosure = currentClosure!
       for a in curClosure.args {
         if case .typeVariable(_) = a.type {
-          error(TypeCheckError.ambiguousExpressionType,
+          error(ConstraintError.ambiguousExpressionType,
                 loc: stmt.startLoc,
                 highlights: [
                   stmt.sourceRange

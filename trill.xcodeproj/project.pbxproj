@@ -363,6 +363,7 @@
 		DC8EBCB71E5FD42A00AE577C /* tinygc.c in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBCAB1E5FD42A00AE577C /* tinygc.c */; };
 		DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAEF1E5FCFB200AE577C /* Builtins.swift */; };
 		DCA8C3991E9FFEEF0002208D /* ConstraintSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA8C3981E9FFEEF0002208D /* ConstraintSystem.swift */; };
+		DCA8C39B1EA018C30002208D /* ConstraintError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA8C39A1EA018C30002208D /* ConstraintError.swift */; };
 		DCAE21ED1E63970A00645143 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAE21EC1E63970A00645143 /* main.swift */; };
 		DCBFE9381E6FD31700573329 /* metadata_private.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DCBFE9371E6FD31700573329 /* metadata_private.cpp */; };
 		DCD1E4B91E9F10340000440A /* ConstraintEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */; };
@@ -759,6 +760,7 @@
 		DC8EBCAA1E5FD42A00AE577C /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		DC8EBCAB1E5FD42A00AE577C /* tinygc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tinygc.c; sourceTree = "<group>"; };
 		DCA8C3981E9FFEEF0002208D /* ConstraintSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ConstraintSystem.swift; path = ../../ConstraintSystem.swift; sourceTree = "<group>"; };
+		DCA8C39A1EA018C30002208D /* ConstraintError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstraintError.swift; sourceTree = "<group>"; };
 		DCAE21EB1E63970A00645143 /* DemangleBridgingHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemangleBridgingHeader.h; sourceTree = "<group>"; };
 		DCAE21EC1E63970A00645143 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		DCBFE9371E6FD31700573329 /* metadata_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata_private.cpp; path = Sources/Runtime/metadata_private.cpp; sourceTree = "<group>"; };
@@ -1006,6 +1008,7 @@
 				DC69E70D1E9D92E100C33956 /* ConstraintGenerator.swift */,
 				DC69E70F1E9D933700C33956 /* Constraint.swift */,
 				DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */,
+				DCA8C39A1EA018C30002208D /* ConstraintError.swift */,
 			);
 			name = "Constraint System";
 			sourceTree = "<group>";
@@ -1729,6 +1732,7 @@
 				82D6E13A1E78E6CA00C791DE /* ConstraintSolver.swift in Sources */,
 				DC8EBB971E5FD06C00AE577C /* BasicBlock.swift in Sources */,
 				DC8EBBB61E5FD06C00AE577C /* Use.swift in Sources */,
+				DCA8C39B1EA018C30002208D /* ConstraintError.swift in Sources */,
 				DC8EBBA61E5FD06C00AE577C /* JIT.swift in Sources */,
 				DC8EBBA01E5FD06C00AE577C /* IntType.swift in Sources */,
 				DC8EBAFB1E5FCFB200AE577C /* FunctionIRGen.swift in Sources */,

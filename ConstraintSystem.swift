@@ -47,7 +47,9 @@ struct ConstraintSystem {
                                caller: StaticString = #function) {
 
     // Don't generate trivially equal constraints.
-    if t1 == t2 { return }
+    if t1 == t2 {
+      return
+    }
 
     constraints.append(Constraint(kind: .equal(t1, t2),
                                   location: caller, node: node))
