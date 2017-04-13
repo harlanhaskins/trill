@@ -100,7 +100,7 @@ struct ConstraintSolver {
                          highlights: [
                            c.node?.sourceRange
                          ])
-      return [:]
+      return nil
     }
   }
 }

@@ -192,21 +192,13 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarExpr(_ expr: VarExpr) -> Result {
-    self.csGen.reset(with: env)
-    self.csGen.visit(expr)
-    if let solution = ConstraintSolver(context: context)
-                        .solveSystem(csGen.constraints) {
-      expr.type = csGen.goal.substitute(solution)
-    }
+    guard let type = solve(expr) else { return }
+    expr.type = type
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
-    self.csGen.reset(with: env)
-    self.csGen.visit(decl)
-    if let solution = ConstraintSolver(context: context)
-                        .solveSystem(csGen.constraints) {
-      decl.type = csGen.goal.substitute(solution)
-    }
+    guard let type = solve(decl) else { return }
+    decl.type = type
     env[decl.name] = decl.type
   }
   
@@ -292,13 +284,9 @@ class TypeChecker: ASTTransformer, Pass {
   }
 
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
-    guard let decl = expr.decl else { return }
-    self.csGen.reset(with: env)
-    self.csGen.visit(expr)
-    if let solution = ConstraintSolver(context: context)
-                        .solveSystem(csGen.constraints) {
-      expr.type = csGen.goal.substitute(solution)
-    }
+    guard let decl = expr.decl,
+          let type = solve(expr) else { return }
+    expr.type = type
     ensureTypesAndLabelsMatch(expr, decl: decl)
   }
   
@@ -394,5 +382,25 @@ class TypeChecker: ASTTransformer, Pass {
       ensureTypesAndLabelsMatch(expr, decl: decl)
     }
     super.visitSubscriptExpr(expr)
+  }
+
+  func solve(_ decl: Decl) -> DataType? {
+    csGen.reset(with: env)
+    csGen.visit(decl)
+    guard let solution = ConstraintSolver(context: context)
+                           .solveSystem(csGen.constraints) else {
+        return nil
+    }
+    return csGen.goal.substitute(solution)
+  }
+
+  func solve(_ expr: Expr) -> DataType? {
+    csGen.reset(with: env)
+    csGen.visit(expr)
+    guard let solution = ConstraintSolver(context: context)
+                            .solveSystem(csGen.constraints) else {
+        return nil
+    }
+    return csGen.goal.substitute(solution)
   }
 }
