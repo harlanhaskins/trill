@@ -13,6 +13,11 @@ dependencies:
     - brew update
     - brew install llvm
     - sudo gem install xcpretty
+    
+general:
+  branches:
+    only:
+     - master
 
 test:
   override:
