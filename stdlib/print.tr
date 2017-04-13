@@ -1,5 +1,6 @@
 func print(_ value: Any) {
-  printf("%s", String(describing: value).cString)
+  let description = String(describing: value)
+  fprintf(stdout, "%s", description.cString)
 }
 
 func println(_ value: Any) {
