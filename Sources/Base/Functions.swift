@@ -65,13 +65,7 @@ class FuncDecl: Decl { // func <id>(<id>: <type-id>) -> <type-id> { <expr>* }
     self.returnType = returnType
     self.hasVarArgs = hasVarArgs
     self.isPlaceholder = isPlaceholder
-    var allValid = true
-    for arg in args {
-      if case .error = arg.type {
-        allValid = false
-        break
-      }
-    }
+    let allValid = !args.contains { $0.type == .error }
     super.init(type: .function(args: allValid ? args.map { $0.type } : [],
                                returnType: returnType.type,
                                hasVarArgs: hasVarArgs),

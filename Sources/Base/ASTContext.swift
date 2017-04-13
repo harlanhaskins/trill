@@ -302,12 +302,8 @@ public class ASTContext {
     guard let methods = requiredMethods(for: proto) else { return [] }
     var missing = [MethodDecl]()
     for method in methods {
-      var impl: MethodDecl?
-      for candidate in decl.methods(named: method.name.name) {
-        if haveEqualSignatures(method, candidate) {
-          impl = candidate
-          break
-        }
+      let impl = decl.methods(named: method.name.name).first {
+        haveEqualSignatures(method, $0)
       }
       if let impl = impl {
         impl.satisfiedProtocols.insert(proto)
@@ -325,11 +321,11 @@ public class ASTContext {
     switch expr.semanticsProvidingExpr {
     case let expr as NumExpr:
       if case .int = canTy {
-        expr.type = canTy
+        expr.type = contextualType
         return true
       }
       if case .floating = canTy {
-        expr.type = canTy
+        expr.type = contextualType
         return true
       }
     case let expr as ArrayExpr:
@@ -353,7 +349,7 @@ public class ASTContext {
         return changed
       }
     case let expr as NilExpr where canBeNil(canTy):
-      expr.type = canTy
+      expr.type = contextualType
       return true
     case let expr as TupleExpr:
       guard
@@ -367,12 +363,12 @@ public class ASTContext {
         }
       }
       if changed {
-        expr.type = canTy
+        expr.type = contextualType
       }
       return changed
     case let expr as TernaryExpr:
       if case .any = canTy {
-        expr.type = canTy
+        expr.type = contextualType
         return true
       } else if propagateContextualType(contextualType, to: expr.trueCase) && propagateContextualType(contextualType, to: expr.falseCase) {
         expr.type = contextualType
@@ -380,12 +376,12 @@ public class ASTContext {
       }
     case let expr as StringExpr:
       if [.string, .pointer(type: DataType.int8)].contains(canTy) {
-        expr.type = canTy
+        expr.type = contextualType
         return true
       }
     case let expr as ClosureExpr:
       if case let .function(_, retTy, _) = canTy {
-        expr.type = canTy
+        expr.type = contextualType
         expr.returnType = TypeRefExpr(type: retTy, name: Identifier(name: ""))
         return true
       }
