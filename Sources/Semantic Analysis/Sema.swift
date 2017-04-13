@@ -51,17 +51,27 @@ class Sema: ASTTransformer, Pass {
         }
         propertyNames.insert(property.name.name)
       }
-      var methodNames = Set<String>()
-      for method in expr.methods + expr.staticMethods {
-        let mangled = Mangler.mangle(method)
-        if methodNames.contains(mangled) {
-          error(SemaError.duplicateMethod(name: method.name,
-                                          type: expr.type),
-                loc: method.startLoc,
-                highlights: [ expr.name.range ])
-          continue
+      for methodSet in [expr.methods, expr.staticMethods] {
+        var signatureTable = [String: Set<String>]()
+        for method in methodSet {
+          // If the context should allow overloading foreign declarations (like in
+          // JavaScript) then use the parameter list for uniquing. Otherwise, use
+          // the mangled name.
+          let signature = context.allowForeignOverloads ?
+            method.uniqueSignatureKey : Mangler.mangle(method)
+          if let signatures = signatureTable[method.name.name] {
+            if signatures.contains(signature) {
+              error(SemaError.duplicateMethod(name: method.name,
+                                              type: expr.type),
+                    loc: method.startLoc,
+                    highlights: [ expr.name.range ])
+              continue
+            }
+            signatureTable[method.name.name]?.insert(signature)
+          } else {
+            signatureTable[method.name.name] = [signature]
+          }
         }
-        methodNames.insert(mangled)
       }
       if context.isCircularType(expr) {
         error(SemaError.referenceSelfInProp(name: expr.name),
@@ -475,7 +485,7 @@ class Sema: ASTTransformer, Pass {
     } else if let decl = context.decl(for: DataType(name: expr.name.name)) {
       expr.isTypeVar = true
       expr.decl = decl
-      expr.type = context.stdlib?.mirror.type ?? DataType(name: expr.name.name)
+      expr.type = context.stdlib?.mirror?.type ?? DataType(name: expr.name.name)
     }
     guard let decl = expr.decl else {
       error(SemaError.unknownVariableName(name: expr.name),

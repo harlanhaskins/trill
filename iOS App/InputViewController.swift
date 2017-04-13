@@ -21,21 +21,35 @@ enum Action {
 }
 
 struct PopulateJSDecls: Pass {
-  func run(in context: ASTContext) {
-    for name in ["print", "println"] {
-      let anyRef = DataType.any.ref()
-      let decl = FuncDecl(name: Identifier(name: name),
-                          returnType: DataType.void.ref(),
-                          args: [ParamDecl(name: "", type: anyRef)],
-                          modifiers: [.foreign])
-      context.add(decl)
+  static func stdlibContext() -> StdLibASTContext {
+    let diag = DiagnosticEngine()
+    let trFiles = Bundle.main.paths(forResourcesOfType: "tr", inDirectory: nil)
+    let context = StdLibASTContext(diagnosticEngine: diag)
+    context.allowForeignOverloads = true
+    for file in trFiles {
+      do {
+        let contents = try String(contentsOfFile: file)
+        var lexer = Lexer(filename: file, input: contents)
+        let toks = try lexer.lex()
+        let parser = Parser(tokens: toks, filename: file, context: context)
+        try parser.parseTopLevel(into: context)
+      } catch {
+        diag.error(error)
+      }
     }
-    context.add(OperatorDecl(.plus, .any, .string, .string, modifiers: [.foreign, .implicit]))
-    context.add(OperatorDecl(.plus, .string, .any, .string, modifiers: [.foreign, .implicit]))
+    return context
   }
+
+  func run(in context: ASTContext) {
+    let stdlib = PopulateJSDecls.stdlibContext()
+    context.merge(context: stdlib)
+    context.stdlib = stdlib
+  }
+
   var title: String {
     return "Populating JavaScript Decls"
   }
+
   let context: ASTContext
   init(context: ASTContext) { self.context = context }
 }
@@ -75,8 +89,14 @@ class ViewController: UIViewController, UITextViewDelegate {
     textView.font = colorScheme.font
     textView.textContainerInset = UIEdgeInsets(top: 15, left: 15, bottom: 15, right: 15)
     
-    NotificationCenter.default.addObserver(self, selector: #selector(keyboardWasShown), name: .UIKeyboardDidShow, object: nil)
-    NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillBeHidden), name: .UIKeyboardWillHide, object: nil)
+    NotificationCenter.default.addObserver(self,
+                                           selector: #selector(keyboardWasShown),
+                                           name: .UIKeyboardDidShow,
+                                           object: nil)
+    NotificationCenter.default.addObserver(self,
+                                           selector: #selector(keyboardWillBeHidden),
+                                           name: .UIKeyboardWillHide,
+                                           object: nil)
     
     storage = LexerTextStorage(attributes: colorScheme,
                                filename: document.fileURL.path)
@@ -137,6 +157,7 @@ class ViewController: UIViewController, UITextViewDelegate {
     
     diagnosticEngine = DiagnosticEngine()
     context = ASTContext(diagnosticEngine: diagnosticEngine)
+    context.allowForeignOverloads = true
     let filename = self.document.fileURL.path
     let sourceFile = try! SourceFile(path: .input(url: document.fileURL,
                                                   contents: document.sourceText),

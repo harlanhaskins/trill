@@ -1,0 +1,47 @@
+foreign type String {
+  foreign static func fromCharCode(_: Int8) -> String
+  foreign init() -> String
+  foreign var length: Int
+  foreign func charAt(_: Int) -> Int8
+  foreign func charCodeAt(_: Int) -> Int8
+  foreign func codePointAt(_: Int) -> Int
+  foreign func concat(_: String) -> String
+  foreign func includes(_: String) -> Bool
+  foreign func endsWith(_: String) -> Bool
+  foreign func indexOf(_: String) -> Bool
+  foreign func indexOf(_: String, startingFrom index: Int) -> Bool
+  foreign func lastIndexOf(_: String) -> Bool
+  foreign func lastIndexOf(_: String, startingFrom index: Int) -> Bool
+  foreign func localeCompare(_: String) -> Int
+  foreign func match(_: String) -> Bool
+  foreign func normalize() -> String
+  foreign func padEnd(_: Int) -> String
+  foreign func padEnd(_: Int, _: String) -> String
+  foreign func padStart(_: Int) -> String
+  foreign func padStart(_: Int, _: String) -> String
+  foreign func repeat(_: Int) -> String
+  foreign func replace(_: String, with: String) -> String
+  foreign subscript(_: Int) -> String
+  foreign func search(_: String) -> Int
+  foreign func search(_: String, flags: String) -> Int
+  foreign func slice(from: Int, to: Int) -> String
+  foreign func split(_: String) -> Array
+  foreign func startsWith(_: String) -> Bool
+  foreign func substr(from: Int, length: Int) -> String
+  foreign func substring(from: Int) -> String
+  foreign func substring(from: Int, to: Int) -> String
+  foreign func toLocaleLowerCase() -> String
+  foreign func toLocaleUpperCase() -> String
+  foreign func toLowerCase() -> String
+  foreign func toSource() -> String
+  foreign func toString() -> String
+  foreign func toUpperCase() -> String
+  foreign func trim() -> String
+  foreign func trimLeft() -> String
+  foreign func trimRight() -> String
+  foreign func valueOf() -> String
+}
+
+foreign func +(lhs: String, rhs: Any) -> String
+foreign func +(lhs: Any, rhs: String) -> String
+foreign func ==(lhs: String, rhs: String) -> Bool

@@ -116,7 +116,9 @@ class LexerTextStorage: NSTextStorage {
     
     let diag = DiagnosticEngine()
     let context = ASTContext(diagnosticEngine: diag)
+    context.allowForeignOverloads = true
     let annotator = SourceAnnotator(attributes: self.attributes,
+                                    file: self.filename,
                                     context: context)
     diag.register(annotator)
     let driver = Driver(context: context)

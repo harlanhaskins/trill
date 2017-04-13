@@ -282,10 +282,15 @@ class TypeDecl: Decl {
     self.initializers = initializers
     let type = DataType(name: name.name)
     self.deinitializer = `deinit`
-    let synthInit = TypeDecl.synthesizeInitializer(properties: properties,
-                                                   genericParams: genericParams,
-                                                   type: type)
-    self.initializers.append(synthInit)
+    // Foreign types only get a synthesized initializer if they don't have
+    // any declared initializers.
+    // All non-foreign types get a synthesized initializer.
+    if !modifiers.contains(.foreign) || initializers.isEmpty {
+      let synthInit = TypeDecl.synthesizeInitializer(properties: properties,
+                                                     genericParams: genericParams,
+                                                     type: type)
+      self.initializers.append(synthInit)
+    }
     self.name = name
     self.conformances = conformances
     self.genericParams = genericParams
@@ -345,8 +350,12 @@ class PropertyDecl: VarAssignDecl {
 
 class PropertyGetterDecl: MethodDecl {
   let propertyName: Identifier
-  init(parentType: DataType, propertyName: Identifier, type: TypeRefExpr, body: CompoundStmt, sourceRange: SourceRange? = nil) {
+  let getRange: SourceRange?
+  init(parentType: DataType, propertyName: Identifier, type: TypeRefExpr,
+       body: CompoundStmt, getRange: SourceRange?,
+       sourceRange: SourceRange? = nil) {
     self.propertyName = propertyName
+    self.getRange = getRange
     super.init(name: "",
                parentType: parentType,
                args: [],
@@ -361,12 +370,15 @@ class PropertyGetterDecl: MethodDecl {
 
 class PropertySetterDecl: MethodDecl {
   let propertyName: Identifier
+  let setRange: SourceRange
   init(parentType: DataType,
        propertyName: Identifier,
        type: TypeRefExpr,
        body: CompoundStmt,
+       setRange: SourceRange,
        sourceRange: SourceRange? = nil) {
     self.propertyName = propertyName
+    self.setRange = setRange
     super.init(name: "",
                parentType: parentType,
                args: [ParamDecl(name: "newValue", type: type)],
