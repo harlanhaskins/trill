@@ -257,11 +257,12 @@ final class ConstraintGenerator: ASTTransformer {
     visit(expr.lhs)
     let lhsGoal = self.goal
 
-    system.constrainEqual(expr.decl!, lhsGoal)
-    let tau = env.freshTypeVariable()
+    guard case .tuple(let fields) = lhsGoal else {
+      return
+    }
 
-    system.constrainEqual(expr, tau)
-    self.goal = tau
+    system.constrainEqual(expr, fields[expr.field])
+    self.goal = fields[expr.field]
   }
 
   override func visitParenExpr(_ expr: ParenExpr) {

@@ -102,7 +102,6 @@ class ArrayExpr: Expr {
 
 class TupleFieldLookupExpr: Expr {
   let lhs: Expr
-  var decl: Decl? = nil
   let field: Int
   let fieldRange: SourceRange
   init(lhs: Expr, field: Int, fieldRange: SourceRange, sourceRange: SourceRange? = nil) {
