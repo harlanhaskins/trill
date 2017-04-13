@@ -57,26 +57,26 @@ final class ConstraintGenerator: ASTTransformer {
     self.goal = tau
   }
 
-  override func visitVarAssignDecl(_ expr: VarAssignDecl) {
+  override func visitVarAssignDecl(_ decl: VarAssignDecl) {
     let goalType: DataType
 
     // let <ident>: <Type> = <expr>
-    if let e = expr.rhs {
-      goalType = e.type
+    if let e = decl.rhs {
+      if let typeRef = decl.typeRef {
+        goalType = typeRef.type
+      } else {
+        goalType = e.type
+      }
 
       visit(e)
 
       // Bind the given type to the goal type the initializer generated.
-      system.constrainEqual(goalType, self.goal, node: e)
-
-      if let typeRef = expr.typeRef {
-        system.constrainEqual(e, typeRef.type)
-      }
+      system.constrainEqual(goalType, goal, node: e)
     } else {
       // let <ident>: <Type>
       // Take the type binding as fact and move on.
-      goalType = expr.type
-      bind(expr.name, to: goalType)
+      goalType = decl.type
+      bind(decl.name, to: goalType)
     }
 
     self.goal = goalType
@@ -176,17 +176,14 @@ final class ConstraintGenerator: ASTTransformer {
   }
 
   override func visitArrayExpr(_ expr: ArrayExpr) {
-    guard case .array(let field, let length) = expr.type else {
+    guard case .array(let field, _) = expr.type else {
       fatalError("invalid array type")
     }
-    let tau = env.freshTypeVariable()
     for value in expr.values {
       visit(value)
-      system.constrainEqual(goal, tau, node: value)
+      system.constrainEqual(goal, field, node: value)
     }
-    system.constrainEqual(field, tau)
-    goal = DataType.array(field: tau, length: length)
-    system.constrainEqual(expr, goal)
+    goal = expr.type
   }
 
   override func visitTupleExpr(_ expr: TupleExpr) {
