@@ -7,7 +7,6 @@
 //
 
 struct ConstraintSolver {
-  typealias ConstraintSystem = [Constraint]
   typealias Solution = [String: DataType]
 
   let context: ASTContext
@@ -17,13 +16,14 @@ struct ConstraintSolver {
   /// - parameter cs: The constraint system you're trying to solve.
   /// - returns: A full environment of concrete types to fill in the type
   ///            variables in the system.
-  func solveSystem(_ cs: ConstraintSystem) -> Solution? {
-    var sub: Solution = [:]
-    for c in cs {
-      guard let soln = self.solveSingle(c) else { return nil }
-      sub.unionInPlace(soln)
+  func solveSystem(_ system: ConstraintSystem) -> Solution? {
+    var fullSolution: Solution = [:]
+    for constraint in system.constraints {
+      let subst = constraint.substituting(fullSolution)
+      guard let solution = self.solveSingle(subst) else { return nil }
+      fullSolution.unionInPlace(solution)
     }
-    return sub
+    return fullSolution
   }
 
   /// Solves a single constraint based on the set of available
@@ -62,30 +62,53 @@ struct ConstraintSolver {
       }
 
       switch (t1, t2) {
+      case (.typeVariable, .typeVariable):
+        context.diag.error("expression type is ambiguous",
+                           loc: c.node?.startLoc,
+                           highlights: [
+                              c.node?.sourceRange
+                           ])
+        return nil
       case let (t, .typeVariable(m)):
         // Perform the occurs check
         if t.contains(m) {
-          fatalError("Infinite type")
+          context.diag.error("type \(t) is infinite",
+                             loc: c.node?.startLoc,
+                             highlights: [
+                               c.node?.sourceRange
+                             ])
+          return nil
         }
         // Unify the type variable with the concrete type.
         return [m: _t1]
       case let (.typeVariable(m), t):
         // Perform the occurs check
         if t.contains(m) {
-          fatalError("Infinite type")
+          context.diag.error("type \(t) is infinite",
+                             loc: c.node?.startLoc,
+                             highlights: [
+                               c.node?.sourceRange
+                             ])
+          return nil
         }
         // Unify the type variable with the concrete type.
         return [m: _t2]
-      case let (.function(args1, returnType1, hasVarArgs1), .function(args2, returnType2, hasVarArgs2)):
+      case let (.function(args1, returnType1, hasVarArgs1),
+                .function(args2, returnType2, hasVarArgs2)):
 
         guard args1.count == args2.count || hasVarArgs1 || hasVarArgs2 else {
           break
         }
 
-        var system = zip(args1, args2).map(Constraint.Kind.equal)
-        system.insert(.equal(returnType1, returnType2), at: 0)
+        var system = ConstraintSystem()
+        for (arg1, arg2) in zip(args1, args2) {
+          system.constrainEqual(arg1, arg2,
+                                node: c.node, caller: c.location)
+        }
+        system.constrainEqual(returnType1, returnType2,
+                              node: c.node, caller: c.location)
 
-        return solveSystem(system.map(c.withKind))
+        return solveSystem(system)
       case (.pointer(_), .pointer(_)):
         // Pointers may unify with any other kind of pointer.
         return [:]

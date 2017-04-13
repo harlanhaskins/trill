@@ -11,12 +11,12 @@ import Foundation
 final class ConstraintGenerator: ASTTransformer {
   var goal: DataType = .error
   var env = ConstraintEnvironment()
-  var constraints: [Constraint] = []
+  var system = ConstraintSystem()
 
   func reset(with env: ConstraintEnvironment) {
     self.goal = .error
     self.env = env
-    self.constraints = []
+    self.system = ConstraintSystem()
   }
 
   func byBinding(_ name: Identifier, to type: DataType, _ f: () -> ()) {
@@ -43,21 +43,9 @@ final class ConstraintGenerator: ASTTransformer {
       return
     }
 
-    var functions = context.functions(named: expr.name)
-    if functions.isEmpty {
-      guard let decl = expr.decl as? FuncDecl else {
-        fatalError("no decl?")
-      }
-      functions = [decl]
-    }
-
-    // If we can avoid overload resolution, avoid it
-    if functions.count == 1 {
-      self.goal = functions[0].type
-    } else {
-      self.goal = DataType.function(args: [ env.freshTypeVariable() ],
-                                    returnType: env.freshTypeVariable(),
-                                    hasVarArgs: false)
+    if let decl = expr.decl {
+      self.goal = decl.type
+      return
     }
   }
 
@@ -68,17 +56,16 @@ final class ConstraintGenerator: ASTTransformer {
   override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     visit(expr.lhs)
     let lhsGoal = self.goal
-    constrainEqual(expr.typeDecl!, lhsGoal)
+    system.constrainEqual(expr.typeDecl!, lhsGoal)
 
     let tau = env.freshTypeVariable()
-    constrainEqual(expr.decl!, tau)
+    system.constrainEqual(expr.decl!, tau)
 
     self.goal = tau
   }
 
   override func visitVarAssignDecl(_ expr: VarAssignDecl) {
     let goalType: DataType
-
 
     // let <ident>: <Type> = <expr>
     if let e = expr.rhs {
@@ -87,10 +74,10 @@ final class ConstraintGenerator: ASTTransformer {
         visit(e)
       })
       // Bind the given type to the goal type the initializer generated.
-      constrainEqual(goalType, self.goal, node: e)
+      system.constrainEqual(goalType, self.goal, node: e)
 
       if let typeRef = expr.typeRef {
-        constrainEqual(e, typeRef.type)
+        system.constrainEqual(e, typeRef.type)
       }
     }
       // let <ident> = <expr>
@@ -101,7 +88,7 @@ final class ConstraintGenerator: ASTTransformer {
         visit(e)
       })
       if let phi = ConstraintSolver(context: context)
-                    .solveSystem(self.constraints) {
+                    .solveSystem(system) {
         goalType = tau.substitute(phi)
       } else {
         goalType = tau
@@ -123,6 +110,7 @@ final class ConstraintGenerator: ASTTransformer {
         // Bind the type of the parameters.
         bind(p.name, to: p.type)
       }
+
       // Walk into the function body
       self.visit(body)
       self.env = oldEnv
@@ -142,38 +130,48 @@ final class ConstraintGenerator: ASTTransformer {
       goals.append(self.goal)
     }
     let tau = env.freshTypeVariable()
-    constrainEqual(lhsGoal,
-                   .function(args: goals, returnType: tau, hasVarArgs: false),
-                   node: expr.lhs)
-    self.goal = tau
+    system.constrainEqual(lhsGoal,
+                          .function(args: goals,
+                                    returnType: tau,
+                                    hasVarArgs: expr.decl!.hasVarArgs),
+                          node: expr.lhs)
+    goal = tau
   }
 
   override func visitIsExpr(_ expr: IsExpr) {
     let tau = env.freshTypeVariable()
-    constrainEqual(expr, .bool)
-    constrainEqual(expr.rhs, tau)
-    self.goal = tau
+    system.constrainEqual(expr, .bool)
+    system.constrainEqual(expr.rhs, tau)
+    goal = .bool
   }
 
   override func visitCoercionExpr(_ expr: CoercionExpr) {
     let tau = env.freshTypeVariable()
-    constrainEqual(expr, tau)
-    constrainEqual(expr.rhs, tau)
-    self.goal = tau
+    system.constrainEqual(expr, tau)
+    system.constrainEqual(expr.rhs, tau)
+    goal = tau
   }
 
   override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
     let tau = env.freshTypeVariable()
-    let lhsGoal = expr.decl!.type
-    var goals: [DataType] = []
-    [ expr.lhs, expr.rhs ].forEach { e in
-      visit(e)
-      goals.append(self.goal)
+
+    if expr.op.isAssign {
+      goal = .void
+      return
     }
-    constrainEqual(lhsGoal,
-                   .function(args: goals, returnType: tau, hasVarArgs: false),
-                   node: expr.lhs)
-    self.goal = tau
+
+    let lhsGoal = expr.decl!.type
+    var goals = [DataType]()
+    visit(expr.lhs)
+    goals.append(goal)
+    visit(expr.rhs)
+    goals.append(goal)
+
+    system.constrainEqual(lhsGoal,
+                          .function(args: goals, returnType: tau,
+                                    hasVarArgs: expr.decl!.hasVarArgs),
+                          node: expr.lhs)
+    goal = tau
   }
 
   override func visitSubscriptExpr(_ expr: SubscriptExpr) {
@@ -185,7 +183,7 @@ final class ConstraintGenerator: ASTTransformer {
     }
     let tau = env.freshTypeVariable()
     if let decl = expr.decl {
-      constrainEqual(decl, .function(args: goals, returnType: tau, hasVarArgs: false))
+      system.constrainEqual(decl, .function(args: goals, returnType: tau, hasVarArgs: false))
     }
     self.goal = tau
   }
@@ -197,10 +195,10 @@ final class ConstraintGenerator: ASTTransformer {
     let tau = env.freshTypeVariable()
     for value in expr.values {
       visit(value)
-      constrainGoal(tau, node: value)
+      system.constrainEqual(self.goal, tau, node: value)
     }
     let goal = DataType.array(field: tau, length: length)
-    constrainEqual(expr, goal)
+    system.constrainEqual(expr, goal)
     self.goal = goal
   }
 
@@ -210,7 +208,7 @@ final class ConstraintGenerator: ASTTransformer {
       visit(element)
       goals.append(self.goal)
     }
-    constrainEqual(expr, .tuple(fields: goals))
+    system.constrainEqual(expr, .tuple(fields: goals))
     self.goal = expr.type
   }
 
@@ -218,15 +216,16 @@ final class ConstraintGenerator: ASTTransformer {
     let tau = env.freshTypeVariable()
 
     visit(expr.condition)
-    constrainEqual(expr.condition, .bool)
+    system.constrainEqual(expr.condition, .bool)
 
     visit(expr.trueCase)
-    constrainEqual(expr.trueCase, tau)
+    system.constrainEqual(expr.trueCase, tau)
 
     visit(expr.falseCase)
-    constrainEqual(expr.falseCase, tau)
+    system.constrainEqual(expr.falseCase, tau)
 
-    constrainEqual(expr, tau)
+    system.constrainEqual(expr, tau)
+
     self.goal = tau
   }
 
@@ -235,32 +234,33 @@ final class ConstraintGenerator: ASTTransformer {
     let rhsGoal = self.goal
     switch expr.op {
     case .ampersand:
-      constrainEqual(expr, .pointer(type: rhsGoal))
+      goal = .pointer(type: rhsGoal)
     case .bitwiseNot:
-      constrainEqual(expr, rhsGoal)
+      goal = rhsGoal
     case .minus:
-      constrainEqual(expr, rhsGoal)
+      goal = rhsGoal
     case .not:
-      constrainEqual(expr, .bool)
-      constrainEqual(rhsGoal, .bool, node: expr.rhs)
+      goal = .bool
+      system.constrainEqual(rhsGoal, .bool, node: expr.rhs)
     case .star:
       guard case .pointer(let element) = expr.rhs.type else {
         fatalError("invalid dereference?")
       }
-      constrainEqual(expr, element)
+      goal = element
     default:
       fatalError("invalid prefix operator: \(expr.op)")
     }
+    system.constrainEqual(expr, goal)
   }
 
   override func visitTupleFieldLookupExpr(_ expr: TupleFieldLookupExpr) {
     visit(expr.lhs)
     let lhsGoal = self.goal
 
-    constrainEqual(expr.decl!, lhsGoal)
+    system.constrainEqual(expr.decl!, lhsGoal)
     let tau = env.freshTypeVariable()
 
-    constrainEqual(expr, tau)
+    system.constrainEqual(expr, tau)
     self.goal = tau
   }
 
@@ -279,22 +279,6 @@ final class ConstraintGenerator: ASTTransformer {
 
   override func visitClosureExpr(_ expr: ClosureExpr) {
     // TODO: Implement this
-  }
-
-  func constrainEqual(_ d: Decl, _ t: DataType, caller: StaticString = #function) {
-    constraints.append(Constraint(kind: .equal(d.type, t), location: caller, node: d))
-  }
-
-  func constrainEqual(_ e: Expr, _ t: DataType, caller: StaticString = #function) {
-    constraints.append(Constraint(kind: .equal(e.type, t), location: caller, node: e))
-  }
-
-  func constrainEqual(_ t1: DataType, _ t2: DataType, node: ASTNode? = nil, caller: StaticString = #function) {
-    constraints.append(Constraint(kind: .equal(t1, t2), location: caller, node: node))
-  }
-
-  func constrainGoal(_ t: DataType, node: ASTNode? = nil, caller: StaticString = #function) {
-    constraints.append(Constraint(kind: .equal(goal, t), location: caller, node: node))
   }
 
   // MARK: Literals

@@ -74,7 +74,7 @@ class TypeChecker: ASTTransformer, Pass {
 
   required init(context: ASTContext) {
     env = ConstraintEnvironment()
-    self.csGen = ConstraintGenerator(context: context)
+    csGen = ConstraintGenerator(context: context)
     super.init(context: context)
   }
 
@@ -190,15 +190,11 @@ class TypeChecker: ASTTransformer, Pass {
             highlights: [c.constant.sourceRange!])
     }
   }
-  
-  override func visitVarExpr(_ expr: VarExpr) -> Result {
-    guard let type = solve(expr) else { return }
-    expr.type = type
-  }
-  
+
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
-    guard let type = solve(decl) else { return }
-    decl.type = type
+    if let type = solve(decl) {
+      decl.type = type
+    }
     env[decl.name] = decl.type
   }
   
@@ -303,33 +299,8 @@ class TypeChecker: ASTTransformer, Pass {
         ])
       return
     }
-    if expr.type != .error {
-      guard matches(expr.type, trueType) else {
-        error(TypeCheckError.typeMismatch(expected: expr.type, got: trueType),
-              loc: expr.startLoc,
-              highlights: [
-                expr.sourceRange
-          ])
-        return
-      }
-      guard matches(expr.type, falseType) else {
-        error(TypeCheckError.typeMismatch(expected: expr.type, got: falseType),
-              loc: expr.startLoc,
-              highlights: [
-                expr.sourceRange
-          ])
-        return
-      }
-    } else {
-      guard matches(trueType, falseType) else {
-        error(TypeCheckError.typeMismatch(expected: trueType, got: falseType),
-              loc: expr.startLoc,
-              highlights: [
-                expr.sourceRange
-          ])
-        return
-      }
-    }
+    guard let type = solve(expr) else { return }
+    expr.type = type
     super.visitTernaryExpr(expr)
   }
   
@@ -384,23 +355,17 @@ class TypeChecker: ASTTransformer, Pass {
     super.visitSubscriptExpr(expr)
   }
 
-  func solve(_ decl: Decl) -> DataType? {
+  func solve(_ node: ASTNode) -> DataType? {
     csGen.reset(with: env)
-    csGen.visit(decl)
+    csGen.visit(node)
     guard let solution = ConstraintSolver(context: context)
-                           .solveSystem(csGen.constraints) else {
+                           .solveSystem(csGen.system) else {
         return nil
     }
-    return csGen.goal.substitute(solution)
-  }
-
-  func solve(_ expr: Expr) -> DataType? {
-    csGen.reset(with: env)
-    csGen.visit(expr)
-    guard let solution = ConstraintSolver(context: context)
-                            .solveSystem(csGen.constraints) else {
-        return nil
+    let goal = csGen.goal.substitute(solution)
+    if case .typeVariable = goal {
+      return nil
     }
-    return csGen.goal.substitute(solution)
+    return goal
   }
 }
