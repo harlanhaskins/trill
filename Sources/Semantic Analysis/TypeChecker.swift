@@ -64,21 +64,16 @@ enum TypeCheckError: Error, CustomStringConvertible {
 
 class TypeChecker: ASTTransformer, Pass {
   let csGen: ConstraintGenerator
-  var env: [Identifier:DataType]
+  var env: ConstraintEnvironment
 
-  func withDefinition(_ id: Identifier, _ type: DataType, _ function: () -> Void) {
-    return self.withDefinitions([id: type], function)
-  }
-
-  func withDefinitions(_ definitions: [Identifier: DataType], _ function: () -> Void) {
-    let oldTarget = self.env
-    env.unionInPlace(definitions)
+  func withScope(_ function: () -> Void) {
+    let oldTarget = env
     function()
-    self.env = oldTarget
+    env = oldTarget
   }
 
   required init(context: ASTContext) {
-    self.env = [:]
+    env = ConstraintEnvironment()
     self.csGen = ConstraintGenerator(context: context)
     super.init(context: context)
   }
@@ -197,7 +192,7 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarExpr(_ expr: VarExpr) -> Result {
-    self.csGen.reset(with: self.env)
+    self.csGen.reset(with: env)
     self.csGen.visit(expr)
     if let solution = ConstraintSolver(context: context)
                         .solveSystem(csGen.constraints) {
@@ -206,13 +201,13 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitVarAssignDecl(_ decl: VarAssignDecl) -> Result {
-    self.csGen.reset(with: self.env)
+    self.csGen.reset(with: env)
     self.csGen.visit(decl)
     if let solution = ConstraintSolver(context: context)
                         .solveSystem(csGen.constraints) {
       decl.type = csGen.goal.substitute(solution)
     }
-    self.env[decl.name] = decl.type
+    env[decl.name] = decl.type
   }
   
   override func visitIfStmt(_ stmt: IfStmt) {
@@ -288,18 +283,17 @@ class TypeChecker: ASTTransformer, Pass {
   }
 
   override func visitFuncDecl(_ decl: FuncDecl) {
-    var funcEnv: [Identifier: DataType] = [:]
-    for pd in decl.args {
-      funcEnv[pd.name] = pd.type
-    }
-    self.withDefinitions(funcEnv) {
+    self.withScope {
+      for pd in decl.args {
+        env[pd.name] = pd.type
+      }
       super.visitFuncDecl(decl)
     }
   }
 
   override func visitFuncCallExpr(_ expr: FuncCallExpr) -> Result {
     guard let decl = expr.decl else { return }
-    self.csGen.reset(with: self.env)
+    self.csGen.reset(with: env)
     self.csGen.visit(expr)
     if let solution = ConstraintSolver(context: context)
                         .solveSystem(csGen.constraints) {

@@ -10,10 +10,10 @@ import Foundation
 
 final class ConstraintGenerator: ASTTransformer {
   var goal: DataType = .error
-  var env: [Identifier: DataType] = [:]
+  var env = ConstraintEnvironment()
   var constraints: [Constraint] = []
 
-  func reset(with env: [Identifier: DataType]) {
+  func reset(with env: ConstraintEnvironment) {
     self.goal = .error
     self.env = env
     self.constraints = []
@@ -55,8 +55,8 @@ final class ConstraintGenerator: ASTTransformer {
     if functions.count == 1 {
       self.goal = functions[0].type
     } else {
-      self.goal = DataType.function(args: [ DataType.freshTypeVariable ],
-                                    returnType: DataType.freshTypeVariable,
+      self.goal = DataType.function(args: [ env.freshTypeVariable() ],
+                                    returnType: env.freshTypeVariable(),
                                     hasVarArgs: false)
     }
   }
@@ -70,7 +70,7 @@ final class ConstraintGenerator: ASTTransformer {
     let lhsGoal = self.goal
     constrainEqual(expr.typeDecl!, lhsGoal)
 
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     constrainEqual(expr.decl!, tau)
 
     self.goal = tau
@@ -96,7 +96,7 @@ final class ConstraintGenerator: ASTTransformer {
       // let <ident> = <expr>
     else if let e = expr.rhs {
       // Generate
-      let tau = DataType.freshMetaVariable
+      let tau = env.freshTypeVariable()
       byBinding(expr.name, to: tau, {
         visit(e)
       })
@@ -141,7 +141,7 @@ final class ConstraintGenerator: ASTTransformer {
       visit(arg.val)
       goals.append(self.goal)
     }
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     constrainEqual(lhsGoal,
                    .function(args: goals, returnType: tau, hasVarArgs: false),
                    node: expr.lhs)
@@ -149,21 +149,21 @@ final class ConstraintGenerator: ASTTransformer {
   }
 
   override func visitIsExpr(_ expr: IsExpr) {
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     constrainEqual(expr, .bool)
     constrainEqual(expr.rhs, tau)
     self.goal = tau
   }
 
   override func visitCoercionExpr(_ expr: CoercionExpr) {
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     constrainEqual(expr, tau)
     constrainEqual(expr.rhs, tau)
     self.goal = tau
   }
 
   override func visitInfixOperatorExpr(_ expr: InfixOperatorExpr) {
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     let lhsGoal = expr.decl!.type
     var goals: [DataType] = []
     [ expr.lhs, expr.rhs ].forEach { e in
@@ -183,7 +183,7 @@ final class ConstraintGenerator: ASTTransformer {
       visit(a.val)
       goals.append(self.goal)
     }
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     if let decl = expr.decl {
       constrainEqual(decl, .function(args: goals, returnType: tau, hasVarArgs: false))
     }
@@ -194,7 +194,7 @@ final class ConstraintGenerator: ASTTransformer {
     guard case .array(_, let length) = expr.type else {
       fatalError("invalid array type")
     }
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
     for value in expr.values {
       visit(value)
       constrainGoal(tau, node: value)
@@ -215,7 +215,7 @@ final class ConstraintGenerator: ASTTransformer {
   }
 
   override func visitTernaryExpr(_ expr: TernaryExpr) {
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
 
     visit(expr.condition)
     constrainEqual(expr.condition, .bool)
@@ -258,7 +258,7 @@ final class ConstraintGenerator: ASTTransformer {
     let lhsGoal = self.goal
 
     constrainEqual(expr.decl!, lhsGoal)
-    let tau = DataType.freshMetaVariable
+    let tau = env.freshTypeVariable()
 
     constrainEqual(expr, tau)
     self.goal = tau

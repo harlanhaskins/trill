@@ -17,7 +17,6 @@ enum DataType: CustomStringConvertible, Hashable {
   case custom(name: String)
   case any
   case typeVariable(name: String)
-  case metaVariable(name: String)
 
   /// The default type. This should not survive past semantic analysis.
   case error
@@ -42,14 +41,6 @@ enum DataType: CustomStringConvertible, Hashable {
     return .array(field: field, length: nil)
   }
   static let string = DataType.custom(name: "String")
-  static var freshTypeVariable : DataType {
-    defer { DataType.typeVariablePool += 1 }
-    return .typeVariable(name: "T\(DataType.typeVariablePool)")
-  }
-  static var freshMetaVariable : DataType {
-    defer { DataType.typeVariablePool += 1 }
-    return .metaVariable(name: "T\(DataType.typeVariablePool)")
-  }
 
   init(name: String) {
     switch name {
@@ -96,8 +87,6 @@ enum DataType: CustomStringConvertible, Hashable {
       return field.contains(x)
     case let .typeVariable(name):
       return name == x
-    case let .metaVariable(name):
-      return name == x
     default:
       return false
     }
@@ -140,7 +129,6 @@ enum DataType: CustomStringConvertible, Hashable {
       return "(\(args)) -> \(ret)"
     case .any: return "Any"
     case .typeVariable(let name): return "$\(name)"
-    case .metaVariable(let name): return "%\(name)"
     case .error: return "<<error type>>"
     }
   }
@@ -189,23 +177,6 @@ enum DataType: CustomStringConvertible, Hashable {
     }
   }
 
-  var freeMetaVariables : [String] {
-    switch self {
-    case let .array(fields, _):
-      return fields.freeTypeVariables
-    case let .function(args, returnType, _):
-      return args.flatMap({ $0.freeTypeVariables }) + returnType.freeTypeVariables
-    case let .pointer(type):
-      return type.freeTypeVariables
-    case let .tuple(fields):
-      return fields.flatMap({ $0.freeTypeVariables })
-    case let .metaVariable(name):
-      return [name]
-    default:
-      return []
-    }
-  }
-
   func substitute(_ s : [String:DataType]) -> DataType {
     switch self {
     case let .array(fields, l):
@@ -218,7 +189,7 @@ enum DataType: CustomStringConvertible, Hashable {
       return .pointer(type: type.substitute(s))
     case let .tuple(fields):
       return .tuple(fields: fields.map { $0.substitute(s) })
-    case let .typeVariable(n), let .metaVariable(n):
+    case let .typeVariable(n):
       // If it's a type variable, look it up in the substitution map to
       // find a replacement.
       if let t = s[n] {
@@ -247,7 +218,7 @@ enum DataType: CustomStringConvertible, Hashable {
       return .pointer(type: type.substitute(name, for: type))
     case let .tuple(fields):
       return .tuple(fields: fields.map { $0.substitute(name, for: type) })
-    case let .typeVariable(tvn), let .metaVariable(tvn):
+    case let .typeVariable(tvn):
       if tvn == name {
         return type
       }
@@ -256,8 +227,6 @@ enum DataType: CustomStringConvertible, Hashable {
       fatalError()
     }
   }
-
-  static private var typeVariablePool : Int = 0
 }
 
 func ==(lhs: DataType, rhs: DataType) -> Bool {
@@ -281,8 +250,6 @@ func ==(lhs: DataType, rhs: DataType) -> Bool {
   case (.tuple(let fields), .tuple(let fields2)):
     return fields == fields2
   case (.typeVariable(let name1), .typeVariable(let name2)):
-    return name1 == name2
-  case (.metaVariable(let name1), .metaVariable(let name2)):
     return name1 == name2
   default: return false
   }

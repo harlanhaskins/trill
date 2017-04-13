@@ -62,20 +62,6 @@ struct ConstraintSolver {
       }
 
       switch (t1, t2) {
-      case let (t, .metaVariable(m)):
-        // Perform the occurs check
-        if t.contains(m) {
-          fatalError("Infinite type")
-        }
-        // Unify the metavariable with the concrete type.
-        return [m: _t1]
-      case let (.metaVariable(m), t):
-        // Perform the occurs check
-        if t.contains(m) {
-          fatalError("Infinite type")
-        }
-        // Unify the metavariable with the concrete type.
-        return [m: _t2]
       case let (t, .typeVariable(m)):
         // Perform the occurs check
         if t.contains(m) {

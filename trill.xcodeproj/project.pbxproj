@@ -364,6 +364,7 @@
 		DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAEF1E5FCFB200AE577C /* Builtins.swift */; };
 		DCAE21ED1E63970A00645143 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAE21EC1E63970A00645143 /* main.swift */; };
 		DCBFE9381E6FD31700573329 /* metadata_private.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DCBFE9371E6FD31700573329 /* metadata_private.cpp */; };
+		DCD1E4B91E9F10340000440A /* ConstraintEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -759,6 +760,7 @@
 		DCAE21EB1E63970A00645143 /* DemangleBridgingHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemangleBridgingHeader.h; sourceTree = "<group>"; };
 		DCAE21EC1E63970A00645143 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		DCBFE9371E6FD31700573329 /* metadata_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata_private.cpp; path = Sources/Runtime/metadata_private.cpp; sourceTree = "<group>"; };
+		DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstraintEnvironment.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1000,6 +1002,7 @@
 				82D6E1391E78E6CA00C791DE /* ConstraintSolver.swift */,
 				DC69E70D1E9D92E100C33956 /* ConstraintGenerator.swift */,
 				DC69E70F1E9D933700C33956 /* Constraint.swift */,
+				DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */,
 			);
 			name = "Constraint System";
 			sourceTree = "<group>";
@@ -1693,6 +1696,7 @@
 				DC8EBBA51E5FD06C00AE577C /* IRValue.swift in Sources */,
 				DC8EBAF81E5FCFB200AE577C /* BaseIRGen.swift in Sources */,
 				DC8EBAAE1E5FCF6E00AE577C /* Decl.swift in Sources */,
+				DCD1E4B91E9F10340000440A /* ConstraintEnvironment.swift in Sources */,
 				DC8EBAEA1E5FCFA500AE577C /* Utilities.swift in Sources */,
 				DC8EBAA61E5FCF6E00AE577C /* ASTBase.swift in Sources */,
 				DC8EBAB81E5FCF6E00AE577C /* Protocols.swift in Sources */,
