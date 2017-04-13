@@ -18,7 +18,7 @@ struct ConstraintSolver {
   ///            variables in the system.
   func solveSystem(_ system: ConstraintSystem) -> Solution? {
     var fullSolution: Solution = [:]
-    for constraint in system.constraints {
+    for constraint in system.constraints.reversed() {
       let subst = constraint.substituting(fullSolution)
       guard let solution = self.solveSingle(subst) else { return nil }
       fullSolution.unionInPlace(solution)
