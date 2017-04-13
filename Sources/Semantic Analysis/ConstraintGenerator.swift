@@ -31,6 +31,11 @@ final class ConstraintGenerator: ASTTransformer {
       return
     }
 
+    if let stdlib = context.stdlib, expr.isTypeVar {
+      self.goal = stdlib.mirror.type
+      return
+    }
+
     if let t = env[expr.name] ?? context.global(named: expr.name)?.type {
       self.goal = t
       return
@@ -47,9 +52,16 @@ final class ConstraintGenerator: ASTTransformer {
   }
 
   override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
-    visit(expr.lhs)
-    let lhsGoal = self.goal
-    system.constrainEqual(expr.typeDecl!, lhsGoal)
+    // Don't visit the left-hand side if it's a type var, because you're
+    // actually trying to access a static property of the type, not an instance
+    // property/method on the metatype mirror.
+    if (expr.lhs as? VarExpr)?.isTypeVar != true {
+      visit(expr.lhs)
+    } else {
+      goal = expr.lhs.type
+    }
+
+    system.constrainEqual(goal, expr.typeDecl!.type, node: expr)
 
     let tau = env.freshTypeVariable()
     system.constrainEqual(expr.decl!, tau)

@@ -221,42 +221,9 @@ class TypeChecker: ASTTransformer, Pass {
   }
   
   override func visitReturnStmt(_ stmt: ReturnStmt) -> Result {
-    guard var returnType = currentClosure?.returnType!.type ?? currentFunction?.returnType.type else { return }
-    var valType = stmt.value.type
-    if case .typeVariable(_) = returnType {
-      // Try to solve for the closure's return type with the return statement's
-      // return type.
-      if case .typeVariable(_) = valType {
-        error(ConstraintError.ambiguousExpressionType,
-              loc: stmt.startLoc,
-              highlights: [
-                stmt.sourceRange
-          ])
-        return
-      }
-
-      // FIXME: Type variable propagation restricted to closure expressions.
-      let curClosure = currentClosure!
-      for a in curClosure.args {
-        if case .typeVariable(_) = a.type {
-          error(ConstraintError.ambiguousExpressionType,
-                loc: stmt.startLoc,
-                highlights: [
-                  stmt.sourceRange
-                ])
-          return
-        }
-      }
-      // Recast an empty argument list as Void
-      // FIXME: Do this earlier (Parse) with a special kind of identifier?
-      let argTy = curClosure.args.isEmpty ? [DataType.void] : curClosure.args.map { $0.type }
-      context.propagateContextualType(DataType.function(args: argTy, returnType: valType, hasVarArgs: false), to: curClosure)
-      returnType = valType
-    } else if case .typeVariable(_) = valType {
-      // Try to solve the return statement's type with the closure's return type.
-      context.propagateContextualType(returnType, to: stmt.value)
-      valType = returnType
-    }
+    guard let returnType = currentClosure?.returnType?.type ??
+                           currentFunction?.returnType.type else { return }
+    let valType = stmt.value.type
     if !matches(valType, returnType) {
       error(TypeCheckError.typeMismatch(expected: returnType, got: valType),
             loc: stmt.startLoc,
