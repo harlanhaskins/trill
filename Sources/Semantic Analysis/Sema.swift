@@ -281,7 +281,8 @@ class Sema: ASTTransformer, Pass {
       return .property
     }
     expr.typeDecl = typeDecl
-    if let varExpr = expr.lhs as? VarExpr, varExpr.isTypeVar, let varTypeDecl = varExpr.decl as? TypeDecl {
+    if let varExpr = expr.lhs as? VarExpr, varExpr.isTypeVar,
+       let varTypeDecl = varExpr.decl as? TypeDecl {
       expr.typeDecl = varTypeDecl
       expr.type = varTypeDecl.type
       return .staticMethod

@@ -55,10 +55,12 @@ final class ConstraintGenerator: ASTTransformer {
     // Don't visit the left-hand side if it's a type var, because you're
     // actually trying to access a static property of the type, not an instance
     // property/method on the metatype mirror.
-    if (expr.lhs as? VarExpr)?.isTypeVar != true {
-      visit(expr.lhs)
+    if let v = expr.lhs as? VarExpr,
+       let typeDecl = expr.typeDecl,
+       v.isTypeVar {
+      goal = typeDecl.type
     } else {
-      goal = expr.lhs.type
+      visit(expr.lhs)
     }
 
     system.constrainEqual(goal, expr.typeDecl!.type, node: expr)
