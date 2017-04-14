@@ -119,7 +119,7 @@ extension IRGenerator {
     let type = resolveLLVMType(decl.returnType)
     var res: VarBinding? = nil
     let storageKind = storage(for: returnType)
-    let isReferenceInitializer = decl is InitializerDecl && storage(for: returnType) == .reference
+    let isReferenceInitializer = decl is InitializerDecl && storageKind == .reference
     withFunction {
       builder.positionAtEnd(of: entrybb)
       if decl.returnType != .void {
@@ -130,7 +130,16 @@ extension IRGenerator {
                                        name: "res", storage: storageKind)
         }
         if decl is InitializerDecl {
-          varIRBindings["self"] = res!
+          let selfBinding: VarBinding
+          if isReferenceInitializer {
+            selfBinding = VarBinding(ref: res!.ref,
+                                     storage: res!.storage,
+                                     read: { res!.ref },
+                                     write: res!.write)
+          } else {
+            selfBinding = res!
+          }
+          varIRBindings["self"] = selfBinding
         }
       }
       for (idx, arg) in decl.args.enumerated() {
