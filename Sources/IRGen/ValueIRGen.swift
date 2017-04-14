@@ -185,7 +185,7 @@ extension IRGenerator {
                                              storage: .value)
     self.builder.buildStore(segmentsParam, to: alloca.ref)
     expr.segments.forEach { segment in
-      let arg = codegenPromoteToAny(value: visit(segment)!, type: segment.type!)
+      let arg = codegenPromoteToAny(value: visit(segment)!, type: segment.type)
       let _ = builder.buildCall(codegenFunctionPrototype(arrayAppend), args: [alloca.ref, arg])
     }
     

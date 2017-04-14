@@ -51,6 +51,10 @@ final class ConstraintGenerator: ASTTransformer {
     self.goal = expr.type
   }
 
+  override func visitStringInterpolationExpr(_ expr: StringInterpolationExpr) {
+    self.goal = expr.type
+  }
+
   override func visitPropertyRefExpr(_ expr: PropertyRefExpr) {
     // Don't visit the left-hand side if it's a type var, because you're
     // actually trying to access a static property of the type, not an instance
