@@ -89,7 +89,7 @@ final class ConstraintGenerator: ASTTransformer {
       visit(e)
 
       // Bind the given type to the goal type the initializer generated.
-      system.constrainEqual(goalType, goal, node: e)
+      system.constrainEqual(goal, goalType, node: e)
     } else {
       // let <ident>: <Type>
       // Take the type binding as fact and move on.
