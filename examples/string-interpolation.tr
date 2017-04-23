@@ -10,7 +10,7 @@ func main() {
   assert(s == e, "wrong interpolation! got: " + s)
 
   var dict = AnyDictionary()
-  s = "\("this is a dictionary" + s) => \(dict)!"
+  s = "\("this is a dictionary") => \(dict)!"
   e = "this is a dictionary => {}!"
   println(s)
   assert(s == e, "wrong interpolation! got: " + s)
