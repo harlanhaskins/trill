@@ -362,9 +362,10 @@
 		DC8EBCB41E5FD42A00AE577C /* javaxfc.h in Headers */ = {isa = PBXBuildFile; fileRef = DC8EBCA81E5FD42A00AE577C /* javaxfc.h */; };
 		DC8EBCB71E5FD42A00AE577C /* tinygc.c in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBCAB1E5FD42A00AE577C /* tinygc.c */; };
 		DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8EBAEF1E5FCFB200AE577C /* Builtins.swift */; };
-		DCA8C3991E9FFEEF0002208D /* ConstraintSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA8C3981E9FFEEF0002208D /* ConstraintSystem.swift */; };
 		DCA8C39B1EA018C30002208D /* ConstraintError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA8C39A1EA018C30002208D /* ConstraintError.swift */; };
 		DCAE21ED1E63970A00645143 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCAE21EC1E63970A00645143 /* main.swift */; };
+		DCBA99B51EAD12B9007AD2E3 /* ConstraintSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBA99B41EAD12B9007AD2E3 /* ConstraintSystem.swift */; };
+		DCBA99B61EAD12B9007AD2E3 /* ConstraintSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBA99B41EAD12B9007AD2E3 /* ConstraintSystem.swift */; };
 		DCBFE9381E6FD31700573329 /* metadata_private.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DCBFE9371E6FD31700573329 /* metadata_private.cpp */; };
 		DCD1E4B91E9F10340000440A /* ConstraintEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */; };
 /* End PBXBuildFile section */
@@ -759,10 +760,10 @@
 		DC8EBCA91E5FD42A00AE577C /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		DC8EBCAA1E5FD42A00AE577C /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		DC8EBCAB1E5FD42A00AE577C /* tinygc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tinygc.c; sourceTree = "<group>"; };
-		DCA8C3981E9FFEEF0002208D /* ConstraintSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ConstraintSystem.swift; path = ../../ConstraintSystem.swift; sourceTree = "<group>"; };
 		DCA8C39A1EA018C30002208D /* ConstraintError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstraintError.swift; sourceTree = "<group>"; };
 		DCAE21EB1E63970A00645143 /* DemangleBridgingHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemangleBridgingHeader.h; sourceTree = "<group>"; };
 		DCAE21EC1E63970A00645143 /* main.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		DCBA99B41EAD12B9007AD2E3 /* ConstraintSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstraintSystem.swift; sourceTree = "<group>"; };
 		DCBFE9371E6FD31700573329 /* metadata_private.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata_private.cpp; path = Sources/Runtime/metadata_private.cpp; sourceTree = "<group>"; };
 		DCD1E4B81E9F10340000440A /* ConstraintEnvironment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstraintEnvironment.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1003,7 +1004,7 @@
 		DC69E70C1E9D92C500C33956 /* Constraint System */ = {
 			isa = PBXGroup;
 			children = (
-				DCA8C3981E9FFEEF0002208D /* ConstraintSystem.swift */,
+				DCBA99B41EAD12B9007AD2E3 /* ConstraintSystem.swift */,
 				82D6E1391E78E6CA00C791DE /* ConstraintSolver.swift */,
 				DC69E70D1E9D92E100C33956 /* ConstraintGenerator.swift */,
 				DC69E70F1E9D933700C33956 /* Constraint.swift */,
@@ -1673,13 +1674,13 @@
 				DC8EBAA81E5FCF6E00AE577C /* ASTContext.swift in Sources */,
 				DC8EBAE41E5FCFA500AE577C /* Options.swift in Sources */,
 				DC8EBADC1E5FCFA500AE577C /* DiagnosticConsumer.swift in Sources */,
-				DCA8C3991E9FFEEF0002208D /* ConstraintSystem.swift in Sources */,
 				DC8EBAE01E5FCFA500AE577C /* Driver.swift in Sources */,
 				DC8EBB011E5FCFB200AE577C /* ValueIRGen.swift in Sources */,
 				DC8EBAAA1E5FCF6E00AE577C /* ASTTransformer.swift in Sources */,
 				DC8EBB021E5FCFB200AE577C /* VarBinding.swift in Sources */,
 				DC8EBAC21E5FCF6E00AE577C /* Types.swift in Sources */,
 				DC8EBB061E5FCFBC00AE577C /* LLVMWrappers.cpp in Sources */,
+				DCBA99B51EAD12B9007AD2E3 /* ConstraintSystem.swift in Sources */,
 				DC8EBB3E1E5FCFD500AE577C /* SemaError.swift in Sources */,
 				DC8EBBAA1E5FD06C00AE577C /* MetadataType.swift in Sources */,
 				DC8EBBB51E5FD06C00AE577C /* TokenType.swift in Sources */,
@@ -1786,6 +1787,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DC8EBABB1E5FCF6E00AE577C /* SourceFile.swift in Sources */,
+				DCBA99B61EAD12B9007AD2E3 /* ConstraintSystem.swift in Sources */,
 				DC8EBAA91E5FCF6E00AE577C /* ASTContext.swift in Sources */,
 				DC8EBAEB1E5FCFA500AE577C /* Utilities.swift in Sources */,
 				DC8EBCB81E5FD52800AE577C /* Builtins.swift in Sources */,
