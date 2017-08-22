@@ -1,0 +1,296 @@
+#!/usr/bin/env python
+#
+# build
+#
+# Copyright 2016-2017 the Trill project authors.
+# Licensed under the MIT License.
+#
+# Full license text available at https://github.com/trill-lang/trill
+#
+"""
+A script to build trill and invoke SwiftPM.
+"""
+from __future__ import print_function
+import argparse
+import os
+import os.path as path
+import pkgconfig
+import shutil
+from subprocess import call, Popen, PIPE
+import sys
+from contextlib import contextmanager
+from distutils.spawn import find_executable
+from glob import glob
+
+
+def error(msg):
+    """
+    Prints an error message and exits with a non-zero exit code.
+    """
+    print("error: " + str(msg))
+    sys.exit(-1)
+
+
+@contextmanager
+def pushd(new_dir):
+    """
+    Pushes the provided directory onto the directory stack while the context
+    manager is active.
+    """
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    yield
+    os.chdir(previous_dir)
+
+
+def log(msg):
+    """
+    Logs the provided message to the console.
+    """
+    print("[build]: " + str(msg))
+
+
+class LinkDependency(object):
+    """
+    Represents a linked dependency for a project.
+    """
+    def __init__(self, cflags, ldflags):
+        self.cflags = cflags
+        self.ldflags = ldflags
+
+    @staticmethod
+    def find_from_pkgconfig(name, repo_name):
+        """
+        Finds the CFLAGS and LDFLAGS from the provided pkgconfig file, erroring
+        if they couldn't be found.
+        """
+        if not pkgconfig.exists(name):
+            error("You must install the pkg-config file for %s before "
+                  "building trill. Run `utils/make-pkgconfig.swift` in the "
+                  "%sSwift repo." % repo_name)
+        return LinkDependency(pkgconfig.cflags(name).split(),
+                              pkgconfig.libs(name).split())
+
+    def include_dirs(self):
+        """
+        Gets just the include directories out of the cflags.
+        """
+        return [flag.strip('-I') for flag in self.cflags
+                if flag.startswith('-I')]
+
+class Build(object):
+    """
+    Represents a full build configuration for the project.
+    """
+    def __init__(self, args):
+        self.xcodeproj = args.xcodeproj
+        self.is_release = args.release
+        self.should_reconfigure = args.reconfigure
+
+        dir_pieces = []
+        if args.xcodeproj:
+            if sys.platform != 'darwin':
+                error("xcode project generation requires macOS")
+            dir_pieces.append('Xcode')
+        dir_pieces.append('Release' if self.is_release else 'Debug')
+        self.build_config = '-'.join(dir_pieces)
+        self.source_dir = os.path.abspath(path.join(path.split(__file__)[0],
+                                                    os.pardir))
+
+        self.build_dir = path.join(self.source_dir, '.build', self.build_config)
+
+        if args.swift:
+            self.swift = args.swift
+        else:
+            self.swift = 'swift'
+
+    def find_executable(self, name):
+        """
+        Finds the executable for the provided name or errors if it could not
+        be found in the PATH.
+        """
+        executable = find_executable(name)
+        if not executable:
+            error('could not find executable for %s; ' +
+                  'make sure it is in your PATH')
+        log('using %s: %s' % (name, executable))
+        return executable
+
+    def link_stdlib(self):
+        """
+        Links the stdlib into the build dir's stdlib directory
+        """
+        stdlib_src_dir = path.join(self.source_dir, 'stdlib')
+        new_stdlib_dir = path.join(self.build_dir, 'stdlib')
+        os.symlink(stdlib_src_dir, new_stdlib_dir)
+
+    def build_runtime(self):
+        """
+        Builds the runtime and links it with the bdw garbage collector.
+        """
+        bdw_dir = path.join(self.build_dir, 'dependencies', 'bdwgc')
+        libgc_archive_path = path.join(bdw_dir, 'libgc-lib.a')
+
+        if not path.exists(bdw_dir):
+            log("cloning BDW GC")
+            call([
+                'git', 'clone',
+                'https://github.com/ivmai/bdwgc.git',
+                bdw_dir
+            ])
+
+        runtime_dir = path.join(self.source_dir, 'runtime')
+        runtime_build_dir = path.join(self.build_dir, 'runtime')
+        runtime_lib_dir = path.join(self.build_dir, 'lib')
+        runtime_archive_path = path.join(runtime_lib_dir, 'libtrillRuntime.a')
+        runtime_src_dir = path.join(runtime_dir, 'src')
+        runtime_include_dir = path.join(runtime_dir, 'include')
+
+        shutil.rmtree(runtime_lib_dir, ignore_errors=True)
+        os.makedirs(runtime_lib_dir)
+
+        if not path.exists(runtime_build_dir):
+            os.makedirs(runtime_build_dir)
+
+        call(['cmake', bdw_dir,
+              '-DCMAKE_OSX_ARCHITECTURES=x86_64'])
+        call(['cmake', '--build', bdw_dir])
+
+        clang_args = [
+            'clang++', '-I', runtime_include_dir, '-std=c++14', '-c',
+            '-I', path.join(bdw_dir, 'include')
+        ]
+        clang_args += glob('%s/*.cpp' % runtime_src_dir)
+
+        if sys.platform == 'darwin':
+            xcrun = Popen(['xcrun', '--show-sdk-path'], stdout=PIPE)
+            out, _ = xcrun.communicate()
+            clang_args += ['-isysroot', out.strip()]
+
+        with pushd(runtime_build_dir):
+            log('building runtime sources')
+            call(clang_args)
+
+        ar_args = ['ar', '-rcs', runtime_archive_path]
+        ar_args += glob('%s/*.o' % runtime_build_dir)
+
+        log('creating libtrillRuntime.a')
+        call(ar_args)
+
+        log('adding bdw gc to libtrillRuntime.a')
+        call([
+            'libtool', '-static',
+            '-o', runtime_archive_path,
+            libgc_archive_path, runtime_archive_path
+        ])
+
+    def run_swift_build(self):
+        """
+        Runs `swift build` with the appropriate command-line flags.
+        """
+        swiftpm_dir = path.join(self.build_dir, 'swiftpm')
+        bin_dir = path.join(self.build_dir, 'bin')
+
+        if not path.exists(bin_dir):
+            os.makedirs(bin_dir)
+
+        swift_args = [
+            self.swift, 'build', "--build-path", swiftpm_dir,
+            '-Xcxx', '-std=c++14'
+        ]
+        if self.is_release:
+            swift_args += ['--configuration', 'release']
+
+        llvm = LinkDependency.find_from_pkgconfig('cllvm', 'LLVM')
+        clang = LinkDependency.find_from_pkgconfig('cclang', 'Clang')
+
+        for flag in llvm.cflags + clang.cflags:
+            swift_args += ['-Xcxx', flag]
+
+        for flag in llvm.ldflags + clang.ldflags:
+            swift_args += ['-Xlinker', flag]
+
+        call(swift_args)
+
+    def run_swift_xcodeproj(self):
+        """
+        Runs `swift package generate-xcpodeproj`, creating an `xcconfig` file
+        with the appropriate source directories.
+        """
+        swiftpm_dir = path.join(self.build_dir, 'swiftpm')
+        bin_dir = path.join(self.build_dir, 'bin')
+
+        llvm = LinkDependency.find_from_pkgconfig('cllvm', 'LLVM')
+        clang = LinkDependency.find_from_pkgconfig('cclang', 'Clang')
+
+        xcconfig_path = path.join(self.build_dir, 'trill.xcconfig')
+        xcconfig_contents = \
+"""
+MACOSX_DEPLOYMENT_TARGET = 10.12
+SWIFT_VERSION = 4.0
+HEADER_SEARCH_PATHS = $(inherited) {include_dirs}
+OTHER_LDFLAGS = $(inherited) {ldflags}
+CLANG_CXX_LANGUAGE_STANDARD = c++14
+BUILD_DIR = {bin_dir}
+""".format(include_dirs=' '.join(llvm.include_dirs() + clang.include_dirs()),
+           ldflags=' '.join(llvm.ldflags + clang.ldflags),
+           bin_dir=bin_dir)
+
+        with open(xcconfig_path, 'w+') as xcconfig_file:
+            log('writing trill.xcconfig')
+            xcconfig_file.write(xcconfig_contents)
+
+        call([
+            self.swift, 'package', 'generate-xcodeproj',
+            '--output', self.build_dir,
+            '--xcconfig-overrides', xcconfig_path
+        ])
+
+    def run(self):
+        """
+        Runs the full build with the arguments provided
+        """
+        if self.should_reconfigure:
+            shutil.rmtree(self.build_dir, ignore_errors=True)
+
+        try:
+            os.makedirs(self.build_dir)
+        except OSError:
+            # If the directory exists already, we'll get this.
+            pass
+
+        os.chdir(self.build_dir)
+
+        self.build_runtime()
+
+        if self.xcodeproj:
+            self.run_swift_xcodeproj()
+        else:
+            self.run_swift_build()
+
+def main():
+    """
+    Runs the build script and invokes CMake.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--swift', help='Path to custom swift executable.')
+    parser.add_argument('-r', '--release', action='store_true',
+                        help='Build the executable in the Release ' +
+                        'configuration')
+    parser.add_argument('-x', '--xcodeproj', action='store_true',
+                        help='Build an Xcode project for the trill compiler.')
+    parser.add_argument('-t', '--test', help='Run the trill test suite.',
+                        action='store_true')
+    parser.add_argument('--reconfigure', action='store_true',
+                        help='Delete the existing CMake files and start over')
+
+    args = parser.parse_args()
+
+    if args.test:
+        error("tests are unsupported right now...")
+
+    build = Build(args)
+    build.run()
+
+if __name__ == "__main__":
+    main()

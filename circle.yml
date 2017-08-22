@@ -7,9 +7,9 @@ machine:
 dependencies:
   override:
     - brew update
-    - brew install llvm
+    - brew install llvm cmake
 
 test:
   override:
     - utils/build-script
-    - swift utils/run-examples.swift
+    - swift utils/run-examples.swift .build/CMake/bin/trill examples

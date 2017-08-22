@@ -31,5 +31,4 @@ let package = Package(name: "trill",
       "AST", "ClangImporter", "Diagnostics", "Driver",
       "IRGen", "LLVMWrappers", "Options", "Parse", "Sema", "Source"
     ])
-  ],
-  cxxLanguageStandard: .cxx14)
+  ])
