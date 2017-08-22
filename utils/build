@@ -217,7 +217,6 @@ class Build(object):
         Runs `swift package generate-xcpodeproj`, creating an `xcconfig` file
         with the appropriate source directories.
         """
-        swiftpm_dir = path.join(self.build_dir, 'swiftpm')
         bin_dir = path.join(self.build_dir, 'bin')
 
         llvm = LinkDependency.find_from_pkgconfig('cllvm', 'LLVM')
