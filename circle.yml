@@ -7,8 +7,9 @@ machine:
 dependencies:
   override:
     - brew update
-    - brew install llvm cmake
+    - brew install llvm
 
 test:
   override:
+    - utils/build-script
     - swift utils/run-examples.swift
