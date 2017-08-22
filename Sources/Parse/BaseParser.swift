@@ -1,9 +1,16 @@
-//
-//  Parser.swift
-//  Trill
-//
+///
+/// BaseParser.swift
+///
+/// Copyright 2016-2017 the Trill project authors.
+/// Licensed under the MIT License.
+///
+/// Full license text available at https://github.com/trill-lang/trill
+///
 
+import AST
+import Diagnostics
 import Foundation
+import Source
 
 enum ParseError: Error, CustomStringConvertible {
   case unexpectedToken(token: TokenKind)
@@ -59,6 +66,22 @@ class Parser {
     self.tokens = tokens
     self.filename = filename
     self.context = context
+  }
+
+  static func parse(_ file: SourceFile, into context: ASTContext) {
+    do {
+      var lexer = Lexer(filename: file.path.filename,
+                        input: file.contents)
+      let tokens = try lexer.lex()
+      let parser = Parser(tokens: tokens,
+                          filename: file.path.filename,
+                          context: context)
+      try parser.parseTopLevel(into: context)
+    } catch let diag as Diagnostic {
+      context.diag.add(diag)
+    } catch {
+      context.error(error)
+    }
   }
   
   func adjustedEnd() -> SourceLocation {

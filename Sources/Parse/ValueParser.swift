@@ -1,9 +1,16 @@
-//
-//  ValueParser.swift
-//  Trill
-//
+///
+/// ValueParser.swift
+///
+/// Copyright 2016-2017 the Trill project authors.
+/// Licensed under the MIT License.
+///
+/// Full license text available at https://github.com/trill-lang/trill
+///
 
+import AST
+import Diagnostics
 import Foundation
+import Source
 
 extension Parser {
   
@@ -98,7 +105,7 @@ extension Parser {
                               sourceRange: tok.range)
     case .poundLine:
       consumeToken()
-      valExpr = NumExpr(value: IntMax(sourceLoc.line),
+      valExpr = NumExpr(value: Int64(sourceLoc.line),
                         raw: "\(sourceLoc.line)",
                         sourceRange: tok.range)
     case .poundFunction:
