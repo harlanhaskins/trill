@@ -86,18 +86,24 @@ class Build(object):
         self.xcodeproj = args.xcodeproj
         self.is_release = args.release
         self.should_reconfigure = args.reconfigure
+        self.run_tests = args.test
 
         dir_pieces = []
         if args.xcodeproj:
+            if args.test:
+                error("cannot test with an xcode project")
             if sys.platform != 'darwin':
                 error("xcode project generation requires macOS")
             dir_pieces.append('Xcode')
+
         dir_pieces.append('Release' if self.is_release else 'Debug')
         self.build_config = '-'.join(dir_pieces)
         self.source_dir = os.path.abspath(path.join(path.split(__file__)[0],
                                                     os.pardir))
 
         self.build_dir = path.join(self.source_dir, '.build', self.build_config)
+        self.bin_dir = path.join(self.build_dir, 'bin')
+        self.trill_exec = path.join(self.bin_dir, 'trill')
 
         if args.swift:
             self.swift = args.swift
@@ -122,26 +128,30 @@ class Build(object):
         """
         stdlib_src_dir = path.join(self.source_dir, 'stdlib')
         new_stdlib_dir = path.join(self.build_dir, 'stdlib')
+        if path.exists(new_stdlib_dir):
+            os.remove(new_stdlib_dir)
+
         os.symlink(stdlib_src_dir, new_stdlib_dir)
 
     def build_runtime(self):
         """
-        Builds the runtime and links it with the bdw garbage collector.
+        Builds the runtime and links it with the tinygc garbage collector.
         """
-        bdw_dir = path.join(self.build_dir, 'dependencies', 'bdwgc')
-        libgc_archive_path = path.join(bdw_dir, 'libgc-lib.a')
+        tinygc_dir = path.join(self.build_dir, 'dependencies', 'tinygc')
+        libgc_archive_path = path.join(tinygc_dir, 'libgc.a')
 
-        if not path.exists(bdw_dir):
-            log("cloning BDW GC")
+        if not path.exists(tinygc_dir):
+            log("cloning TinyGC")
             call([
                 'git', 'clone',
-                'https://github.com/ivmai/bdwgc.git',
-                bdw_dir
+                'https://github.com/ivmai/tinygc.git',
+                tinygc_dir
             ])
 
         runtime_dir = path.join(self.source_dir, 'runtime')
         runtime_build_dir = path.join(self.build_dir, 'runtime')
         runtime_lib_dir = path.join(self.build_dir, 'lib')
+        runtime_build_include_dir = path.join(self.build_dir, 'include')
         runtime_archive_path = path.join(runtime_lib_dir, 'libtrillRuntime.a')
         runtime_src_dir = path.join(runtime_dir, 'src')
         runtime_include_dir = path.join(runtime_dir, 'include')
@@ -149,27 +159,36 @@ class Build(object):
         shutil.rmtree(runtime_lib_dir, ignore_errors=True)
         os.makedirs(runtime_lib_dir)
 
+        log('copying runtime headers')
+        shutil.rmtree(runtime_build_include_dir, ignore_errors=True)
+        shutil.copytree(runtime_include_dir, runtime_build_include_dir)
+
         if not path.exists(runtime_build_dir):
             os.makedirs(runtime_build_dir)
 
-        call(['cmake', bdw_dir,
-              '-DCMAKE_OSX_ARCHITECTURES=x86_64'])
-        call(['cmake', '--build', bdw_dir])
-
         clang_args = [
             'clang++', '-I', runtime_include_dir, '-std=c++14', '-c',
-            '-I', path.join(bdw_dir, 'include')
+            '-I', tinygc_dir
         ]
         clang_args += glob('%s/*.cpp' % runtime_src_dir)
 
+        sysroot_args = []
         if sys.platform == 'darwin':
             xcrun = Popen(['xcrun', '--show-sdk-path'], stdout=PIPE)
             out, _ = xcrun.communicate()
-            clang_args += ['-isysroot', out.strip()]
+            sysroot_args = ['-isysroot', out.strip()]
+
+        clang_args += sysroot_args
 
         with pushd(runtime_build_dir):
             log('building runtime sources')
             call(clang_args)
+
+            # Compile tinygc
+            call([
+                'clang', '-c', '-I', tinygc_dir, '-Wno-ignored-attributes',
+                path.join(tinygc_dir, 'tinygc.c')
+            ] + sysroot_args)
 
         ar_args = ['ar', '-rcs', runtime_archive_path]
         ar_args += glob('%s/*.o' % runtime_build_dir)
@@ -177,19 +196,15 @@ class Build(object):
         log('creating libtrillRuntime.a')
         call(ar_args)
 
-        log('adding bdw gc to libtrillRuntime.a')
-        call([
-            'libtool', '-static',
-            '-o', runtime_archive_path,
-            libgc_archive_path, runtime_archive_path
-        ])
-
     def run_swift_build(self):
         """
         Runs `swift build` with the appropriate command-line flags.
         """
         swiftpm_dir = path.join(self.build_dir, 'swiftpm')
         bin_dir = path.join(self.build_dir, 'bin')
+        swiftpm_bin = path.join(swiftpm_dir,
+                                'release' if self.is_release else 'debug',
+                                'trill')
 
         if not path.exists(bin_dir):
             os.makedirs(bin_dir)
@@ -201,6 +216,11 @@ class Build(object):
         if self.is_release:
             swift_args += ['--configuration', 'release']
 
+        if sys.platform == 'darwin':
+            swift_args += [
+                '-Xswiftc', '-target', '-Xswiftc', 'x86_64-apple-macosx10.12'
+            ]
+
         llvm = LinkDependency.find_from_pkgconfig('cllvm', 'LLVM')
         clang = LinkDependency.find_from_pkgconfig('cclang', 'Clang')
 
@@ -211,6 +231,12 @@ class Build(object):
             swift_args += ['-Xlinker', flag]
 
         call(swift_args)
+
+        if not path.exists(swiftpm_bin):
+            error('could not find trill executable in %s' % swiftpm_bin)
+
+        log('moving built trill into ./bin')
+        shutil.move(swiftpm_bin, self.trill_exec)
 
     def run_swift_xcodeproj(self):
         """
@@ -245,6 +271,15 @@ BUILD_DIR = {bin_dir}
             '--xcconfig-overrides', xcconfig_path
         ])
 
+    def test(self):
+        """
+        Runs the run-examples test suite.
+        """
+        run_examples_script = path.join(self.source_dir, 'utils',
+                                        'run-examples.swift')
+        examples_dir = path.join(self.source_dir, 'examples')
+        call([self.swift, run_examples_script, self.trill_exec, examples_dir])
+
     def run(self):
         """
         Runs the full build with the arguments provided
@@ -261,11 +296,15 @@ BUILD_DIR = {bin_dir}
         os.chdir(self.build_dir)
 
         self.build_runtime()
+        self.link_stdlib()
 
         if self.xcodeproj:
             self.run_swift_xcodeproj()
         else:
             self.run_swift_build()
+
+        if self.run_tests:
+            self.test()
 
 def main():
     """
@@ -284,9 +323,6 @@ def main():
                         help='Delete the existing CMake files and start over')
 
     args = parser.parse_args()
-
-    if args.test:
-        error("tests are unsupported right now...")
 
     build = Build(args)
     build.run()

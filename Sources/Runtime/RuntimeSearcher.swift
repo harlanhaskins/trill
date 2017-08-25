@@ -23,12 +23,12 @@ func findObject(forAddress address: UnsafeRawPointer) -> URL? {
 
 public enum RuntimeLocationError: Error {
   case couldNotLocateBinary
-  case invalidInstallDir
-  case invalidIncludeDir
-  case invalidHeader
-  case invalidLibDir
-  case invalidLibrary
-  case invalidStdLibDir
+  case invalidInstallDir(URL)
+  case invalidIncludeDir(URL)
+  case invalidHeader(URL)
+  case invalidLibDir(URL)
+  case invalidLibrary(URL)
+  case invalidStdLibDir(URL)
 }
 
 public enum RuntimeLocator {
@@ -36,31 +36,38 @@ public enum RuntimeLocator {
     guard let url = findObject(forAddress: address) else {
       throw RuntimeLocationError.couldNotLocateBinary
     }
-    let installDir = url.deletingLastPathComponent()
-                        .deletingLastPathComponent()
+
+    // Walk up the directory tree until we find `bin`.
+    var installDir = url
+    while installDir.lastPathComponent != "bin" {
+        installDir = installDir.deletingLastPathComponent()
+    }
+    // Walk one directory above `bin`
+    installDir = installDir.deletingLastPathComponent()
+
     guard FileManager.default.fileExists(atPath: installDir.path) else {
-      throw RuntimeLocationError.invalidInstallDir
+      throw RuntimeLocationError.invalidInstallDir(installDir)
     }
     let includeDir = installDir.appendingPathComponent("include")
     guard FileManager.default.fileExists(atPath: includeDir.path) else {
-      throw RuntimeLocationError.invalidIncludeDir
+      throw RuntimeLocationError.invalidIncludeDir(includeDir)
     }
     let header = includeDir.appendingPathComponent("runtime")
                            .appendingPathComponent("trill.h")
     guard FileManager.default.fileExists(atPath: header.path) else {
-      throw RuntimeLocationError.invalidHeader
+      throw RuntimeLocationError.invalidHeader(header)
     }
     let libraryDir = installDir.appendingPathComponent("lib")
     guard FileManager.default.fileExists(atPath: libraryDir.path) else {
-        throw RuntimeLocationError.invalidLibDir
+        throw RuntimeLocationError.invalidLibDir(libraryDir)
     }
     let library = libraryDir.appendingPathComponent("libtrillRuntime.a")
     guard FileManager.default.fileExists(atPath: library.path) else {
-        throw RuntimeLocationError.invalidLibrary
+        throw RuntimeLocationError.invalidLibrary(library)
     }
     let stdlib = installDir.appendingPathComponent("stdlib")
     guard FileManager.default.fileExists(atPath: stdlib.path) else {
-      throw RuntimeLocationError.invalidStdLibDir
+      throw RuntimeLocationError.invalidStdLibDir(stdlib)
     }
     return RuntimeLocation(includeDir: includeDir,
                            header: header,

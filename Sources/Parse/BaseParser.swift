@@ -56,7 +56,7 @@ enum ParseError: Error, CustomStringConvertible {
   }
 }
 
-class Parser {
+public class Parser {
   var tokenIndex = 0
   var tokens: [Token]
   let filename: String
@@ -68,7 +68,7 @@ class Parser {
     self.context = context
   }
 
-  static func parse(_ file: SourceFile, into context: ASTContext) {
+  public static func parse(_ file: SourceFile, into context: ASTContext) {
     do {
       var lexer = Lexer(filename: file.path.filename,
                         input: file.contents)

@@ -128,6 +128,7 @@ func _sourceFiles(from filenames: [String], diag: DiagnosticEngine) throws -> [S
 func lexAndParse(sourceFiles: [SourceFile], into context: ASTContext) {
   if sourceFiles.count == 1 {
     context.add(sourceFiles[0])
+    Parser.parse(sourceFiles[0], into: context)
     return
   }
 
@@ -143,6 +144,7 @@ func lexAndParse(sourceFiles: [SourceFile], into context: ASTContext) {
     DispatchQueue.global().async(group: group) {
       let newCtx = ASTContext(diagnosticEngine: context.diag)
       newCtx.add(file)
+      Parser.parse(file, into: context)
       add(newCtx)
     }
   }
