@@ -11,5 +11,4 @@ dependencies:
 
 test:
   override:
-    - utils/build-script
-    - swift utils/run-examples.swift .build/CMake/bin/trill examples
+    - utils/build --test
