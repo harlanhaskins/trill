@@ -56,7 +56,8 @@ let ansiEscapeSupportedOnStdErr: Bool = {
 
 extension FileManager {
   func recursiveChildren(of path: String) -> [String]? {
-    guard let enumerator = enumerator(at: URL(fileURLWithPath: path), includingPropertiesForKeys: nil, options: [], errorHandler: nil) else {
+    let url = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+    guard let enumerator = enumerator(at: url, includingPropertiesForKeys: nil) else {
       return nil
     }
     return enumerator.map { ($0 as! URL).path }

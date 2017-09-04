@@ -179,6 +179,20 @@ public class IRGenerator: ASTVisitor, Pass {
     LLVMInitializeNativeAsmPrinter()
     LLVMInitializeNativeTarget()
 
+    let reg = LLVMGetGlobalPassRegistry()
+    LLVMInitializeIPA(reg)
+    LLVMInitializeIPO(reg)
+    LLVMInitializeCore(reg)
+    LLVMInitializeTarget(reg)
+    LLVMInitializeCodeGen(reg)
+    LLVMInitializeAnalysis(reg)
+    LLVMInitializeScalarOpts(reg)
+    LLVMInitializeInstCombine(reg)
+    LLVMInitializeObjCARCOpts(reg)
+    LLVMInitializeVectorization(reg)
+    LLVMInitializeTransformUtils(reg)
+    LLVMInitializeInstrumentation(reg)
+
     self.targetMachine = try TargetMachine(triple: options.targetTriple)
 
     layout = module.dataLayout

@@ -501,17 +501,18 @@ public struct Lexer {
     
     // skip comments
     if c == "/" {
-      if charAt(1) == "/" {
+      let next = charAt(1)
+      if next == "/" {
         advanceWhile({
           return $0 != "\n"
         })
         return try advanceToNextToken()
-      } else if charAt(1) == "*" {
+      } else if next == "*" {
+        advance(2)
         while charAt(0) != "*" && charAt(1) != "/" {
           advance()
         }
-        advance()
-        advance()
+        advance(2)
         return try advanceToNextToken()
       }
     }

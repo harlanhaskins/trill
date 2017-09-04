@@ -9,6 +9,10 @@ dependencies:
     - brew update
     - brew install llvm cmake pkg-config
     - pip install pkgconfig
+    - git clone https://github.com/trill-lang/LLVMSwift.git /tmp/LLVMSwift
+    - swift /tmp/LLVMSwift/utils/make-pkgconfig.swift
+    - git clone https://github.com/trill-lang/ClangSwift.git /tmp/ClangSwift
+    - swift /tmp/ClangSwift/utils/make-pkgconfig.swift
 
 test:
   override:

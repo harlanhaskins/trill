@@ -65,9 +65,9 @@ class LinkDependency(object):
         if they couldn't be found.
         """
         if not pkgconfig.exists(name):
-            error("You must install the pkg-config file for %s before "
-                  "building trill. Run `utils/make-pkgconfig.swift` in the "
-                  "%sSwift repo." % repo_name)
+            error(("You must install the pkg-config file for %s before " +
+                   "building trill. Run `utils/make-pkgconfig.swift` in the " +
+                   "%sSwift repo.") % (repo_name, repo_name))
         return LinkDependency(pkgconfig.cflags(name).split(),
                               pkgconfig.libs(name).split())
 
