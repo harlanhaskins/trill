@@ -3,13 +3,13 @@ machine:
     version: 9.0
   environment:
     LC_CTYPE: en_US.UTF-8
+    PATH: /usr/local/opt/llvm/bin:$PATH
 
 dependencies:
   override:
     - brew update
     - brew install llvm cmake pkg-config
     - pip install pkgconfig
-    - export PATH="/usr/local/opt/llvm/bin":$PATH
     - git clone https://github.com/trill-lang/LLVMSwift.git /tmp/LLVMSwift
     - swift /tmp/LLVMSwift/utils/make-pkgconfig.swift
     - git clone https://github.com/trill-lang/ClangSwift.git /tmp/ClangSwift
