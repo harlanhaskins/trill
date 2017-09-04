@@ -7,7 +7,7 @@ machine:
 dependencies:
   override:
     - brew update
-    - brew install llvm cmake
+    - brew install llvm cmake pkg-config
     - pip install pkgconfig
 
 test:
