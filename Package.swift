@@ -7,7 +7,7 @@ let package = Package(name: "trill",
   ],
   dependencies: [
     .package(url: "https://github.com/trill-lang/cllvm.git", from: "0.0.3"),
-    .package(url: "https://github.com/trill-lang/LLVMSwift.git", from: "0.1.11"),
+    .package(url: "https://github.com/trill-lang/LLVMSwift.git", .branch("master")),
     .package(url: "https://github.com/trill-lang/ClangSwift.git", from: "0.0.4"),
     .package(url: "https://github.com/jatoben/CommandLine.git", .branch("master"))
   ],
@@ -20,7 +20,9 @@ let package = Package(name: "trill",
     ]),
     .target(name: "Driver", dependencies: ["AST"]),
     .target(name: "Diagnostics", dependencies: ["Source"]),
-    .target(name: "IRGen", dependencies: ["AST", "LLVM", "LLVMWrappers", "Options", "Runtime"]),
+    .target(name: "IRGen", dependencies: [
+      "AST", "LLVM", "LLVMWrappers", "Options", "Runtime"
+    ]),
     .target(name: "LLVMWrappers"),
     .target(name: "Options", dependencies: ["CommandLine"]),
     .target(name: "Parse", dependencies: ["AST"]),

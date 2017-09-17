@@ -22,6 +22,11 @@ from contextlib import contextmanager
 from distutils.spawn import find_executable
 from glob import glob
 
+def call_or_panic(*args):
+    return_code = call(*args)
+    if return_code != 0:
+        print("command failed: %s" % ' '.join(*args))
+        sys.exit(return_code)
 
 def error(msg):
     """
@@ -142,7 +147,7 @@ class Build(object):
 
         if not path.exists(tinygc_dir):
             log("cloning TinyGC")
-            call([
+            call_or_panic([
                 'git', 'clone',
                 'https://github.com/ivmai/tinygc.git',
                 tinygc_dir
@@ -182,10 +187,10 @@ class Build(object):
 
         with pushd(runtime_build_dir):
             log('building runtime sources')
-            call(clang_args)
+            call_or_panic(clang_args)
 
             # Compile tinygc
-            call([
+            call_or_panic([
                 'clang', '-c', '-I', tinygc_dir, '-Wno-ignored-attributes',
                 path.join(tinygc_dir, 'tinygc.c')
             ] + sysroot_args)
@@ -194,7 +199,7 @@ class Build(object):
         ar_args += glob('%s/*.o' % runtime_build_dir)
 
         log('creating libtrillRuntime.a')
-        call(ar_args)
+        call_or_panic(ar_args)
 
     def run_swift_build(self):
         """
@@ -230,7 +235,7 @@ class Build(object):
         for flag in llvm.ldflags + clang.ldflags:
             swift_args += ['-Xlinker', flag]
 
-        call(swift_args)
+        call_or_panic(swift_args)
 
         if not path.exists(swiftpm_bin):
             error('could not find trill executable in %s' % swiftpm_bin)
@@ -265,7 +270,7 @@ BUILD_DIR = {bin_dir}
             log('writing trill.xcconfig')
             xcconfig_file.write(xcconfig_contents)
 
-        call([
+        call_or_panic([
             self.swift, 'package', 'generate-xcodeproj',
             '--output', self.build_dir,
             '--xcconfig-overrides', xcconfig_path
@@ -278,7 +283,8 @@ BUILD_DIR = {bin_dir}
         run_examples_script = path.join(self.source_dir, 'utils',
                                         'run-examples.swift')
         examples_dir = path.join(self.source_dir, 'examples')
-        call([self.swift, run_examples_script, self.trill_exec, examples_dir])
+        call_or_panic([self.swift, run_examples_script,
+                       self.trill_exec, examples_dir])
 
     def run(self):
         """
