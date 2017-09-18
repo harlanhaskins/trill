@@ -4,6 +4,7 @@ import PackageDescription
 let package = Package(name: "trill",
   products: [
     .executable(name: "trill", targets: ["trill"]),
+    .library(name: "trillRuntime", type: .static, targets: ["trillRuntime"])
   ],
   dependencies: [
     .package(url: "https://github.com/trill-lang/cllvm.git", from: "0.0.3"),
@@ -29,8 +30,10 @@ let package = Package(name: "trill",
     .target(name: "Sema", dependencies: ["AST"]),
     .target(name: "Source"),
     .target(name: "Runtime"),
+    .target(name: "trillRuntime"),
     .target(name: "trill", dependencies: [
       "AST", "ClangImporter", "Diagnostics", "Driver",
-      "IRGen", "LLVMWrappers", "Options", "Parse", "Sema", "Source"
+      "IRGen", "LLVMWrappers", "Options", "Parse", "Sema", "Source",
+      "trillRuntime"
     ])
   ])

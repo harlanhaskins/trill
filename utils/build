@@ -142,69 +142,6 @@ class Build(object):
 
         os.symlink(stdlib_src_dir, new_stdlib_dir)
 
-    def build_runtime(self):
-        """
-        Builds the runtime and links it with the tinygc garbage collector.
-        """
-        tinygc_dir = path.join(self.build_dir, 'dependencies', 'tinygc')
-        libgc_archive_path = path.join(tinygc_dir, 'libgc.a')
-
-        if not path.exists(tinygc_dir):
-            log("cloning TinyGC")
-            call_or_panic([
-                'git', 'clone',
-                'https://github.com/ivmai/tinygc.git',
-                tinygc_dir
-            ])
-
-        runtime_dir = path.join(self.source_dir, 'runtime')
-        runtime_build_dir = path.join(self.build_dir, 'runtime')
-        runtime_lib_dir = path.join(self.build_dir, 'lib')
-        runtime_build_include_dir = path.join(self.build_dir, 'include')
-        runtime_archive_path = path.join(runtime_lib_dir, 'libtrillRuntime.a')
-        runtime_src_dir = path.join(runtime_dir, 'src')
-        runtime_include_dir = path.join(runtime_dir, 'include')
-
-        shutil.rmtree(runtime_lib_dir, ignore_errors=True)
-        os.makedirs(runtime_lib_dir)
-
-        log('copying runtime headers')
-        shutil.rmtree(runtime_build_include_dir, ignore_errors=True)
-        shutil.copytree(runtime_include_dir, runtime_build_include_dir)
-
-        if not path.exists(runtime_build_dir):
-            os.makedirs(runtime_build_dir)
-
-        clang_args = [
-            'clang++', '-I', runtime_include_dir, '-std=c++14', '-c',
-            '-I', tinygc_dir
-        ]
-        clang_args += glob('%s/*.cpp' % runtime_src_dir)
-
-        sysroot_args = []
-        if sys.platform == 'darwin':
-            xcrun = Popen(['xcrun', '--show-sdk-path'], stdout=PIPE)
-            out, _ = xcrun.communicate()
-            sysroot_args = ['-isysroot', out.strip()]
-
-        clang_args += sysroot_args
-
-        with pushd(runtime_build_dir):
-            log('building runtime sources')
-            call_or_panic(clang_args)
-
-            # Compile tinygc
-            call_or_panic([
-                'clang', '-c', '-I', tinygc_dir, '-Wno-ignored-attributes',
-                path.join(tinygc_dir, 'tinygc.c')
-            ] + sysroot_args)
-
-        ar_args = ['ar', '-rcs', runtime_archive_path]
-        ar_args += glob('%s/*.o' % runtime_build_dir)
-
-        log('creating libtrillRuntime.a')
-        call_or_panic(ar_args)
-
     def run_swift_build(self):
         """
         Runs `swift build` with the appropriate command-line flags.
@@ -249,6 +186,20 @@ class Build(object):
 
         log('moving built trill into ./bin')
         shutil.move(swiftpm_bin, self.trill_exec)
+
+        log('copying runtime')
+        runtime_build_dir = path.join(self.build_dir, 'runtime')
+        runtime_lib_dir = path.join(self.build_dir, 'lib')
+        runtime_build_include_dir = path.join(self.build_dir, 'include')
+        runtime_include_dir = path.join(self.source_dir, 'Sources', 'trillRuntime', 'include')
+        runtime_archive_path = path.join(runtime_lib_dir, 'libtrillRuntime.a')
+        swiftpm_runtime_archive = path.join(swiftpm_dir,
+                                            'release' if self.is_release else 'debug',
+                                            'libtrillRuntime.a')
+
+        shutil.rmtree(runtime_build_include_dir, ignore_errors=True)
+        shutil.copytree(runtime_include_dir, runtime_build_include_dir)
+        shutil.move(swiftpm_runtime_archive, runtime_archive_path)
 
     def run_swift_xcodeproj(self):
         """
@@ -310,7 +261,6 @@ RUNPATH_SEARCH_PATHS = {runpath_search_paths} $(inherited)
 
         os.chdir(self.build_dir)
 
-        self.build_runtime()
         self.link_stdlib()
 
         if self.xcodeproj:
