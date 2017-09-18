@@ -22,8 +22,8 @@ from contextlib import contextmanager
 from distutils.spawn import find_executable
 from glob import glob
 
-def call_or_panic(*args):
-    return_code = call(*args)
+def call_or_panic(*args, **kwargs):
+    return_code = call(*args, **kwargs)
     if return_code != 0:
         print("command failed: %s" % ' '.join(*args))
         sys.exit(return_code)
@@ -82,6 +82,10 @@ class LinkDependency(object):
         """
         return [flag.strip('-I') for flag in self.cflags
                 if flag.startswith('-I')]
+
+    def runpath_search_paths(self):
+        return [flag.strip('-L') for flag in self.ldflags
+                 if flag.startswith('-L')]
 
 class Build(object):
     """
@@ -235,6 +239,9 @@ class Build(object):
         for flag in llvm.ldflags + clang.ldflags:
             swift_args += ['-Xlinker', flag]
 
+        for flag in llvm.runpath_search_paths() + clang.runpath_search_paths():
+            swift_args += ['-Xlinker', '-rpath', '-Xlinker', flag]
+
         call_or_panic(swift_args)
 
         if not path.exists(swiftpm_bin):
@@ -262,9 +269,11 @@ HEADER_SEARCH_PATHS = $(inherited) {include_dirs}
 OTHER_LDFLAGS = $(inherited) {ldflags}
 CLANG_CXX_LANGUAGE_STANDARD = c++14
 BUILD_DIR = {bin_dir}
+RUNPATH_SEARCH_PATHS = {runpath_search_paths} $(inherited)
 """.format(include_dirs=' '.join(llvm.include_dirs() + clang.include_dirs()),
            ldflags=' '.join(llvm.ldflags + clang.ldflags),
-           bin_dir=bin_dir)
+           bin_dir=bin_dir,
+           runpath_search_paths=' '.join(llvm.runpath_search_paths() + clang.runpath_search_paths()))
 
         with open(xcconfig_path, 'w+') as xcconfig_file:
             log('writing trill.xcconfig')
