@@ -75,7 +75,8 @@ extension Source.SourceLocation {
     var column: UInt32 = 0
     var offset: UInt32 = 0
     clang_getSpellingLocation(clangLocation, &cxfile, &line, &column, &offset)
-    self.init(line: Int(line), column: Int(column), file: clang_getFileName(cxfile).asSwift(),
+    let sourceFile = try! SourceFile(path: .file(URL(fileURLWithPath: clang_getFileName(cxfile).asSwift())))
+    self.init(line: Int(line), column: Int(column), file: sourceFile,
               charOffset: Int(offset))
   }
 }
@@ -461,7 +462,7 @@ public class ClangImporter: Pass {
   }
 
   func simpleParseCToken(_ token: String, range: Source.SourceRange) throws -> Expr? {
-    var lexer = Lexer(filename: "", input: token)
+    var lexer = Lexer(file: range.start.file, input: token)
     let toks = try lexer.lex()
     guard let first = toks.first?.kind else { return nil }
     switch first {

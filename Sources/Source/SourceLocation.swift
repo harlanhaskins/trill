@@ -10,12 +10,12 @@
 import Foundation
 
 public struct SourceLocation: CustomStringConvertible {
-  public let file: String?
+  public let file: SourceFile
   public var line: Int
   public var column: Int
   public var charOffset: Int
 
-  public init(line: Int, column: Int, file: String? = nil, charOffset: Int = 0) {
+  public init(line: Int, column: Int, file: SourceFile, charOffset: Int = 0) {
     self.file = file
     self.line = line
     self.column = column
@@ -23,16 +23,9 @@ public struct SourceLocation: CustomStringConvertible {
   }
 
   public var description: String {
-    let basename: String
-    if let file = file {
-      basename = URL(fileURLWithPath: file).lastPathComponent
-    } else {
-      basename = "<none>"
-    }
+    let basename = file.path.basename
     return "<\(basename):\(line):\(column)>"
   }
-
-  public static let zero = SourceLocation(line: 0, column: 0)
 }
 
 extension SourceLocation: Comparable {}
@@ -55,8 +48,6 @@ public struct SourceRange {
     self.start = start
     self.end = end
   }
-  
-  public static let zero = SourceRange(start: .zero, end: .zero)
 }
 
 extension SourceRange: Equatable {

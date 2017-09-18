@@ -121,7 +121,7 @@ extension Parser {
     case .stringInterpolationLiteral(let segments):
       consumeToken()
       let segmentExprs = try segments.map { tokens -> Expr in
-        let parser = Parser(tokens: tokens, filename: filename, context: context)
+        let parser = Parser(tokens: tokens, file: file, context: context)
         return try parser.parseValExpr()
       }
       valExpr = StringInterpolationExpr(

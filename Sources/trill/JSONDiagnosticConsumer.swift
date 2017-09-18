@@ -37,9 +37,7 @@ private extension Diagnostic {
       "message": message,
     ]
     if let loc = self.loc {
-      if let file = loc.file {
-        js["file"] = file
-      }
+      js["file"] = loc.file
       js["sourceLocation"] = loc.json
     }
 

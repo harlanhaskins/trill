@@ -367,9 +367,9 @@ public struct Lexer {
     return SourceRange(start: start, end: sourceLoc)
   }
   
-  public init(filename: String, input: String) {
+  public init(file: SourceFile, input: String) {
     characters = Array(input.unicodeScalars)
-    sourceLoc = SourceLocation(line: 1, column: 1, file: filename)
+    sourceLoc = SourceLocation(line: 1, column: 1, file: file)
   }
   
   public mutating func lex() throws -> [Token] {

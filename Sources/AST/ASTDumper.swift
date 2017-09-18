@@ -61,8 +61,9 @@ public class ASTDumper<StreamType: ColoredStream>: ASTTransformer {
   }
 
   func printNode(_ node: ASTNode, then: (() -> Void)? = nil) {
-    guard let loc = node.startLoc, let file = loc.file else { return }
-    let component = URL(fileURLWithPath: file).lastPathComponent
+    guard let loc = node.startLoc else { return }
+    let file = loc.file
+    let component = file.path.basename
     if !showImports {
       guard sourceFiles.contains(component) else { return }
       if let decl = node as? Decl, decl.has(attribute: .implicit) {

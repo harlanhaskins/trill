@@ -41,10 +41,7 @@ public struct Diagnostic: Error, CustomStringConvertible, Hashable {
   public var description: String {
     var description = ""
     if let sourceLoc = loc {
-      if let file = sourceLoc.file {
-        description += "\(file):"
-      }
-      description += "\(sourceLoc.line):\(sourceLoc.column): "
+      description += "\(sourceLoc.file.path):\(sourceLoc.line):\(sourceLoc.column): "
     }
     return description + "\(diagnosticType): \(message)"
   }

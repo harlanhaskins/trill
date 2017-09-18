@@ -42,8 +42,7 @@ public class StreamConsumer<StreamType: ColoredStream>: DiagnosticConsumer {
     }
 
     func sourceFile(for diag: Diagnostic) -> SourceFile? {
-      guard let diagFile = diag.loc?.file else { return nil }
-      return try? SourceFile(path: .file(URL(fileURLWithPath: diagFile)))
+      return diag.loc?.file
     }
 
     public func consume(_ diagnostic: Diagnostic) {
