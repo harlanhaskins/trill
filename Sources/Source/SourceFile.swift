@@ -13,12 +13,13 @@ public enum SourceFileType {
   case input(url: URL, contents: String)
   case file(URL)
   case stdin
+  case none
   
   public var basename: String {
     switch self {
     case .file(let url), .input(let url, _):
       return url.lastPathComponent
-    case .stdin:
+    case .stdin, .none:
       return filename
     }
   }
@@ -29,6 +30,8 @@ public enum SourceFileType {
       return url.path
     case .stdin:
       return "<stdin>"
+    case .none:
+      return "<none>"
     }
   }
 }
@@ -51,6 +54,8 @@ public struct SourceFile {
         return contents
       case .file(let url):
         return try String(contentsOf: url)
+      case .none:
+        return ""
       }
     }
     

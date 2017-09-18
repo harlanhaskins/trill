@@ -75,7 +75,16 @@ extension Source.SourceLocation {
     var column: UInt32 = 0
     var offset: UInt32 = 0
     clang_getSpellingLocation(clangLocation, &cxfile, &line, &column, &offset)
-    let sourceFile = try! SourceFile(path: .file(URL(fileURLWithPath: clang_getFileName(cxfile).asSwift())))
+
+    let sourceFile: SourceFile
+    let fileName = clang_getFileName(cxfile).asSwift()
+
+    if fileName != "<none>" {
+      let fileURL = URL(fileURLWithPath: fileName)
+      sourceFile = try! SourceFile(path: .file(fileURL))
+    } else {
+      sourceFile = try! SourceFile(path: .none)
+    }
     self.init(line: Int(line), column: Int(column), file: sourceFile,
               charOffset: Int(offset))
   }
