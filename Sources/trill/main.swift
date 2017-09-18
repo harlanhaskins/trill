@@ -31,7 +31,7 @@ func populate(driver: Driver, options: Options,
               isATTY: Bool,
               context: ASTContext) throws {
   let runtimeLocation = try RuntimeLocator.findRuntime(forAddress: #dsohandle)
-  var stderrStream = ColoredANSIStream(&stdout, colored: isATTY)
+  var stderrStream = ColoredANSIStream(&stderr, colored: isATTY)
   let fatalErrorConsumer = StreamConsumer(stream: &stderrStream)
   let gen = try IRGenerator(context: context, options: options,
                             runtimeLocation: runtimeLocation,
