@@ -195,7 +195,7 @@ class Build(object):
             error('could not find trill executable in %s' % swiftpm_bin)
 
         log('moving built trill into ./bin')
-        shutil.move(swiftpm_bin, self.trill_exec)
+        shutil.copy(swiftpm_bin, self.trill_exec)
 
         log('copying runtime')
         runtime_build_dir = path.join(self.build_dir, 'runtime')
@@ -209,7 +209,7 @@ class Build(object):
         shutil.rmtree(runtime_build_include_dir, ignore_errors=True)
         shutil.copytree(runtime_include_dir, runtime_build_include_dir)
         self.try_make_dir(runtime_lib_dir)
-        shutil.move(swiftpm_runtime_archive, runtime_lib_dir)
+        shutil.copy(swiftpm_runtime_archive, runtime_lib_dir)
 
     def run_swift_xcodeproj(self):
         """
