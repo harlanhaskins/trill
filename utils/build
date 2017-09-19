@@ -131,6 +131,17 @@ class Build(object):
         log('using %s: %s' % (name, executable))
         return executable
 
+    def try_make_dir(self, dir):
+        """
+        Tries to make the given directory, but does not raise
+        if the directory already exists
+        """
+        try:
+            os.makedirs(dir)
+        except OSError:
+            # If the directory exists already, we'll get this.
+            pass
+
     def link_stdlib(self):
         """
         Links the stdlib into the build dir's stdlib directory
@@ -152,8 +163,7 @@ class Build(object):
                                 'release' if self.is_release else 'debug',
                                 'trill')
 
-        if not path.exists(bin_dir):
-            os.makedirs(bin_dir)
+        self.try_make_dir(bin_dir)
 
         swift_args = [
             self.swift, 'build', "--build-path", swiftpm_dir,
@@ -192,14 +202,14 @@ class Build(object):
         runtime_lib_dir = path.join(self.build_dir, 'lib')
         runtime_build_include_dir = path.join(self.build_dir, 'include')
         runtime_include_dir = path.join(self.source_dir, 'Sources', 'trillRuntime', 'include')
-        runtime_archive_path = path.join(runtime_lib_dir, 'libtrillRuntime.a')
         swiftpm_runtime_archive = path.join(swiftpm_dir,
                                             'release' if self.is_release else 'debug',
                                             'libtrillRuntime.a')
 
         shutil.rmtree(runtime_build_include_dir, ignore_errors=True)
         shutil.copytree(runtime_include_dir, runtime_build_include_dir)
-        shutil.move(swiftpm_runtime_archive, runtime_archive_path)
+        self.try_make_dir(runtime_lib_dir)
+        shutil.move(swiftpm_runtime_archive, runtime_lib_dir)
 
     def run_swift_xcodeproj(self):
         """
@@ -253,11 +263,7 @@ RUNPATH_SEARCH_PATHS = {runpath_search_paths} $(inherited)
         if self.should_reconfigure:
             shutil.rmtree(self.build_dir, ignore_errors=True)
 
-        try:
-            os.makedirs(self.build_dir)
-        except OSError:
-            # If the directory exists already, we'll get this.
-            pass
+        self.try_make_dir(self.build_dir)
 
         os.chdir(self.build_dir)
 
