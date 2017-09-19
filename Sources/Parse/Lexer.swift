@@ -509,7 +509,7 @@ public struct Lexer {
         return try advanceToNextToken()
       } else if next == "*" {
         advance(2)
-        while charAt(0) != "*" && charAt(1) != "/" {
+        while charAt(0) != "*" || charAt(1) != "/" {
           advance()
         }
         advance(2)
