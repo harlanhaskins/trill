@@ -20,12 +20,6 @@
 #include "runtime/Demangle.h"
 #include "runtime/Runtime.h"
 
-#define GC_PRINT_MSGS
-#include "gc.h"
-#undef GC_PRINT_MSGS
-
-#define TRILL_ENABLE_GC 1
-
 namespace trill {
 
 #define MAX_STACK_DEPTH 256

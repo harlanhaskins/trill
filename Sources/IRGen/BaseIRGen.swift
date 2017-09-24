@@ -313,7 +313,6 @@ public class IRGenerator: ASTVisitor, Pass {
           outputFilename,
           "-l", "c++",
           "-l", "trillRuntime",
-          "-l", "gc",
           "-L", runtimeLocation.libraryDir.path,
           "-o", executableName,
         ], linkerFlags: options.linkerFlags)

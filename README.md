@@ -63,6 +63,7 @@ optional arguments:
 - There is a very limited standard library that exists alongside libc. You pretty much just get whatever you get with C, which includes all the pitfalls of manual pointers.
   - Ideally I have a standard library that vends common types like `Array` , `String` , `Dictionary` , `Set` , etc.
 - The LLVM codegen is definitely not optimal, and certainly not correct.
+- There is no garbage collection / automatic reference counting, so allocated trill types will leak like crazy.
 - Many more yet-unknown issues and corner-cases.
 
 

@@ -38,10 +38,10 @@ class DemangleRegex: NSRegularExpression {
                                   in string: String,
                                   offset: Int,
                                   template templ: String) -> String {
-    let res = result.resultByAdjustingRangesWithOffset(offset)
+    let res = result.adjustingRanges(offset: offset)
     let start = string.characters.index(string.startIndex, offsetBy: res.range.location)
     let end = string.characters.index(start, offsetBy: res.range.length)
-    let symbol = string.substring(with: start..<end)
+    let symbol = String(string[start..<end])
     return demangle(symbol) ?? symbol
   }
 }
