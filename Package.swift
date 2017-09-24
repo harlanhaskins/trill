@@ -4,6 +4,7 @@ import PackageDescription
 let package = Package(name: "trill",
   products: [
     .executable(name: "trill", targets: ["trill"]),
+    .executable(name: "trill-demangle", targets: ["trill-demangle"]),
     .library(name: "trillRuntime", type: .static, targets: ["trillRuntime"])
   ],
   dependencies: [
@@ -31,6 +32,7 @@ let package = Package(name: "trill",
     .target(name: "Source"),
     .target(name: "Runtime"),
     .target(name: "trillRuntime", path: "runtime"),
+    .target(name: "trill-demangle", dependencies: ["trillRuntime"], path: "tools/trill-demangle"),
     .target(name: "trill", dependencies: [
       "AST", "ClangImporter", "Diagnostics", "Driver",
       "IRGen", "LLVMWrappers", "Options", "Parse", "Sema", "Source",

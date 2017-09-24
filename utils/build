@@ -113,6 +113,7 @@ class Build(object):
         self.build_dir = path.join(self.source_dir, '.build', self.build_config)
         self.bin_dir = path.join(self.build_dir, 'bin')
         self.trill_exec = path.join(self.bin_dir, 'trill')
+        self.trill_demangle_exec = path.join(self.bin_dir, 'trill-demangle')
 
         if args.swift:
             self.swift = args.swift
@@ -159,9 +160,10 @@ class Build(object):
         """
         swiftpm_dir = path.join(self.build_dir, 'swiftpm')
         bin_dir = path.join(self.build_dir, 'bin')
-        swiftpm_bin = path.join(swiftpm_dir,
-                                'release' if self.is_release else 'debug',
-                                'trill')
+        swiftpm_config_dir = path.join(swiftpm_dir,
+                                       'release' if self.is_release else 'debug')
+        swiftpm_bin = path.join(swiftpm_config_dir, 'trill')
+        swiftpm_demangle_bin = path.join(swiftpm_config_dir, 'trill-demangle')
 
         self.try_make_dir(bin_dir)
 
@@ -196,6 +198,7 @@ class Build(object):
 
         log('moving built trill into ./bin')
         shutil.copy(swiftpm_bin, self.trill_exec)
+        shutil.copy(swiftpm_demangle_bin, self.trill_demangle_exec)
 
         log('copying runtime')
         runtime_build_dir = path.join(self.build_dir, 'runtime')
