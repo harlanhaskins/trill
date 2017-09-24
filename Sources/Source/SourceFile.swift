@@ -71,30 +71,13 @@ public struct SourceFile: Equatable, Hashable {
   public var hashValue: Int { return path.hashValue ^ 0x35 }
 
   public let path: SourceFileType
-  public let contents: String
-  public let lines: [String]
+  internal unowned let sourceFileManager: SourceFileManager
+  public var contents: String { return try! sourceFileManager.contents(file: self) }
+  public var lines: [String] { return try! sourceFileManager.lines(file: self) }
   
-  public init(path: SourceFileType) throws {
-    let fetchContents: () throws -> String = {
-      switch path {
-      case .stdin:
-        var str = ""
-        while let line = readLine() {
-          str += line
-        }
-        return str
-      case .input(_, let contents):
-        return contents
-      case .file(let url):
-        return try String(contentsOf: url)
-      case .none:
-        return ""
-      }
-    }
-    
+  public init(path: SourceFileType, sourceFileManager: SourceFileManager) throws {
     self.path = path
-    self.contents = try fetchContents()
-    self.lines = self.contents.components(separatedBy: .newlines)
+    self.sourceFileManager = sourceFileManager
   }
 }
 

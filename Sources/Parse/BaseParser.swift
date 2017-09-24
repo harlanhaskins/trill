@@ -71,8 +71,8 @@ public class Parser {
 
   public static func parse(_ file: SourceFile, into context: ASTContext) {
     do {
-      var lexer = Lexer(file: file,
-                        input: file.contents)
+      let fileContents = try context.sourceFileManager.contents(file: file)
+      var lexer = Lexer(file: file, input: fileContents)
       let tokens = try lexer.lex()
       let parser = Parser(tokens: tokens,
                           file: file,

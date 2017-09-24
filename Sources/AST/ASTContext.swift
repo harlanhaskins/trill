@@ -95,6 +95,8 @@ public class ASTContext {
     diag.note(msg, loc: loc, highlights: highlights)
   }
 
+  public let sourceFileManager = SourceFileManager()
+
   public var sourceFiles = [SourceFile]()
   public var functions = [FuncDecl]()
   public var operators = [OperatorDecl]()

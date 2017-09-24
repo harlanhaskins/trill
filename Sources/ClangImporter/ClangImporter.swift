@@ -483,7 +483,7 @@ public final class ClangImporter: Pass {
 
   func importDeclarations(for path: String, in context: ASTContext) {
     do {
-      let file = try SourceFile(path: .file(URL(fileURLWithPath: path)))
+      let file = try SourceFile(path: .file(URL(fileURLWithPath: path)), sourceFileManager: context.sourceFileManager)
       context.add(file)
     } catch {
       // do nothing
@@ -706,9 +706,9 @@ public final class ClangImporter: Pass {
     } else {
       if fileName != "<none>" {
         let fileURL = URL(fileURLWithPath: fileName)
-        sourceFile = try! SourceFile(path: .file(fileURL))
+        sourceFile = try! SourceFile(path: .file(fileURL), sourceFileManager: context.sourceFileManager)
       } else {
-        sourceFile = try! SourceFile(path: .none)
+        sourceFile = try! SourceFile(path: .none, sourceFileManager: context.sourceFileManager)
       }
       files[fileName] = sourceFile
     }
