@@ -82,3 +82,9 @@ public struct SourceFile: Equatable {
     self.lines = self.contents.components(separatedBy: .newlines)
   }
 }
+
+extension SourceFile {
+  public var start: SourceLocation {
+    return SourceLocation(line: 1, column: 1, file: self, charOffset: 0)
+  }
+}

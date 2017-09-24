@@ -173,8 +173,7 @@ public class Parser {
   
   func currentToken() -> Token {
     guard tokens.indices.contains(tokenIndex) else {
-      let range = SourceRange(start: SourceLocation(line: 1, column: 1, file: file),
-                              end: SourceLocation(line: 1, column: 1, file: file))
+      let range = SourceRange(start: file.start, end: file.start)
       return Token(kind: .eof,
                    range: range)
     }

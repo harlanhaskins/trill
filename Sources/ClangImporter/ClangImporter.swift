@@ -68,38 +68,7 @@ extension String {
   }
 }
 
-extension Source.SourceLocation {
-  init(clangLocation: CXSourceLocation) {
-    var cxfile: CXFile?
-    var line: UInt32 = 0
-    var column: UInt32 = 0
-    var offset: UInt32 = 0
-    clang_getSpellingLocation(clangLocation, &cxfile, &line, &column, &offset)
-
-    let sourceFile: SourceFile
-    let fileName = clang_getFileName(cxfile).asSwift()
-
-    if fileName != "<none>" {
-      let fileURL = URL(fileURLWithPath: fileName)
-      sourceFile = try! SourceFile(path: .file(fileURL))
-    } else {
-      sourceFile = try! SourceFile(path: .none)
-    }
-    self.init(line: Int(line), column: Int(column), file: sourceFile,
-              charOffset: Int(offset))
-  }
-}
-
-extension Source.SourceRange {
-  init(clangRange: CXSourceRange) {
-    let start = clang_getRangeStart(clangRange)
-    let end = clang_getRangeEnd(clangRange)
-    self.init(start: SourceLocation(clangLocation: start),
-              end: SourceLocation(clangLocation: end))
-  }
-}
-
-public class ClangImporter: Pass {
+public final class ClangImporter: Pass {
   static let headerFiles = [
     "stdlib.h",
     "stdio.h",
@@ -244,7 +213,7 @@ public class ClangImporter: Pass {
       return nil
     }
 
-    let range = SourceRange(clangRange: clang_getCursorExtent(cursor))
+    let range = makeRange(clang_getCursorExtent(cursor))
     let alias = TypeAliasDecl(name: Identifier(name: name),
                               bound: t.ref(range: range),
                               sourceRange: range)
@@ -277,7 +246,7 @@ public class ClangImporter: Pass {
       guard let trillTy = self.convertToTrillType(fieldTy) else {
         return CXChildVisit_Break
       }
-      let range = SourceRange(clangRange: clang_getCursorExtent(child))
+      let range = self.makeRange(clang_getCursorExtent(child))
       let expr = PropertyDecl(name: fieldId,
                               type: trillTy.ref(),
                               mutable: true,
@@ -293,7 +262,7 @@ public class ClangImporter: Pass {
       return nil
     }
 
-    let range = SourceRange(clangRange: clang_getCursorExtent(cursor))
+    let range = makeRange(clang_getCursorExtent(cursor))
     let expr = TypeDecl(name: name, properties: values, modifiers: [.foreign, .implicit],
                         sourceRange: range)
     importedTypes[name] = expr
@@ -325,10 +294,10 @@ public class ClangImporter: Pass {
 
       guard let trillType = convertToTrillType(type) else { return }
       args.append(trillType)
-      argRanges.append(SourceRange(clangRange: range))
+      argRanges.append(makeRange(range))
     }
 
-    let range = SourceRange(clangRange: clang_getCursorExtent(cursor))
+    let range = makeRange(clang_getCursorExtent(cursor))
     let decl = synthesize(name: name,
                           args: args,
                           return: trillRetTy,
@@ -345,7 +314,7 @@ public class ClangImporter: Pass {
       let name = Identifier(name: clang_getCursorSpelling(child).asSwift())
       if context.global(named: name) != nil { return CXChildVisit_Continue }
 
-      let range = SourceRange(clangRange: clang_getCursorExtent(child))
+      let range = self.self.makeRange(clang_getCursorExtent(child))
       let varExpr = VarAssignDecl(name: name,
                                   typeRef: DataType.int32.ref(),
                                   modifiers: [.foreign, .implicit],
@@ -407,14 +376,14 @@ public class ClangImporter: Pass {
     case CXToken_Identifier:
       let identifierName = clang_getTokenSpelling(tu, tokens[1]).asSwift()
       guard let _ = context.global(named: identifierName) else { return }
-      let rhs = VarExpr(name: Identifier(name: identifierName, range: SourceRange(clangRange: clang_getTokenExtent(tu, tokens[1]))))
+      let rhs = VarExpr(name: Identifier(name: identifierName, range: makeRange(clang_getTokenExtent(tu, tokens[1]))))
       let varDecl = VarAssignDecl(name: Identifier(name: name),
                                   typeRef: nil,
                                   kind: .global,
                                   rhs: rhs,
                                   modifiers: [.implicit],
                                   mutable: false,
-                                  sourceRange: SourceRange(clangRange: range))
+                                  sourceRange: makeRange(range))
       context.add(varDecl!)
     default:
       return
@@ -424,7 +393,7 @@ public class ClangImporter: Pass {
   func importVariableDeclation(_ cursor: CXCursor, in tu: CXTranslationUnit, context: ASTContext) {
     guard let type = convertToTrillType(clang_getCursorType(cursor)) else { return }
     let name = clang_getCursorSpelling(cursor).asSwift()
-    let identifier = Identifier(name: name, range: SourceRange(clangRange: clang_getCursorExtent(cursor)))
+    let identifier = Identifier(name: name, range: makeRange(clang_getCursorExtent(cursor)))
     if let existing = context.global(named: name), existing.sourceRange == identifier.range { return }
 
     context.add(VarAssignDecl(name: identifier,
@@ -493,7 +462,7 @@ public class ClangImporter: Pass {
   func parse(tu: CXTranslationUnit, token: CXToken, name: String) -> VarAssignDecl? {
     do {
       let tok = clang_getTokenSpelling(tu, token).asSwift()
-      let range = SourceRange(clangRange: clang_getTokenExtent(tu, token))
+      let range = makeRange(clang_getTokenExtent(tu, token))
       guard let expr = try simpleParseCToken(tok, range: range) else { return nil }
 
       return VarAssignDecl(name: Identifier(name: name),
@@ -719,5 +688,38 @@ public class ClangImporter: Pass {
       args.append(trillArgTy)
     }
     return .function(args: args, returnType: trillRet, hasVarArgs: isVarArg)
+  }
+
+  var files = [String: SourceFile]()
+
+  private func makeLocation(_ clangLocation: CXSourceLocation) -> Source.SourceLocation {
+    var cxfile: CXFile?
+    var line: UInt32 = 0
+    var column: UInt32 = 0
+    var offset: UInt32 = 0
+    clang_getSpellingLocation(clangLocation, &cxfile, &line, &column, &offset)
+
+    let fileName = clang_getFileName(cxfile).asSwift()
+    let sourceFile: SourceFile
+    if files.keys.contains(fileName) {
+      sourceFile = files[fileName]!
+    } else {
+      if fileName != "<none>" {
+        let fileURL = URL(fileURLWithPath: fileName)
+        sourceFile = try! SourceFile(path: .file(fileURL))
+      } else {
+        sourceFile = try! SourceFile(path: .none)
+      }
+      files[fileName] = sourceFile
+    }
+    return SourceLocation(line: Int(line), column: Int(column), file: sourceFile,
+                          charOffset: Int(offset))
+  }
+
+  private func makeRange(_ clangRange: CXSourceRange) -> Source.SourceRange {
+    let start = clang_getRangeStart(clangRange)
+    let end = clang_getRangeEnd(clangRange)
+    return SourceRange(start: makeLocation(start),
+                       end: makeLocation(end))
   }
 }
