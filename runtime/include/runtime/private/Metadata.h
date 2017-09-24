@@ -7,6 +7,8 @@
 /// Full license text available at https://github.com/trill-lang/trill
 ///
 
+#ifdef __cplusplus
+
 #ifndef metadata_private_h
 #define metadata_private_h
 
@@ -186,3 +188,5 @@ struct GenericBox {
 
 }
 #endif /* metadata_private_h */
+
+#endif /* __cplusplus */
