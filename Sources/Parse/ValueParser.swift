@@ -360,8 +360,7 @@ extension Parser {
     guard [.leftParen, .leftBracket, .dot, .comma].contains(peek()) else {
       return false
     }
-    let newTokDesc = tokDesc.substring(from:
-      tokDesc.index(after: tokDesc.startIndex))
+    let newTokDesc = String(tokDesc[tokDesc.index(after: tokDesc.startIndex)...])
     if newTokDesc.characters.count > 0 {
       var newStart = tok.range.start
       newStart.charOffset += 1
