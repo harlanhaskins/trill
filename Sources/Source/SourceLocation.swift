@@ -71,7 +71,7 @@ extension SourceRange {
 
   public var source: String {
     let startIndex = contents.index(contents.startIndex, offsetBy: start.charOffset)
-    let endIndex = contents.index(contents.startIndex, offsetBy: end.charOffset)
+    let endIndex = contents.index(startIndex, offsetBy: length)
     return String(contents[startIndex...endIndex])
   }
 }

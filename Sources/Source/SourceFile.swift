@@ -72,8 +72,8 @@ public struct SourceFile: Equatable, Hashable {
 
   public let path: SourceFileType
   internal unowned let sourceFileManager: SourceFileManager
-  public var contents: String { return try! sourceFileManager.contents(file: self) }
-  public var lines: [String] { return try! sourceFileManager.lines(file: self) }
+  public var contents: String { return try! sourceFileManager.contents(of: self) }
+  public var lines: [String] { return try! sourceFileManager.lines(in: self) }
   
   public init(path: SourceFileType, sourceFileManager: SourceFileManager) throws {
     self.path = path

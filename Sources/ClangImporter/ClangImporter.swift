@@ -314,7 +314,7 @@ public final class ClangImporter: Pass {
       let name = Identifier(name: clang_getCursorSpelling(child).asSwift())
       if context.global(named: name) != nil { return CXChildVisit_Continue }
 
-      let range = self.self.makeRange(clang_getCursorExtent(child))
+      let range = self.makeRange(clang_getCursorExtent(child))
       let varExpr = VarAssignDecl(name: name,
                                   typeRef: DataType.int32.ref(),
                                   modifiers: [.foreign, .implicit],

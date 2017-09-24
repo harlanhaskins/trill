@@ -1,5 +1,5 @@
 ///
-/// SourceFile.swift
+/// SourceFileManager.swift
 ///
 /// Copyright 2016-2017 the Trill project authors.
 /// Licensed under the MIT License.
@@ -13,16 +13,16 @@ public final class SourceFileManager {
 
   public init() {}
 
-  public func contents(file: SourceFile) throws -> String {
+  public func contents(of file: SourceFile) throws -> String {
     if let contents = contentsCache[file] { return contents }
     let contents = try fetchContents(file: file)
     contentsCache[file] = contents
     return contents
   }
 
-  public func lines(file: SourceFile) throws -> [String] {
+  public func lines(in file: SourceFile) throws -> [String] {
     if let lines = linesCache[file] { return lines }
-    let contents = try self.contents(file: file)
+    let contents = try self.contents(of: file)
     let lines = contents.components(separatedBy: .newlines)
     linesCache[file] = lines
     return lines
