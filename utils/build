@@ -201,7 +201,7 @@ class Build(object):
         runtime_build_dir = path.join(self.build_dir, 'runtime')
         runtime_lib_dir = path.join(self.build_dir, 'lib')
         runtime_build_include_dir = path.join(self.build_dir, 'include')
-        runtime_include_dir = path.join(self.source_dir, 'Sources', 'trillRuntime', 'include')
+        runtime_include_dir = path.join(self.source_dir, 'runtime', 'include')
         swiftpm_runtime_archive = path.join(swiftpm_dir,
                                             'release' if self.is_release else 'debug',
                                             'libtrillRuntime.a')
