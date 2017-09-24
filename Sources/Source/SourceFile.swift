@@ -9,7 +9,20 @@
 
 import Foundation
 
-public enum SourceFileType: Equatable {
+public enum SourceFileType: Equatable, Hashable {
+  public var hashValue: Int {
+    switch self {
+    case .input(let url, _):
+      return url.hashValue ^ 0x4324
+    case .file(let url):
+      return url.hashValue ^ 0x33345
+    case .stdin:
+      return 0x314159
+    case .none:
+      return 0xE271
+    }
+  }
+
   public static func ==(lhs: SourceFileType, rhs: SourceFileType) -> Bool {
     switch (lhs, rhs) {
     case (.input(let lhsURL, _), .input(let rhsURL, _)),
@@ -50,10 +63,12 @@ public enum SourceFileType: Equatable {
   }
 }
 
-public struct SourceFile: Equatable {
+public struct SourceFile: Equatable, Hashable {
   public static func ==(lhs: SourceFile, rhs: SourceFile) -> Bool {
     return lhs.path == rhs.path
   }
+
+  public var hashValue: Int { return path.hashValue ^ 0x35 }
 
   public let path: SourceFileType
   public let contents: String
