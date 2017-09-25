@@ -68,8 +68,9 @@ public struct ClangInvocation {
 
   public func invoke(_ arguments: [String], linkerFlags: [String]) {
     var args = arguments
-    args.append("-Xlinker")
-    args += linkerFlags
+    for flag in linkerFlags {
+      args.append(contentsOf: ["-Xlinker", flag])
+    }
     run(clangPath, arguments: args)
   }
 
