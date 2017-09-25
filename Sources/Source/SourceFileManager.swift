@@ -7,25 +7,32 @@
 /// Full license text available at https://github.com/trill-lang/trill
 ///
 
+import Dispatch
+
 public final class SourceFileManager {
+  private let cacheQueue = DispatchQueue(label: "SourceFileManager")
   private var contentsCache = [SourceFile: String]()
   private var linesCache = [SourceFile: [String]]()
 
   public init() {}
 
   public func contents(of file: SourceFile) throws -> String {
-    if let contents = contentsCache[file] { return contents }
-    let contents = try fetchContents(file: file)
-    contentsCache[file] = contents
-    return contents
+    return try cacheQueue.sync {
+      if let contents = contentsCache[file] { return contents }
+      let contents = try fetchContents(file: file)
+      contentsCache[file] = contents
+      return contents
+    }
   }
 
   public func lines(in file: SourceFile) throws -> [String] {
-    if let lines = linesCache[file] { return lines }
     let contents = try self.contents(of: file)
-    let lines = contents.components(separatedBy: .newlines)
-    linesCache[file] = lines
-    return lines
+    return cacheQueue.sync {
+      if let lines = linesCache[file] { return lines }
+      let lines = contents.components(separatedBy: .newlines)
+      linesCache[file] = lines
+      return lines
+    }
   }
 
   private func fetchContents(file: SourceFile) throws -> String {
