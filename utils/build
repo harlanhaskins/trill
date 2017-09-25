@@ -21,6 +21,7 @@ import sys
 from contextlib import contextmanager
 from distutils.spawn import find_executable
 from glob import glob
+import re
 
 def call_or_panic(*args, **kwargs):
     return_code = call(*args, **kwargs)
@@ -255,6 +256,11 @@ LD_RUNPATH_SEARCH_PATHS = {runpath_search_paths} $(inherited)
             '--output', self.build_dir,
             '--xcconfig-overrides', xcconfig_path
         ])
+
+        pbxproj = path.join(self.build_dir, 'trill.xcodeproj', 'project.pbxproj')
+        pbxproj_contents = open(pbxproj).read()
+        pbxproj_contents = re.sub(r'(LD_RUNPATH_SEARCH_PATHS = \()', '\\1"$(inherited)", ', pbxproj_contents)
+        open(pbxproj, mode='w').write(pbxproj_contents)
 
     def test(self):
         """
