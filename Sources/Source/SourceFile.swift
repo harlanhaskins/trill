@@ -9,7 +9,34 @@
 
 import Foundation
 
-public enum SourceFileType {
+public enum SourceFileType: Equatable, Hashable {
+  public var hashValue: Int {
+    switch self {
+    case .input(let url, _):
+      return url.hashValue ^ 0x4324
+    case .file(let url):
+      return url.hashValue ^ 0x33345
+    case .stdin:
+      return 0x314159
+    case .none:
+      return 0xE271
+    }
+  }
+
+  public static func ==(lhs: SourceFileType, rhs: SourceFileType) -> Bool {
+    switch (lhs, rhs) {
+    case (.input(let lhsURL, _), .input(let rhsURL, _)),
+         (.file(let lhsURL), .file(let rhsURL)):
+      return lhsURL == rhsURL
+    case (.stdin, .stdin):
+      return true
+    case (.none, .none):
+      return true
+    default:
+      return false
+    }
+  }
+
   case input(url: URL, contents: String)
   case file(URL)
   case stdin
@@ -36,31 +63,26 @@ public enum SourceFileType {
   }
 }
 
-public struct SourceFile {
+public struct SourceFile: Equatable, Hashable {
+  public static func ==(lhs: SourceFile, rhs: SourceFile) -> Bool {
+    return lhs.path == rhs.path
+  }
+
+  public var hashValue: Int { return path.hashValue ^ 0x35 }
+
   public let path: SourceFileType
-  public let contents: String
-  public let lines: [String]
+  internal unowned let sourceFileManager: SourceFileManager
+  public var contents: String { return try! sourceFileManager.contents(of: self) }
+  public var lines: [String] { return try! sourceFileManager.lines(in: self) }
   
-  public init(path: SourceFileType) throws {
-    let fetchContents: () throws -> String = {
-      switch path {
-      case .stdin:
-        var str = ""
-        while let line = readLine() {
-          str += line
-        }
-        return str
-      case .input(_, let contents):
-        return contents
-      case .file(let url):
-        return try String(contentsOf: url)
-      case .none:
-        return ""
-      }
-    }
-    
+  public init(path: SourceFileType, sourceFileManager: SourceFileManager) throws {
     self.path = path
-    self.contents = try fetchContents()
-    self.lines = self.contents.components(separatedBy: .newlines)
+    self.sourceFileManager = sourceFileManager
+  }
+}
+
+extension SourceFile {
+  public var start: SourceLocation {
+    return SourceLocation(line: 1, column: 1, file: self, charOffset: 0)
   }
 }

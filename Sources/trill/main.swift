@@ -54,7 +54,7 @@ func populate(driver: Driver, options: Options,
       let stdlibPath = runtimeLocation.stdlib.path
       let allStdlibFiles = FileManager.default.recursiveChildren(of: stdlibPath)!
       let stdlibFiles = allStdlibFiles.filter {  $0.hasSuffix(".tr") }
-      let stdlibSourceFiles = try _sourceFiles(from: stdlibFiles, diag: context.diag)
+      let stdlibSourceFiles = try _sourceFiles(from: stdlibFiles, context: context)
       lexAndParse(sourceFiles: stdlibSourceFiles, into: stdlibContext)
       context.stdlib = stdlibContext
       context.merge(stdlibContext)
@@ -109,19 +109,19 @@ func populate(driver: Driver, options: Options,
   }
 }
 
-func sourceFiles(options: Options, diag: DiagnosticEngine) throws -> [SourceFile] {
+func sourceFiles(options: Options, context: ASTContext) throws -> [SourceFile] {
   if options.isStdin {
-    let file = try SourceFile(path: .stdin)
+    let file = try SourceFile(path: .stdin, sourceFileManager: context.sourceFileManager)
     return [file]
   } else {
-    return try _sourceFiles(from: options.filenames, diag: diag)
+    return try _sourceFiles(from: options.filenames, context: context)
   }
 }
 
-func _sourceFiles(from filenames: [String], diag: DiagnosticEngine) throws -> [SourceFile] {
+func _sourceFiles(from filenames: [String], context: ASTContext) throws -> [SourceFile] {
   return try filenames.map { path in
     let url = URL(fileURLWithPath: path)
-    return try SourceFile(path: .file(url))
+    return try SourceFile(path: .file(url), sourceFileManager: context.sourceFileManager)
   }
 }
 
@@ -174,7 +174,7 @@ func performCompile(diag: DiagnosticEngine, options: Options) {
 
   var files = [SourceFile]()
   do {
-    files = try sourceFiles(options: options, diag: diag)
+    files = try sourceFiles(options: options, context: context)
 
     try populate(driver: driver,
                  options: options,

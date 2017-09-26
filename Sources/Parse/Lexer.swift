@@ -307,7 +307,7 @@ public struct Token {
   public let range: SourceRange
   
   public var length: Int {
-    return range.end.charOffset - range.start.charOffset
+    return range.length
   }
   
   public var isKeyword: Bool { return kind.isKeyword }
@@ -369,7 +369,7 @@ public struct Lexer {
   
   public init(file: SourceFile, input: String) {
     characters = Array(input.unicodeScalars)
-    sourceLoc = SourceLocation(line: 1, column: 1, file: file)
+    sourceLoc = file.start
   }
   
   public mutating func lex() throws -> [Token] {
@@ -397,6 +397,7 @@ public struct Lexer {
       } else {
         sourceLoc.column += 1
       }
+
       sourceLoc.charOffset += 1
       tokenIndex += 1
     }

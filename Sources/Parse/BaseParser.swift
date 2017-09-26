@@ -71,8 +71,8 @@ public class Parser {
 
   public static func parse(_ file: SourceFile, into context: ASTContext) {
     do {
-      var lexer = Lexer(file: file,
-                        input: file.contents)
+      let fileContents = try context.sourceFileManager.contents(of: file)
+      var lexer = Lexer(file: file, input: fileContents)
       let tokens = try lexer.lex()
       let parser = Parser(tokens: tokens,
                           file: file,
@@ -173,8 +173,7 @@ public class Parser {
   
   func currentToken() -> Token {
     guard tokens.indices.contains(tokenIndex) else {
-      let range = SourceRange(start: SourceLocation(line: 1, column: 1, file: file),
-                              end: SourceLocation(line: 1, column: 1, file: file))
+      let range = SourceRange(start: file.start, end: file.start)
       return Token(kind: .eof,
                    range: range)
     }
