@@ -41,10 +41,17 @@ Once you've got LLVM and CMake installed, you'll need to generate pkgconfig file
 swift utils/make-pkgconfig.swift
 ```
 
+To install the build script dependencies:
+
+```bash
+pip install pkgconfig
+pip install git+https://github.com/kronenthaler/mod-pbxproj.git@python3-support
+```
+
 Then, you should be able to run our build script. Just running the build script gets you a build of `trill` in the `.build/debug` folder.
 
 ```bash
-usage: build-script [-h] [--swift SWIFT] [-r RELEASE] [-x] [-t]
+usage: build [-h] [--swift SWIFT] [-r RELEASE] [-x] [-t]
 
 optional arguments:
   -h, --help            show this help message and exit
