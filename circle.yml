@@ -10,6 +10,7 @@ dependencies:
     - brew update
     - brew install llvm cmake pkg-config
     - pip install pkgconfig
+    - pip install git+https://github.com/kronenthaler/mod-pbxproj.git@python3-support
     - git clone https://github.com/trill-lang/LLVMSwift.git /tmp/LLVMSwift
     - swift /tmp/LLVMSwift/utils/make-pkgconfig.swift
     - git clone https://github.com/trill-lang/ClangSwift.git /tmp/ClangSwift
