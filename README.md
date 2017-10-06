@@ -38,7 +38,7 @@ Once you've got LLVM and CMake installed, you'll need to generate pkgconfig file
 `utils` directory. You'll only need to run it once.
 
 ```bash
-swift utils/make-pkgconfig.swift
+utils/build --pkgconfig
 ```
 
 To install the build script dependencies:

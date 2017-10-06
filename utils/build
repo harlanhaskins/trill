@@ -107,6 +107,7 @@ class Build(object):
         self.is_release = args.release
         self.should_reconfigure = args.reconfigure
         self.run_tests = args.test
+        self.make_pkgconfig = args.pkgconfig
 
         dir_pieces = []
         if args.xcodeproj:
@@ -311,6 +312,12 @@ LD_RUNPATH_SEARCH_PATHS = {runpath_search_paths} $(inherited)
         if self.should_reconfigure:
             shutil.rmtree(self.build_dir, ignore_errors=True)
 
+        if self.make_pkgconfig:
+            call_or_panic([self.swift, "package", "resolve"])
+            call_or_panic([self.swift] + glob(".build/checkouts/LLVMSwift*/utils/make-pkgconfig.swift"))
+            call_or_panic([self.swift] + glob(".build/checkouts/ClangSwift*/utils/make-pkgconfig.swift"))
+            return
+
         self.try_make_dir(self.build_dir)
 
         os.chdir(self.build_dir)
@@ -340,6 +347,8 @@ def main():
                         action='store_true')
     parser.add_argument('--reconfigure', action='store_true',
                         help='Delete the existing CMake files and start over')
+    parser.add_argument('--pkgconfig', action='store_true',
+                        help='Make pkgconfig files for trill\'s dependencies')
 
     args = parser.parse_args()
 
