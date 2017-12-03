@@ -1,3 +1,5 @@
+// RUN: %trill --run %s
+
 func onlyCalledOnce() {
   printf("This function will only actually be called one time!\n")
 }
